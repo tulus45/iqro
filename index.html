@@ -1,0 +1,1012 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Iqro Morning Pray menghadirkan mushaf pilihan dan bacaan tahlil dalam satu halaman modern.">
+    <meta name="robots" content="noindex, noarchive, nosnippet">
+    <title>Iqro Morning Pray | Mushaf Pilihan &amp; Tahlil</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2307110d'/%3E%3Ctext x='50%25' y='53%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial' font-size='28' font-weight='700' fill='%23d6b267'%3EIQ%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="site-shell">
+    <header class="site-header">
+        <button class="brand" type="button" onclick="showHome()">
+            <span class="brand-mark">IQ</span>
+            <span class="brand-copy">
+                <strong>Iqro</strong>
+                <span>Mushaf Pilihan &amp; Tahlil</span>
+            </span>
+        </button>
+        <nav class="site-nav" aria-label="Navigasi utama">
+            <button class="nav-chip is-active" type="button" data-nav="home" onclick="showHome()">Home</button>
+            <button class="nav-chip" type="button" data-nav="quran" onclick="openCatalog()">Al-Quran</button>
+            <button class="nav-chip" type="button" data-nav="tahlil" onclick="openTahlil()">Tahlil</button>
+        </nav>
+    </header>
+
+    <main class="site-main">
+        <section id="homePage" class="page page-home is-active" aria-label="Ringkasan baca Al-Quran">
+            <div class="dashboard-card home-dashboard">
+                <div class="dashboard-hero">
+                    <div>
+                        <p class="section-kicker">Home</p>
+                        <h1 class="main-title">
+                            <span class="title-logo">IQ</span>
+                            Ringkasan Tilawah
+                        </h1>
+                        <p class="hero-copy">Pantau pencapaian baca Al-Qur'an Anda dan lanjutkan kembali dari ayat terakhir yang sudah ditandai.</p>
+                    </div>
+                    <div class="home-calligraphy" aria-label="Al-Quran Karim">
+                        <img class="home-calligraphy-image" src="quran.png" alt="Al-Quran Karim">
+                    </div>
+                </div>
+
+                <div class="home-overview-grid">
+                    <article class="home-card home-progress-card">
+                        <p class="home-card-label">Pencapaian Baca Al-Qur'an</p>
+                        <div class="home-progress-value">
+                            <strong id="homeProgressPercent">0%</strong>
+                            <span id="homeProgressReadAyat">0 dari 6.236 ayat</span>
+                        </div>
+                        <div class="home-progress-track" aria-hidden="true">
+                            <span id="homeProgressBar"></span>
+                        </div>
+                    </article>
+
+                    <article class="home-card home-last-read-card">
+                        <p class="home-card-label">Terakhir Dibaca</p>
+                        <h2 id="homeLastReadSurah" class="home-last-read-surah">Al-Fatihah</h2>
+                        <p id="homeLastReadAyat" class="home-last-read-ayat">Ayat 1 dari 7 ayat</p>
+                        <div class="action-buttons home-card-actions">
+                            <button class="btn-compact btn-main" type="button" onclick="resumeLastRead()">Lanjutkan Membaca</button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="catalogPage" class="page page-catalog" aria-label="Daftar Al-Quran">
+            <div class="catalog-shell">
+                <section class="catalog-shortcuts" aria-label="Surah pilihan">
+                    <div class="catalog-shortcuts-grid">
+                        <button class="catalog-shortcut" type="button" onclick="openPilihan(36, 'quran')">
+                            <span class="catalog-shortcut-copy">
+                                <span class="catalog-shortcut-name">Yasin</span>
+                                <span class="catalog-shortcut-note">Surah 36</span>
+                            </span>
+                            <span class="catalog-shortcut-arabic">ÙŠØ³</span>
+                        </button>
+                        <button class="catalog-shortcut" type="button" onclick="openPilihan(67, 'quran')">
+                            <span class="catalog-shortcut-copy">
+                                <span class="catalog-shortcut-name">Al-Mulk</span>
+                                <span class="catalog-shortcut-note">Surah 67</span>
+                            </span>
+                            <span class="catalog-shortcut-arabic">Ø§Ù„Ù…Ù„Ùƒ</span>
+                        </button>
+                        <button class="catalog-shortcut" type="button" onclick="openPilihan(13, 'quran')">
+                            <span class="catalog-shortcut-copy">
+                                <span class="catalog-shortcut-name">Ar-Ra'd</span>
+                                <span class="catalog-shortcut-note">Surah 13</span>
+                            </span>
+                            <span class="catalog-shortcut-arabic">Ø§Ù„Ø±Ø¹Ø¯</span>
+                        </button>
+                        <button class="catalog-shortcut" type="button" onclick="openPilihan(55, 'quran')">
+                            <span class="catalog-shortcut-copy">
+                                <span class="catalog-shortcut-name">Ar-Rahman</span>
+                                <span class="catalog-shortcut-note">Surah 55</span>
+                            </span>
+                            <span class="catalog-shortcut-arabic">Ø§Ù„Ø±Ø­Ù…Ù†</span>
+                        </button>
+                        <button class="catalog-shortcut" type="button" onclick="openPilihan(56, 'quran')">
+                            <span class="catalog-shortcut-copy">
+                                <span class="catalog-shortcut-name">Waqi'ah</span>
+                                <span class="catalog-shortcut-note">Surah 56</span>
+                            </span>
+                            <span class="catalog-shortcut-arabic">Ø§Ù„ÙˆØ§Ù‚Ø¹Ø©</span>
+                        </button>
+                        <button class="catalog-shortcut" type="button" onclick="openPilihan(18, 'quran')">
+                            <span class="catalog-shortcut-copy">
+                                <span class="catalog-shortcut-name">Kahfi</span>
+                                <span class="catalog-shortcut-note">Surah 18</span>
+                            </span>
+                            <span class="catalog-shortcut-arabic">Ø§Ù„ÙƒÙ‡Ù</span>
+                        </button>
+                    </div>
+                </section>
+
+                <div class="catalog-toolbar">
+                    <div class="catalog-filter">
+                        <label class="catalog-label" for="catalogViewMode">Tampilan</label>
+                        <select id="catalogViewMode" class="catalog-select" onchange="setCatalogView(this.value)">
+                            <option value="surah">Surah</option>
+                            <option value="juz">Juz</option>
+                        </select>
+                    </div>
+                    <div class="catalog-filter catalog-filter-end">
+                        <label class="catalog-label" for="catalogSortOrder">Urutkan</label>
+                        <select id="catalogSortOrder" class="catalog-select" onchange="setCatalogSort(this.value)">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="catalogStatus" class="status-message catalog-status">Memuat daftar Al-Quran...</div>
+                <div id="catalogGrid" class="catalog-grid" aria-live="polite"></div>
+            </div>
+        </section>
+
+<div id="mushafPage" class="page">
+    <div class="mushaf-container">
+        <header class="mushaf-header">
+            <button class="btn-back" type="button" onclick="closeMushaf()">Kembali</button>
+            <div class="latin-toggle">
+                <span>Latin</span>
+                <input type="checkbox" id="latinCheck" checked onchange="toggleLatin()">
+            </div>
+            <h2 id="currentSurahName" class="current-surah-name">Mushaf</h2>
+        </header>
+        
+        <div id="mushafControls" class="mushaf-controls">
+            <div class="mushaf-control-field mushaf-control-surah">
+                <label class="mushaf-control-label" for="surahInput">Surah</label>
+                <select id="surahInput" class="surah-select">
+                </select>
+            </div>
+            <div class="mushaf-control-field mushaf-control-ayat">
+                <label class="mushaf-control-label" for="startAyatInput">Dari Ayat</label>
+                <select id="startAyatInput" class="surah-select ayat-select">
+                </select>
+            </div>
+            <div class="mushaf-control-field mushaf-control-ayat">
+                <label class="mushaf-control-label" for="endAyatInput">Ke Ayat</label>
+                <select id="endAyatInput" class="surah-select ayat-select">
+                </select>
+            </div>
+        </div>
+        
+        <div id="mushafContent"></div>
+    </div>
+</div>
+    </main>
+
+    <footer class="site-footer">
+        <p>© 2026 The Alus. All rights reserved</p>
+    </footer>
+</div>
+
+<div id="customPopup"><div class="popup-card"><h2>Alhamdulillah!</h2><p id="popupMessage"></p><button class="btn-ok" type="button" onclick="closePopupAndGoHome()">Selesai</button></div></div>
+
+<script>
+    const progressStorageKey = 'iqro_tadarus_progress';
+    const defaultProgress = { surah: 1, ayat: 1, nama: 'Al-Fatihah', totalAyat: 7 };
+    let _0xData = { ...defaultProgress };
+    let hasSavedProgress = false;
+    const pages = {
+        home: document.getElementById('homePage'),
+        catalog: document.getElementById('catalogPage'),
+        mushaf: document.getElementById('mushafPage')
+    };
+    let returnView = 'home';
+
+    const surahList = ["Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa'","Al-Ma'idah","Al-An'am","Al-A'raf","Al-Anfal","At-Taubah","Yunus","Hud","Yusuf","Ar-Ra'd","Ibrahim","Al-Hijr","An-Nahl","Al-Isra'","Al-Kahf","Maryam","Ta-Ha","Al-Anbiya'","Al-Hajj","Al-Mu'minun","An-Nur","Al-Furqan","Asy-Syu'ara'","An-Naml","Al-Qasas","Al-'Ankabut","Ar-Rum","Luqman","As-Sajdah","Al-Ahzab","Saba'","Fatir","Ya-Sin","As-Saffat","Sad","Az-Zumar","Gafir","Fussilat","Asy-Syura","Az-Zukhruf","Ad-Dukhan","Al-Jasiyah","Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat","Qaf","Az-Zariyat","At-Tur","An-Najm","Al-Qamar","Ar-Rahman","Al-Waqi'ah","Al-Hadid","Al-Mujadalah","Al-Hasyr","Al-Mumtahanah","As-Saff","Al-Jumu'ah","Al-Munafiqun","At-Tagabun","At-Talaq","At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah","Al-Ma'arij","Nuh","Al-Jinn","Al-Muzzammil","Al-Muddassir","Al-Qiyamah","Al-Insan","Al-Mursalat","An-Naba'","An-Nazi'at","'Abasa","At-Takwir","Al-Infitar","Al-Mutaffifin","Al-Insyiqaq","Al-Buruj","At-Tariq","Al-A'la","Al-Gasyiyah","Al-Fajr","Al-Balad","Asy-Syams","Al-Lail","Ad-Duha","Asy-Syarh","At-Tin","Al-'Alaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-'Adiyat","Al-Qari'ah","At-Takasur","Al-'Asr","Al-Humazah","Al-Fil","Quraisy","Al-Ma'un","Al-Kausar","Al-Kafirun","An-Nasr","Al-Lahab","Al-Ikhlas","Al-Falaq","An-Nas"];
+    const surahAyatCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+    const surahSelect = document.getElementById('surahInput');
+    const startAyatInput = document.getElementById('startAyatInput');
+    const endAyatInput = document.getElementById('endAyatInput');
+    surahList.forEach((nama, index) => {
+        const opt = document.createElement('option');
+        opt.value = index + 1;
+        opt.text = `${index + 1}. ${nama}`;
+        surahSelect.appendChild(opt);
+    });
+    surahSelect.addEventListener('change', () => {
+        setMushafRange(surahSelect.value);
+        openSelectedSurahRange();
+    });
+    startAyatInput.addEventListener('change', () => {
+        syncAyatRangeInputs('start');
+        openSelectedSurahRange();
+    });
+    endAyatInput.addEventListener('change', () => {
+        syncAyatRangeInputs('end');
+        openSelectedSurahRange();
+    });
+
+    const catalogState = {
+        view: 'surah',
+        sort: 'asc',
+        surahs: [],
+        loading: false,
+        loaded: false,
+        message: ''
+    };
+
+    setMushafRange(1);
+
+    const catalogFallback = surahList.map((namaLatin, index) => ({
+        nomor: index + 1,
+        namaLatin,
+        arti: '',
+        nama: '',
+        tempatTurun: '',
+        jumlahAyat: ''
+    }));
+
+    const juzCatalog = [
+        { nomor: 1, ringkas: "Al-Fatihah, Al-Baqarah", startSurah: 1, startAyat: 1 },
+        { nomor: 2, ringkas: "Al-Baqarah", startSurah: 2, startAyat: 142 },
+        { nomor: 3, ringkas: "Al-Baqarah, Ali 'Imran", startSurah: 2, startAyat: 253 },
+        { nomor: 4, ringkas: "Ali 'Imran, An-Nisa", startSurah: 3, startAyat: 93 },
+        { nomor: 5, ringkas: "An-Nisa", startSurah: 4, startAyat: 24 },
+        { nomor: 6, ringkas: "An-Nisa, Al-Ma'idah", startSurah: 4, startAyat: 148 },
+        { nomor: 7, ringkas: "Al-Ma'idah, Al-An'am", startSurah: 5, startAyat: 82 },
+        { nomor: 8, ringkas: "Al-An'am, Al-A'raf", startSurah: 6, startAyat: 111 },
+        { nomor: 9, ringkas: "Al-A'raf, Al-Anfal", startSurah: 7, startAyat: 88 },
+        { nomor: 10, ringkas: "Al-Anfal, At-Taubah", startSurah: 8, startAyat: 41 },
+        { nomor: 11, ringkas: "At-Taubah, Yunus, Hud", startSurah: 9, startAyat: 93 },
+        { nomor: 12, ringkas: "Hud, Yusuf", startSurah: 11, startAyat: 6 },
+        { nomor: 13, ringkas: "Yusuf, Ar-Ra'd, Ibrahim", startSurah: 12, startAyat: 53 },
+        { nomor: 14, ringkas: "Al-Hijr, An-Nahl", startSurah: 15, startAyat: 1 },
+        { nomor: 15, ringkas: "Al-Isra', Al-Kahfi", startSurah: 17, startAyat: 1 },
+        { nomor: 16, ringkas: "Al-Kahfi, Maryam, Ta-Ha", startSurah: 18, startAyat: 75 },
+        { nomor: 17, ringkas: "Al-Anbiya', Al-Hajj", startSurah: 21, startAyat: 1 },
+        { nomor: 18, ringkas: "Al-Mu'minun, An-Nur, Al-Furqan", startSurah: 23, startAyat: 1 },
+        { nomor: 19, ringkas: "Al-Furqan, Asy-Syu'ara', An-Naml", startSurah: 25, startAyat: 21 },
+        { nomor: 20, ringkas: "An-Naml, Al-Qasas, Al-'Ankabut", startSurah: 27, startAyat: 56 },
+        { nomor: 21, ringkas: "Al-'Ankabut, Ar-Rum, Luqman, As-Sajdah, Al-Ahzab", startSurah: 29, startAyat: 46 },
+        { nomor: 22, ringkas: "Al-Ahzab, Saba', Fatir, Ya-Sin", startSurah: 33, startAyat: 31 },
+        { nomor: 23, ringkas: "Ya-Sin, As-Saffat, Sad, Az-Zumar", startSurah: 36, startAyat: 28 },
+        { nomor: 24, ringkas: "Az-Zumar, Gafir, Fussilat", startSurah: 39, startAyat: 32 },
+        { nomor: 25, ringkas: "Fussilat, Asy-Syura, Az-Zukhruf, Ad-Dukhan, Al-Jasiyah", startSurah: 41, startAyat: 47 },
+        { nomor: 26, ringkas: "Al-Ahqaf, Muhammad, Al-Fath, Al-Hujurat, Qaf, Az-Zariyat", startSurah: 46, startAyat: 1 },
+        { nomor: 27, ringkas: "Az-Zariyat, At-Tur, An-Najm, Al-Qamar, Ar-Rahman, Al-Waqi'ah, Al-Hadid", startSurah: 51, startAyat: 31 },
+        { nomor: 28, ringkas: "Al-Mujadalah, Al-Hasyr, Al-Mumtahanah, As-Saff, Al-Jumu'ah, Al-Munafiqun, At-Tagabun, At-Talaq, At-Tahrim", startSurah: 58, startAyat: 1 },
+        { nomor: 29, ringkas: "Al-Mulk, Al-Qalam, Al-Haqqah, Al-Ma'arij, Nuh, Al-Jinn, Al-Muzzammil, Al-Muddassir, Al-Qiyamah, Al-Insan, Al-Mursalat", startSurah: 67, startAyat: 1 },
+        { nomor: 30, ringkas: "An-Naba' sampai An-Nas", startSurah: 78, startAyat: 1 }
+    ];
+
+    const dataTahlil = [
+        { arab: "إِلَى حَضْرَةِ النَّبِيِّ الْمُصْطَفَى سَيِّدِنَا مُحمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ وَاٰلِهِ وَأَزْوَاجِهِ وَأَوْلَادِهِ وَذُرِّيَّاتِهِ الْفَــاتِحَةُ", latin: "Ila ḫadlratin-nabiyyil-musthafâ sayyidinâ Muḫammadin shallallahu ‘alaihi wa sallama wa âlihi wa azwâjihi wa awlâdihi wa dzurriyyâtihi al-fâtiḫah", indo: "Kepada yang terhormat Nabi Muhammad ﷺ, segenap keluarga, istri-istrinya, anak-anaknya, dan keturunannya. Bacaan Al-Fatihah ini kami tujukan kepada Allah dan pahalanya untuk mereka semua. Al-Fatihah…" },
+        { arab: "ثُمَّ إِلَى حَضْرَةِ إِخْوَانِهِ مِنَ الْأَنْبِيَاءِ وَالْمُرْسَلِيْنَ وَالْأَوْلِيَاءِ وَالشُّهَدَاءِ وَالصَّالِحِيْنَ وَالصَّحَابَةِ وَالتَّابِعِيْنَ وَالْعُلَمَاءِ الْعَامِلِيْنَ وَالْمُصَنِّفِيْنَ الْمُخْلِصِيْنَ وَجَمِيْعِ الْمَلَائِكَةِ الْمُقَرَّبِيْنَ، خُصُوْصًا إِلَى سَيِّدِنَا الشَّيْخِ عَبْدِ الْقَادِرِ الْجِيْلَانِي الْفَــاتِحَةُ", latin: "Tsumma ilâ ḫadlrati ikhwânihi minal-anbiya’i wal-mursalîn wal-auliya’i wasy-syuhadâ’i wash-shâlihîn wash-shaḫâbati wat tâbi‘în wal-‘ulamâ’il-‘âmilîn wal-mushannifînal-mukhlishîn wa jamî‘il-malâikatil-muqarrabîn, khusûshan ilâ sayyidinâsy-syaikh ‘abdil qâdir al-jîlânî al-fâtiḫah", indo: "Lalu kepada segenap saudara beliau dari kalangan nabi, rasul, wali, syuhada, orang-orang saleh, sahabat, tabi‘in, ulama al-amilin, ulama penulis yang ikhlas, semua malaikat Muqarrabin, terkhusus kepada Syekh Abdul Qadir al-Jilani Al-Fatihah." },
+        { arab: "ثُمَّ إِلَى جَمِيْعِ أَهْلِ الْقُبُوْرِ مِنَ الْمُسْلِمِيْنَ وَالْمُسْلِمَاتِ وَالْمُؤْمِنِيْنَ وَالْمُؤْمِنَاتِ مِنْ مَشَارِقِ الْأَرْضِ إِلَى مَغَارِبِهَا بَرِّهَا وَبَحْرِهَا خُصُوْصًا إِلَى اٰبَائِنَا وَأُمَّهَاتِنَا وَأَجْدَادِنَا وَجَدَّاتِنَا وَمَشَايِخِنَا وَمَشَايِخِ مَشَايِخِنَا وَأَسَاتِذَةِ أََسَاتِذَتِنَا وَلِمَنْ أَحْسَنَ إِلَيْنَا وَلِمَنِ اجْتَمَعْنَا هٰهُنَا بِسَبَبِهِ الْفَاتِحَةُ", latin: "Tsumma ilâ jamî‘i ahlil-qubûri minal-muslimîna wal-muslimâti wal-mu’minîna wal-mu’minâti min masyâriqil-ardli ilâ maghâribihâ barrihâ wa baḫrihâ khushushan ilâ abâ’inâ wa ummahâtinâ wa ajdâdinâ wa jaddâtina wa masyâkhinâ wa masyâyikhi masyâyikhinâ wa asâtidzati asâtidzatinâ wa liman aḫsana ilainâ wa liman ijtama‘nâ hâhunâ bisababihi, al-fâtiḫah", indo: "Kemudian kepada semua ahli kubur Muslimin, Muslimat, Mukminin, Mukminat dari Timur ke Barat, di laut dan di darat, khususnya bapak kami, ibu kami, kakek-nenek kami, guru kami, dan bagi arwah yang menjadi sebab kami berkumpul di sini. Al-Fatihah." },
+        { arab: "خُصُوْصًا اِلٰى أَرْوَاحِ ............ وَأُصُوْلِهِمْ وَفُرُوْعِهِمْ لَهُمُ الْفَاتِحَةُ", latin: "Khushûshan ilâ arwâhi ............ wa ushûlihim wa furû'ihim, lahumul fâtiḫah.", indo: "Khususnya kepada arwah-arwah ............ (Sebutkan nama-nama arwah yang dituju), serta asal-usul dan keturunan mereka. Al-Fatihah." },
+        { arab: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ قُلْ هُوَ اللّٰهُ اَحَدٌۚ، اَللّٰهُ الصَّمَدُۚ لَمْ يَلِدْ وَلَمْ يُوْلَدْۙ، وَلَمْ يَكُنْ لَّهٗ كُفُوًا اَحَـــــدٌ ×٣", latin: "Bismillâhir-raḫmânir-raḫîm(i), Qul huwallâhu aḫad, Allâhush-shamad, lam yalid wa lam yûlad, wa lam yakul lahû kufuwan aḫad 3x", indo: "Dengan menyebut nama Allah yang maha pengasih lagi maha penyayang. Katakanlah, Dialah Allah, Yang Maha Esa. Allah tempat meminta. Tidak beranak dan tidak pula diperanakkan. Dan tidak ada sesuatu yang setara dengan Dia. (3 kali)." },
+        { arab: "لَا اِلٰهَ اِلَّا اللهُ وَاللهُ اَكْبَرُ وَلِلّٰهِ الْحَمْدُ", latin: "Lâ ilâha illallâhu wallâhu akbar wa lillâhil ḫamd", indo: "Tiada tuhan yang layak disembah kecuali Allah. Allah maha besar dan segala puji hanya bagi Allah." },
+        { arab: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ قُلْ اَعُوْذُ بِرَبِّ الْفَلَقِۙ، مِنْ شَرِّ مَـــا خَلَقَۙ،وَمِنْ شَرِّ غَاسِقٍ اِذَا وَقَبَۙ، وَمِنْ شَرِّ النَّفّٰثٰتِ فِى الْعُقَدِۙ وَمِنْ شَرِّ حَاسِدٍ اِذَا حَسَدَ", latin: "Bismillâhir-raḫmânir-raḫîm(i), Qul a‘udzu bi rabbil-falaq, min syarri mâ khalaq, wa min syarri ghâsiqin idzâ waqab, wa min syarrin-naffâtsâti fîl-‘uqad, wa min syarri ḫâsidin idzâ ḫasad", indo: "Dengan menyebut nama Allah... Katakanlah, Aku berlindung kepada Tuhan yang menguasai subuh, dari kejahatan yang Dia ciptakan, kejahatan malam apabila gelap gulita, kejahatan penyihir yang meniup buhul-buhul, dan dari kejahatan orang yang dengki." },
+        { arab: "لَا اِلٰهَ اِلَّا اللهُ وَاللهُ اَكْبَرُ وَلِلّٰهِ الْحَمْدُ", latin: "Lâ ilâha illallâhu wallâhu akbar wa lillâhil ḫamd", indo: "Tiada tuhan yang layak disembah kecuali Allah. Allah maha besar dan segala puji hanya bagi Allah." },
+        { arab: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ قُلْ اَعُوْذُ بِرَبِّ النَّاسِۙ، مَلِكِ النَّـــاسِۙ اِلٰهِ النَّاسِۙ، مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِۖ الَّذِيْ يُوَسْوِسُ فِيْ صُدُوْرِ النَّاسِۙ، مِنَ الْجِنَّةِ وَالنَّــاسِ", latin: "Bismillâhir-raḫmânir-raḫîm(i), Qul a‘udzû bi rabbin-nâs, malikin-nâs, ilahin-nâs, min syarril-waswâsil khannâs, alladzi yuwaswisu fî shudûrin-nâs, minal-jinnati wan-nâs.", indo: "Dengan menyebut nama Allah... Katakanlah, Aku berlindung kepada Tuhannya manusia, raja manusia, sembahan manusia, dari kejahatan setan yang bersembunyi, yang membisikkan kejahatan ke dalam dada manusia, dari golongan jin dan manusia." },
+        { arab: "لَا اِلٰهَ اِلَّا اللهُ وَاللهُ اَكْبَرُ وَلِلّٰهِ الْحَمْدُ", latin: "Lâ ilâha illallâhu wallâhu akbar wa lillâhil ḫamd", indo: "Tiada tuhan yang layak disembah kecuali Allah. Allah maha besar dan segala puji hanya bagi Allah." },
+        { arab: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ، اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَۙ الرَّحْمٰنِ الرَّحِيْمِۙ مٰلِكِ يَوْمِ الدِّيْنِۗ، اِيَّاكَ نَعْبُدُ وَاِيَّاكَ نَسْتَعِيْنُۗ اِهْدِنَا الصِّرَاطَ الْمُسْتَقِيْمَۙ، صِرَاطَ الَّذِيْنَ اَنْعَمْتَ عَلَيْهِمْ ەۙ غَيْرِ الْمَغْضُوْبِ عَلَيْهِمْ وَلَا الضَّاۤلِّيْنَ", latin: "Bismillâhir-raḫmânir-raḫîm(i), al-ḫamdu lillâhi rabbil-‘âlamîn, Ar-raḫmânir-raḫîm, mâliki yaumid-dîn, iyyâka na‘budu wa iyyâka nasta‘în, ihdinâsh-shirâthal-mustaqîm, shirâtal ladzîna an‘amta ‘alaihim ghairil-maghdlûbi ‘alaihim wa lâdl-dlâllîn. mîn", indo: "Dengan menyebut nama Allah yang maha pengasih lagi maha penyayang. Segala puji bagi Allah, Tuhan semesta alam... Tunjukkanlah kami ke jalan yang lurus, yaitu jalan orang-orang yang telah Kauanugerahi nikmat, bukan jalan mereka yang dimurkai dan sesat." },
+        { arab: "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ، الۤــــــمّۤۚ، ذٰلِكَ الْكِتٰبُ لَا رَيْبَۛ فِيْهِۛ هُدًى لِّلْمُتَّقِيْنَۙ،الَّذِيْنَ يُؤْمِنُوْنَ بِالْغَيْبِ وَيُقِيْمُوْنَ الصَّلٰوةَ وَمِمَّا رَزَقْنٰهُمْ يُنْفِقُوْنَۙ، وَالَّذِيْنَ يُؤْمِنُوْنَ بِمَآ اُنْزِلَ اِلَيْكَ وَمَآ اُنْزِلَ مِنْ قَبْلِكَ ۚ وَبِالْاٰخِرَةِ هُمْ يُوْقِنُوْنَۗ، اُولٰۤىِٕكَ عَلٰى هُدًى مِّنْ رَّبِّهِمْۙ وَاُولٰۤىِٕكَ هُمُ الْمُفْلِحُوْنَ", latin: "Bismillâhir-rahmânir-rahîm(i), Alif Lâm Mîm, dzâlikal-kitâbu lâ raiba fîhi, hudal-lilmuttaqîn, al-ladzîna yu’minûna bil-ghaibi wa yuqîmûnash-shalâta wa mimmâ razaqnâhum yunfiqûn, wal-ladzîna yu’minûna bimâ unzila ilaika wa mâ unzila min qablika, wa bil-âkhirati hum yûqinûn, ulâ’ika ‘alâ hudam mir rabbihim wa ulâ’ika humul-mufliḫûn.", indo: "Alif lam mim. Kitab ini tidak ada keraguan padanya. Petunjuk bagi mereka yang bertakwa. Yaitu mereka yang beriman kepada yang ghaib, mendirikan shalat, menafkahkan sebagian rezeki... Merekalah orang orang yang beruntung." },
+        { arab: "وَإِلٰهُكُمْ إِلٰهٌ وَّاحِدٌ لَا إِلٰهَ إِلَّا هُوَ الرَّحْمٰنُ الرَّحِيمُ", latin: "Wa ilâhukum ilâhuw wâḫidul lâ ilâha illa Huwar-raḫmânur-raḫîm.", indo: "Dan Tuhan kalian adalah Tuhan yang maha esa. Tiada tuhan yang layak disembah kecuali Dia yang maha pengasih lagi maha penyayang." },
+        { arab: "اَللّٰهُ لَآ اِلٰهَ اِلَّا هُوَۚ اَلْحَيُّ الْقَيُّوْمُ ەۚ لَا تَأْخُذُهٗ سِنَةٌ وَّلَا نَوْمٌۗ لَهٗ مَا فِى السَّمٰوٰتِ وَمَا فِى الْاَرْضِۗ مَنْ ذَا الَّذِيْ يَشْفَعُ عِنْدَهٗٓ اِلَّا بِاِذْنِهٖۗ يَعْلَمُ مَا بَيْنَ اَيْدِيْهِمْ وَمَا خَلْفَهُمْۚ وَلَا يُحِيْطُوْنَ بِشَيْءٍ مِّنْ عِلْمِهٖٓ اِلَّا بِمَا شَاۤءَۚ وَسِعَ كُرْسِيُّهُ السَّمٰوٰتِ وَالْاَرْضَۚ وَلَا يَـُٔوْدُهٗ حِفْظُهُمَاۚ وَهُوَ الْعَلِيُّ الْعَظِيْمُ", latin: "Allahu lâ ilâha illa huwal-ḫayyul-qayyûm(u)...", indo: "Allah, tiada yang layak disembah kecuali Dia yang hidup kekal lagi berdiri sendiri. Tidak mengantuk dan tidak tidur. Milik-Nya apa yang ada di langit dan di bumi. Tiada yang dapat memberikan syafaat tanpa izin-Nya... Kursi Allah meliputi langit dan bumi." },
+        { arab: "لِلّٰهِ مَا فِى السَّمٰوٰتِ وَمَا فِى الْاَرْضِۗ وَاِنْ تُبْدُوْا مَا فِيْٓ اَنْفُسِكُمْ اَوْ تُخْفُوْهُ يُحَاسِبْكُمْ بِهِ اللّٰهُۗ فَيَغْفِرُ لِمَنْ يَّشَاۤءُ وَيُعَذِّبُ مَنْ يَّشَاۤءُۗ وَاللّٰهُ عَلٰى كُلِّ شَيْءٍ قَدِيْرٌ، اٰمَنَ الرَّسُوْلُ بِمَآ اُنْزِلَ اِلَيْهِ مِنْ رَّبِّهٖ وَالْمُؤْمِنُوْنَۗ كُلٌّ اٰمَنَ بِاللّٰهِ وَمَلٰۤىِٕكَتِهٖ وَكُتُبِهٖ وَرُسُلِهٖۗ لَا نُفَرِّقُ بَيْنَ اَحَدٍ مِّنْ رُّسُلِهٖۗ وَقَالُوْا سَمِعْنَا وَاَطَعْنَا غُفْرَانَكَ رَبَّنَا وَاِلَيْكَ الْمَصِيْرُ، لَا يُكَلِّفُ اللّٰهُ نَفْسًا اِلَّا وُسْعَهَاۗ لَهَا مَا كَسَبَتْ وَعَلَيْهَا مَا اكْتَسَبَتْۗ رَبَّنَا لَا تُؤَاخِذْنَآ اِنْ نَّسِيْنَآ اَوْ اَخْطَأْنَاۚ رَبَّنَا وَلَا تَحْمِلْ عَلَيْنَآ اِصْرًا كَمَا حَمَلْتَهٗ عَلَى الَّذِيْنَ مِنْ قَبْلِنَاۚ رَبَّنَا وَلَا تُحَمِّلْنَا مَا لَا طَاقَةَ لَنَا بِهٖۚ <br><br>وَاعْفُ عَنَّا وَاغْفِرْ لَنَا وَارْحَمْنَا ×٧<br><br>أَنْتَ مَوْلَانَا فَانْصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ", latin: "Lillâhi mâ fis-samawâti wa mâ fil-ardli... Rabbanâ walâ tuḫammilnâ mâ lâ thâqata lanâ bih.<br><br>Wa‘fu ‘annâ waghfir lanâ warḫamnâ 7x<br><br>Anta maulânâ fanshurnâ ‘alal qaumil kâfirîn.", indo: "Hanya milik Allah segala yang ada di langit dan bumi... Ya Tuhan kami, jangan Kau bebankan kepada kami apa yang tak sanggup kami memikulnya.<br><br>Maafkanlah kami, ampunilah kami, dan rahmatilah kami (7 kali).<br><br>Engkau penolong kami, maka tolonglah kami menghadapi golongan kafir." },
+        { arab: "اِرْحَمْنَا، يَا أَرْحَمَ الرَّاحِمِيْنَ ×٧", latin: "Irḫamnâ yâ arḫamar-râḫimîn 7x", indo: "Kasihani kami, wahai Tuhan yang maha kasih (7 kali)." },
+        { arab: "رَحْمَةُ اللهِ وَبَرَكَاتُهُ عَلَيْكُمْ أَهْلَ الْبَيْتِ إِنَّهُ حَمِيْدٌ مَّجِيْدٌ", latin: "Raḫmatul-lâhi wa barakâtuhu ‘alaikum ahlal-baiti innahu ḫamîdun majîd", indo: "Dan rahmat Allah serta berkah-Nya (kami harapkan) melimpah di atas kamu sekalian wahai ahlul bait. Sungguh Dia maha terpuji lagi maha pemurah." },
+        { arab: "إِنَّمَا يُريِدُ اللهُ لِيُذْهِبَ عَنْكُمُ الرِّجْسَ أَهْلَ الْبَيْتِ وَيُطَهِّرَكُمْ تَطْهِيْرًا", latin: "Innam yurdullhu liyudzhiba ankumur-rijsa ahlal-baiti wa yuthahhira kum tathhra", indo: "Sungguh Allah berkehendak menghilangkan segala kotoran padamu, wahai ahlul bait, dan menyucikanmu sebersih-bersihnya." },
+        { arab: "إِنَّ اللهَ وَمَلَائِكَتَهُ يُصَلُّونَ عَلَى النَّبِيِّ، يَا أَيُّهَا الَّذِيْنَ أٰمَنُوْا صَلُّوْا عَلَيْهِ وَسَلِّمُوْا تَسْلِيْمًا", latin: "Innallha wa malikatahu yushallna alan-nabiyyi y ayyuhal-ladzina man shall alaihi wa sallim taslm", indo: "Sungguh Allah dan para malaikat-Nya bershalawat untuk nabi. Wahai orang-orang yang beriman, bacalah shalawat untuknya dan ucapkanlah salam penghormatan kepadanya." },
+        { arab: "اَللّٰهُمَّ صَلِّ أَفْضَلَ الصَّلَاةِ عَلَى أَسْعَدِ مَخْلُوْقَاتِكَ نُوْرِ الْهُدَى سَيِّدِنَا مُحَمَّدٍ وَعَلٰى اٰلِ سَيِّدِنَا مُحَمَّدٍ عَدَدَ مَعْلُوْمَاتِكَ وَمِدَادَ كَلِمَاتِكَ كُلَّمَا ذَكَرَكَ الذَّاكِرُوْنَ وَغَفَلَ عَنْ ذِكْرِكَ الْغَافِلُوْنَ", latin: "Allâhumma shalli afdlalash-shalâti ‘alâ as‘adi makhlûqôtika nûril-hudâ sayyidinâ Muḫammadin wa ‘alâ âli sayyidinâ Muḫammad, ‘adada ma‘lûmâtika wa midâda kalimâtika kullamâ dzakaradz dzâkirûna wa ghafala ‘an dzikrikal ghâfilûn", indo: "Ya Allah, tambahkanlah rahmat dan kesejahteraan untuk makhluk paling bahagia, cahaya petunjuk, pemimpin dan tuan kami, Nabi Muhammad ﷺ, serta kepada keluarga Nabi Muhammad, sebanyak pengetahuan-Mu dan sebanyak tinta kalimat-kalimat-Mu pada saat dzikir orang-orang yang ingat dan lalai." },
+        { arab: "اَللّٰهُمَّ صَلِّ أَفْضَلَ الصَّلَاةِ عَلَى أَسْعَدِ مَخْلُوْقَاتِكَ شَمْسِ الضُّحَى سَيِّدِنَا مُحَمَّدٍ وَعَلٰى اٰلِ سَيِّدِنَا مُحَمَّدٍ عَدَدَ مَعْلُوْمَاتِكَ وَمِدَادَ كَلِمَاتِكَ كُلَّمَا ذَكَرَكَ الذَّاكِرُوْنَ وَغَفَلَ عَنْ ذِكْرِكَ الْغَافِلُوْنَ", latin: "Allâhumma shalli afdlalash shalati ‘alâ as‘adi makhlûqôtika syamsidl dluḫâ sayyidinâ Muḫammadin wa ‘alâ âli sayyidinâ Muḫammad, ‘adada ma‘lûmâtika wa midâda kalimâtika kullamâ dzakaradz dzâkirûna wa ghafala ‘an dzikrikal ghâfilûn", indo: "Ya Allah, tambahkanlah rahmat dan kesejahteraan untuk makhluk paling bahagia, matahari dhuha, pemimpin dan tuan kami, Nabi Muhammad ﷺ, serta kepada keluarga Nabi Muhammad..." },
+        { arab: "اَللّٰهُمَّ صَلِّ أَفْضَلَ الصَّلَاةِ عَلَى أَسْعَدِ مَخْلُوْقَاتِكَ بَدْرِ الدُّجَى سَيِّدِنَا مُحَمَّدٍ وَعَلٰى اٰلِ سَيِّدِنَا مُحَمَّدٍ عَدَدَ مَعْلُوْمَاتِكَ وَمِدَادَ كَلِمَاتِكَ كُلَّمَا ذَكَرَكَ الذَّاكِرُوْنَ وَغَفَلَ عَنْ ذِكْرِكَ الْغَافِلُوْنَ", latin: "Allâhumma shalli afdlalash-shalati ‘alâ as‘adi makhlûqôtika badrid-dujâ sayyidinâ Muḫammadin wa ‘alâ âli sayyidinâ Muḫammad, ‘adada ma‘lûmâtika wa midâda kalimâtika kullamâ dzakaradz-dzâkirûna wa ghafala ‘an dzikrikal-ghâfilûn", indo: "Ya Allah, tambahkanlah rahmat dan kesejahteraan untuk makhluk paling bahagia, purnama kegelapan, pemimpin dan tuan kami, Nabi Muhammad ﷺ, serta kepada keluarga Nabi Muhammad..." },
+        { arab: "وَسَلِّمْ وَرَضِيَ اللهُ تَعَالَى عَنْ سَادَاتِنَا أَصْحَابِ رَسُوْلِ اللهِ أَجْمَعِيْنَ", latin: "Wa sallim wa radliyallahu ta‘âla ‘an sâdâtinâ ash-ḫabi rasulillah ajma‘în", indo: "Semoga Allah yang maha suci dan tinggi meridhai seluruh sahabat Rasulullah." },
+        { arab: "حَسْبُنَا اللهُ وَنِعْمَ الْوَكِيْلُ، نِعْمَ الْمَوْلَى وَنِعْمَ النَّصِيْرُ ×٧", latin: "Ḫasbunâllâhu wa ni‘mal wakîl, ni‘mal maula wa ni‘man nashîr 7x", indo: "Cukup Allah bagi kami. Dia sebaik-baik wakil. Dia sebaik-baik pemimpin dan penolong (7 kali)." },
+        { arab: "وَلَاحَوْلَ وَلَا قُوَّةَ إِلَّا بِاللهِ العَلِيِّ الْعَظِيْمِ", latin: "Wa lâ ḫaula wa lâ quwwata illâ billâhil ‘aliyyil-‘adhim", indo: "Tidak ada daya dan kekuatan kecuali dengan pertolongan Allah yang maha tinggi dan agung." },
+        { arab: "أَسْتَغْفِرُ اللهَ الْعَـــظِيْمَ ×٣", latin: "Astaghfirullhal-adhm 3x", indo: "Saya mohon ampun kepada Allah yang maha agung (3 kali)." },
+        { arab: "أَفْضَلُ الذِّكْرِ فَاعْلَمْ أَنَّهُ:<br>لَا اِلٰهَ اِلَّا اللهُ، حَيٌّ مَوْجُوْدٌ<br>لَا اِلٰهَ اِلَّا اللهُ، حَيٌّ مَعْبُوْدٌ<br>لَا اِلٰهَ اِلَّا اللهُ، حَيٌّ بَاقٍ<br><br>لَا اِلٰهَ اِلَّا اللهُ ×١٠٠", latin: "Afdlaludz dzikri fa‘lam annahu:<br>Lâ ilâha illallâhu ḫayyun maujûd<br>Lâ ilâha illallâhu ḫayyun ma‘bûd<br>Lâ ilâha illallâhu ḫayyun bâq<br><br>Lâ ilâha illâllâh 100x", indo: "Ketahuilah bahwa sebaik-baik dzikir adalah lafal:<br>Tiada tuhan selain Allah, Zat yang Mahahidup dan Wujud<br>Tiada tuhan selain Allah, Zat yang Mahahidup dan Disembah<br>Tiada tuhan selain Allah, Zat yang Mahahidup dan Kekal<br><br>Tiada tuhan selain Allah (100 kali)." },
+        { arab: "لَا اِلٰهَ اِلَّا اللهُ مُحَمَّدٌ رَّسُوْلُ اللهِ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ", latin: "Lâ ilâha illallâhu Muḫammadur rasûlullâh shallallâhu ‘alaihi wa sallam", indo: "Tiada tuhan yang layak disembah kecuali Allah. Nabi Muhammad adalah utusan Allah, semoga Allah melimpahkan rahmat dan kesejahteraan kepadanya." },
+        { arab: "اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ، اَللّٰهُمَّ صَلِّ عَلَيْهِ وَسَلِّمْ ×٢", latin: "Allâhumma shalli ‘alâ sayyidinâ Muḫammadin, Allâhumma shalli ‘alaihi wa sallim 2x", indo: "Ya Allah, limpahkan rahmat takzim dan keselamatan kepada pemimpin kami, Nabi Muhammad (2 kali)." },
+        { arab: "سُبْحَانَ اللهِ وَبِحَمْدِهِ، سُبْحَانَ اللهِ الْعَظِيْمِ ×٣٣", latin: "Subḫânallâhi wa biḫamdihi, subḫânallâhil ‘adhîm 33x", indo: "Mahasuci Allah dengan segala pujian untuk-Nya. Mahasuci Allah yang Mahaagung (33 kali)" },
+        { arab: "اَللّٰهُمَّ صَلِّ عَلٰى حَبِيْبِكَ سَيِّدِنَا مُحَمَّدٍ وَعَلٰى اٰلِهٖ وَصَحْبِهٖ وَسَلِّمْ ×٢", latin: "Allâhumma shalli ‘alâ ḫabîbika sayyidinâ Muḫammadin wa ‘alâ âlihi wa shaḫbihi wa sallim 2x", indo: "Ya Allah, limpahkan rahmat takzim dan keselamatan kepada kekasih-Mu, pemimpin kami, Nabi Muhammad ﷺ, berikut keluarga dan sahabatnya (2 kali)." },
+        { arab: "اَللّٰهُمَّ صَلِّ عَلٰى حَبِيْبِكَ سَيِّدِنَا مُحَمَّدٍ وَعَلٰى اٰلِهٖ وَصَحْبِهٖ وَبَارِكْ وَسَلِّمْ اَجْمَعِيْنَ", latin: "Allâhumma shalli ‘alâ ḫabîbika sayyidinâ Muḫammadin wa ‘alâ âlihi wa shaḫbihi wa bârik wa sallim ajma‘în", indo: "Ya Allah, limpahkanlah rahmat kepada kekasih-Mu, pemimpin kami, Nabi Muhammad ﷺ, berikut keluarga dan sahabatnya. Limpahkanlah pula berkah dan keselamatan kepada mereka semua." },
+        { arab: "اَلْفَاتِحَةُ", latin: "Al-Fâtiḫah...", indo: "(Membaca Surah Al-Fatihah sebagai penutup zikir dan pengantar doa Tahlil)." }
+    ];
+
+    function setActiveNav(navKey) {
+        document.querySelectorAll('.nav-chip').forEach((button) => {
+            button.classList.toggle('is-active', button.dataset.nav === navKey);
+        });
+    }
+
+    function setActivePage(pageKey, navKey = pageKey) {
+        Object.entries(pages).forEach(([key, element]) => {
+            if (!element) return;
+            element.classList.toggle('is-active', key === pageKey);
+        });
+
+        if (pageKey !== 'mushaf') {
+            returnView = pageKey;
+        }
+
+        setActiveNav(navKey);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showHome() {
+        setActivePage('home', 'home');
+        _0xUpdateUI();
+        ensureCatalogData();
+    }
+
+    function openCatalog() {
+        setActivePage('catalog', 'quran');
+        renderCatalog();
+        ensureCatalogData();
+    }
+
+    function setCatalogView(value) {
+        catalogState.view = value === 'juz' ? 'juz' : 'surah';
+        renderCatalog();
+        if (catalogState.view === 'surah') {
+            ensureCatalogData();
+        }
+    }
+
+    function setCatalogSort(value) {
+        catalogState.sort = value === 'desc' ? 'desc' : 'asc';
+        renderCatalog();
+    }
+
+    function syncCatalogControls() {
+        const viewControl = document.getElementById('catalogViewMode');
+        const sortControl = document.getElementById('catalogSortOrder');
+        if (viewControl) {
+            viewControl.value = catalogState.view;
+        }
+        if (sortControl) {
+            sortControl.value = catalogState.sort;
+        }
+    }
+
+    function getAyatCountForSurah(surahNumber) {
+        const nomor = Math.max(1, Math.min(114, Number(surahNumber) || 1));
+        const catalogCount = catalogState.surahs.find((item) => item.nomor === nomor)?.jumlahAyat;
+        return Number(catalogCount) || surahAyatCounts[nomor - 1] || 1;
+    }
+
+    function populateAyatOptions(selectElement, totalAyat, selectedAyat) {
+        if (!selectElement) return;
+
+        const safeTotal = Math.max(1, Number(totalAyat) || 1);
+        const safeSelected = Math.max(1, Math.min(safeTotal, Number(selectedAyat) || 1));
+        let html = '';
+
+        for (let ayat = 1; ayat <= safeTotal; ayat += 1) {
+            const selectedAttr = ayat === safeSelected ? ' selected' : '';
+            html += `<option value="${ayat}"${selectedAttr}>${ayat}</option>`;
+        }
+
+        selectElement.innerHTML = html;
+        selectElement.value = String(safeSelected);
+    }
+
+    function syncAyatRangeInputs(activeField = 'start') {
+        const startValue = Number(startAyatInput?.value) || 1;
+        const endValue = Number(endAyatInput?.value) || startValue;
+
+        if (activeField === 'start' && endValue < startValue && endAyatInput) {
+            endAyatInput.value = String(startValue);
+        }
+
+        if (activeField === 'end' && startValue > endValue && startAyatInput) {
+            startAyatInput.value = String(endValue);
+        }
+    }
+
+    function setMushafRange(surahNumber, startAyat = 1, endAyat = null) {
+        const nomor = Math.max(1, Math.min(114, Number(surahNumber) || 1));
+        const totalAyat = getAyatCountForSurah(nomor);
+        const safeStart = Math.max(1, Math.min(totalAyat, Number(startAyat) || 1));
+        const safeEnd = Math.max(safeStart, Math.min(totalAyat, Number(endAyat) || totalAyat));
+
+        if (surahSelect) {
+            surahSelect.value = String(nomor);
+        }
+
+        populateAyatOptions(startAyatInput, totalAyat, safeStart);
+        populateAyatOptions(endAyatInput, totalAyat, safeEnd);
+        syncAyatRangeInputs();
+    }
+
+    function openSelectedSurahRange() {
+        const nomor = Number(surahSelect?.value) || 1;
+        const startAyat = Number(startAyatInput?.value) || 1;
+        const endAyat = Number(endAyatInput?.value) || getAyatCountForSurah(nomor);
+        loadSurah(nomor, null, false, startAyat, endAyat);
+    }
+
+    function formatNumberId(value) {
+        return Number(value || 0).toLocaleString('id-ID');
+    }
+
+    function getSurahAyatCounts() {
+        const sorted = [...catalogState.surahs]
+            .sort((left, right) => left.nomor - right.nomor)
+            .map((item) => Number(item.jumlahAyat) || 0);
+
+        if (sorted.length !== 114 || sorted.some((value) => value <= 0)) {
+            return [...surahAyatCounts];
+        }
+
+        return sorted;
+    }
+
+    function getHomeProgressSummary() {
+        const counts = getSurahAyatCounts();
+        const surah = Math.max(1, Math.min(114, Number(_0xData.surah) || defaultProgress.surah));
+        const currentAyatCount = counts[surah - 1] || Math.max(1, Number(_0xData.totalAyat) || defaultProgress.totalAyat);
+        const ayat = Math.max(1, Math.min(currentAyatCount, Number(_0xData.ayat) || defaultProgress.ayat));
+        const nama = String(_0xData.nama || surahList[surah - 1] || defaultProgress.nama);
+
+        if (counts.length !== 114) {
+            return {
+                surah,
+                ayat,
+                nama,
+                currentAyatCount,
+                readAyat: null,
+                totalAyat: null,
+                percent: null
+            };
+        }
+
+        const totalAyat = counts.reduce((sum, value) => sum + value, 0);
+        const beforeCurrent = counts.slice(0, surah - 1).reduce((sum, value) => sum + value, 0);
+        const readAyat = beforeCurrent + ayat;
+        const percent = totalAyat > 0 ? (readAyat / totalAyat) * 100 : 0;
+
+        return {
+            surah,
+            ayat,
+            nama,
+            currentAyatCount,
+            readAyat,
+            totalAyat,
+            percent
+        };
+    }
+
+    function formatPercent(value) {
+        const digits = value >= 10 ? 1 : 2;
+        return `${Number(value).toLocaleString('id-ID', {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits
+        })}%`;
+    }
+
+    const mojibakePattern = /[ÃÂØÙÛÏïáâãäåæçèéêëìíîðñòóôõöøùúûüýþÿœžš€™“”•…]/;
+    const mojibakeDecoder = new TextDecoder('utf-8');
+    const windows1252ReverseMap = {
+        '€': 0x80,
+        '‚': 0x82,
+        'ƒ': 0x83,
+        '„': 0x84,
+        '…': 0x85,
+        '†': 0x86,
+        '‡': 0x87,
+        'ˆ': 0x88,
+        '‰': 0x89,
+        'Š': 0x8A,
+        '‹': 0x8B,
+        'Œ': 0x8C,
+        'Ž': 0x8E,
+        '‘': 0x91,
+        '’': 0x92,
+        '“': 0x93,
+        '”': 0x94,
+        '•': 0x95,
+        '–': 0x96,
+        '—': 0x97,
+        '˜': 0x98,
+        '™': 0x99,
+        'š': 0x9A,
+        '›': 0x9B,
+        'œ': 0x9C,
+        'ž': 0x9E,
+        'Ÿ': 0x9F
+    };
+
+    function getMojibakeScore(value) {
+        const matches = String(value || '').match(/[ÃÂØÙÛÏïáâãäåæçèéêëìíîðñòóôõöøùúûüýþÿœžš€™“”•…]/g);
+        return matches ? matches.length : 0;
+    }
+
+    function toWindows1252Bytes(value) {
+        const bytes = [];
+
+        for (const char of String(value || '')) {
+            const mapped = windows1252ReverseMap[char];
+            if (mapped !== undefined) {
+                bytes.push(mapped);
+                continue;
+            }
+
+            const code = char.codePointAt(0);
+            if (code <= 0xFF) {
+                bytes.push(code);
+            } else {
+                return null;
+            }
+        }
+
+        return Uint8Array.from(bytes);
+    }
+
+    function normalizePossiblyBrokenText(value) {
+        if (typeof value !== 'string') {
+            return value;
+        }
+
+        let current = value;
+        let best = value;
+        let bestScore = getMojibakeScore(value);
+
+        if (!mojibakePattern.test(current)) {
+            return current;
+        }
+
+        try {
+            for (let index = 0; index < 3; index += 1) {
+                if (!mojibakePattern.test(current)) {
+                    break;
+                }
+
+                const bytes = toWindows1252Bytes(current);
+                if (!bytes) {
+                    break;
+                }
+
+                const decoded = mojibakeDecoder.decode(bytes);
+                if (!decoded || decoded === current) {
+                    break;
+                }
+
+                const decodedScore = getMojibakeScore(decoded);
+                if (decoded.includes('�') && decodedScore >= bestScore) {
+                    break;
+                }
+
+                current = decoded;
+                if (decodedScore <= bestScore) {
+                    best = decoded;
+                    bestScore = decodedScore;
+                }
+            }
+
+            return best
+                .replace(/\uFFFD/g, '')
+                .replace(/Â(?=\S)/g, '');
+        } catch (error) {
+            return value;
+        }
+    }
+
+    function normalizeRenderedText(root) {
+        if (!root) return;
+
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const textNodes = [];
+
+        while (walker.nextNode()) {
+            textNodes.push(walker.currentNode);
+        }
+
+        textNodes.forEach((node) => {
+            const normalized = normalizePossiblyBrokenText(node.nodeValue || '');
+            if (normalized !== node.nodeValue) {
+                node.nodeValue = normalized;
+            }
+        });
+    }
+
+    dataTahlil.forEach((item) => {
+        item.arab = normalizePossiblyBrokenText(item.arab);
+        item.latin = normalizePossiblyBrokenText(item.latin);
+        item.indo = normalizePossiblyBrokenText(item.indo);
+    });
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
+    }
+
+    function formatRevelation(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        if (!normalized) return '';
+        if (normalized.includes('mad')) return 'Madaniyah';
+        if (normalized.includes('mak') || normalized.includes('mek')) return 'Makkiyah';
+        return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    }
+
+    function getSortedItems(items) {
+        const sorted = [...items].sort((left, right) => left.nomor - right.nomor);
+        if (catalogState.sort === 'desc') {
+            sorted.reverse();
+        }
+        return sorted;
+    }
+
+    async function ensureCatalogData() {
+        if (catalogState.loaded || catalogState.loading) {
+            return;
+        }
+
+        catalogState.loading = true;
+        catalogState.message = '';
+        renderCatalog();
+
+        try {
+            const response = await fetch('https://equran.id/api/v2/surat');
+            if (!response.ok) throw new Error('catalog-failed');
+
+            const payload = await response.json();
+            const rows = Array.isArray(payload?.data) ? payload.data : [];
+            if (!rows.length) throw new Error('catalog-empty');
+
+            catalogState.surahs = rows.map((item) => ({
+                nomor: Number(item.nomor),
+                namaLatin: String(item.namaLatin || ''),
+                arti: String(item.arti || ''),
+                nama: String(item.nama || ''),
+                tempatTurun: String(item.tempatTurun || ''),
+                jumlahAyat: Number(item.jumlahAyat) || ''
+            }));
+            catalogState.message = '';
+        } catch (error) {
+            catalogState.surahs = [...catalogFallback];
+            catalogState.message = 'Koneksi data lengkap sedang tidak tersedia. Menampilkan daftar dasar surah.';
+        } finally {
+            catalogState.loaded = true;
+            catalogState.loading = false;
+            renderCatalog();
+            _0xUpdateUI();
+        }
+    }
+
+    function renderCatalog() {
+        const grid = document.getElementById('catalogGrid');
+        const status = document.getElementById('catalogStatus');
+        if (!grid || !status) return;
+
+        syncCatalogControls();
+
+        if (catalogState.view === 'surah' && catalogState.loading && !catalogState.surahs.length) {
+            status.hidden = false;
+            status.textContent = 'Memuat daftar Al-Quran...';
+            status.classList.remove('catalog-status-warning');
+            grid.innerHTML = '';
+            return;
+        }
+
+        if (catalogState.view === 'surah' && !catalogState.loaded && !catalogState.loading) {
+            status.hidden = false;
+            status.textContent = 'Memuat daftar Al-Quran...';
+            status.classList.remove('catalog-status-warning');
+            grid.innerHTML = '';
+            return;
+        }
+
+        const items = catalogState.view === 'juz'
+            ? getSortedItems(juzCatalog)
+            : getSortedItems(catalogState.surahs);
+
+        if (!items.length) {
+            status.hidden = false;
+            status.textContent = 'Daftar belum tersedia.';
+            status.classList.add('catalog-status-warning');
+            grid.innerHTML = '';
+            return;
+        }
+
+        const shouldShowMessage = catalogState.view === 'surah' && Boolean(catalogState.message);
+        status.hidden = !shouldShowMessage;
+        status.textContent = shouldShowMessage ? catalogState.message : '';
+        status.classList.toggle('catalog-status-warning', shouldShowMessage);
+
+        grid.innerHTML = items.map((item) => (
+            catalogState.view === 'juz' ? renderJuzCard(item) : renderSurahCard(item)
+        )).join('');
+    }
+
+    function renderSurahCard(surah) {
+        const arti = surah.arti ? `<span class="catalog-title-note">(${escapeHtml(surah.arti)})</span>` : '';
+        const meta = [
+            formatRevelation(surah.tempatTurun),
+            surah.jumlahAyat ? `${surah.jumlahAyat} Ayat` : ''
+        ].filter(Boolean).join(' &bull; ');
+        const arabic = surah.nama
+            ? `<span class="catalog-arabic">${escapeHtml(surah.nama)}</span>`
+            : '<span class="catalog-arabic catalog-arabic-empty" aria-hidden="true"></span>';
+
+        return `
+            <button class="catalog-card catalog-card-surah" type="button" onclick="openCatalogSurah(${surah.nomor})">
+                <span class="catalog-badge"><span>${surah.nomor}</span></span>
+                <span class="catalog-copy">
+                    <span class="catalog-title">
+                        <span>${escapeHtml(surah.namaLatin)}</span>
+                        ${arti}
+                    </span>
+                    <span class="catalog-meta">${meta || `Surah ${surah.nomor}`}</span>
+                </span>
+                ${arabic}
+            </button>
+        `;
+    }
+
+    function renderJuzCard(juz) {
+        return `
+            <button class="catalog-card catalog-card-juz" type="button" onclick="openJuzCatalog(${juz.nomor})">
+                <span class="catalog-badge"><span>${juz.nomor}</span></span>
+                <span class="catalog-copy">
+                    <span class="catalog-title">Juz ${juz.nomor}</span>
+                    <span class="catalog-meta">${escapeHtml(juz.ringkas)}</span>
+                </span>
+                <span class="catalog-arrow" aria-hidden="true">&rsaquo;</span>
+            </button>
+        `;
+    }
+
+    function openCatalogSurah(nomor) {
+        document.getElementById('mushafControls').style.display = 'flex';
+        setMushafRange(nomor);
+        openMushaf('quran');
+        loadSurah(nomor, null, false);
+    }
+
+    function openJuzCatalog(nomor) {
+        const juz = juzCatalog.find((item) => item.nomor === nomor);
+        if (!juz) return;
+
+        document.getElementById('mushafControls').style.display = 'flex';
+        setMushafRange(juz.startSurah, juz.startAyat);
+        openMushaf('quran');
+        loadSurah(juz.startSurah, juz.startAyat, false);
+    }
+
+    async function _0xSync() {
+        try {
+            const saved = window.localStorage.getItem(progressStorageKey);
+            const parsed = saved ? JSON.parse(saved) : null;
+            if (parsed && typeof parsed === 'object') {
+                hasSavedProgress = true;
+                const totalAyat = Math.max(1, Number(parsed.totalAyat) || defaultProgress.totalAyat);
+                _0xData = {
+                    surah: Math.max(1, Math.min(114, Number(parsed.surah) || defaultProgress.surah)),
+                    ayat: Math.max(1, Math.min(totalAyat, Number(parsed.ayat) || defaultProgress.ayat)),
+                    nama: String(parsed.nama || defaultProgress.nama),
+                    totalAyat
+                };
+            } else {
+                hasSavedProgress = false;
+                _0xData = { ...defaultProgress };
+            }
+            _0xUpdateUI();
+        } catch (e) {}
+    }
+
+    async function _0xSave(s, a, n, t) {
+        try {
+            hasSavedProgress = true;
+            _0xData = { surah: s, ayat: a, nama: n, totalAyat: t };
+            window.localStorage.setItem(progressStorageKey, JSON.stringify(_0xData));
+            _0xUpdateUI();
+        } catch (e) {}
+    }
+
+    function _0xUpdateUI() {
+        const summary = getHomeProgressSummary();
+        const progressPercent = document.getElementById('homeProgressPercent');
+        const progressReadAyat = document.getElementById('homeProgressReadAyat');
+        const progressBar = document.getElementById('homeProgressBar');
+        const lastReadSurah = document.getElementById('homeLastReadSurah');
+        const lastReadAyat = document.getElementById('homeLastReadAyat');
+
+        if (!progressPercent || !progressReadAyat || !progressBar || !lastReadSurah || !lastReadAyat) {
+            return;
+        }
+
+        lastReadSurah.textContent = summary.nama;
+        lastReadAyat.textContent = `Ayat ${summary.ayat} dari ${summary.currentAyatCount} ayat`;
+
+        if (summary.percent === null || summary.readAyat === null || summary.totalAyat === null) {
+            const metadataUnavailable = catalogState.loaded && Boolean(catalogState.message);
+            progressPercent.textContent = metadataUnavailable ? '--' : '...';
+            progressReadAyat.textContent = metadataUnavailable ? 'Progress penuh belum tersedia' : 'Menyiapkan data ayat';
+            progressBar.style.width = '0%';
+            return;
+        }
+
+        progressPercent.textContent = formatPercent(summary.percent);
+        progressReadAyat.textContent = `${formatNumberId(summary.readAyat)} dari ${formatNumberId(summary.totalAyat)} ayat`;
+        progressBar.style.width = `${Math.max(0, Math.min(100, summary.percent))}%`;
+    }
+
+    function resumeLastRead() {
+        setMushafVariant('surah');
+        document.getElementById('mushafControls').style.display = 'flex';
+        setMushafRange(_0xData.surah);
+        openMushaf('home');
+        loadSurah(_0xData.surah, _0xData.ayat, false);
+    }
+
+    function toggleLatin() {
+        const show = document.getElementById('latinCheck').checked;
+        document.querySelectorAll('.ayah-latin').forEach(el => el.style.display = show ? 'block' : 'none');
+    }
+
+    function setMushafVariant(variant = 'surah') {
+        const mushafPage = document.getElementById('mushafPage');
+        if (!mushafPage) return;
+        mushafPage.classList.toggle('is-tahlil', variant === 'tahlil');
+    }
+
+    function openPilihan(num, navKey = 'home') {
+        setMushafVariant('surah');
+        document.getElementById('mushafControls').style.display = 'none';
+        setMushafRange(num);
+        openMushaf(navKey);
+        loadSurah(num, null, true);
+    }
+    
+    function openTahlil() {
+        setMushafVariant('tahlil');
+        document.getElementById('mushafControls').style.display = 'none';
+        openMushaf('tahlil');
+        document.getElementById('currentSurahName').innerText = "Bacaan Tahlil";
+        
+        let html = "";
+        dataTahlil.forEach((v, index) => {
+            html += `
+            <div class="ayah-block">
+                <div class="ayah-arab" style="cursor:default;">
+                    ${v.arab} <span class="ayah-end" style="opacity:0.5;">&#xFD3F;${_0xAr(index + 1)}&#xFD3E;</span>
+                </div>
+                <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
+                    ${v.latin}
+                </div>
+                <div class="ayah-indo" style="text-align:justify;">
+                    ${v.indo}
+                </div>
+            </div>`;
+        });
+
+        // BLOK KHUSUS: DOA TAHLIL (MAJMU' SYARIF PERFECTED)
+        html += `
+        <div class="ayah-block" style="background-color: var(--surface-tint); padding: 30px; border-radius: 15px; margin-top: 20px; border: 1px solid var(--line-strong);">
+            <h3 style="text-align:center; color: var(--primary); margin-top: 0;">Doa Tahlil</h3>
+            <div class="ayah-arab" style="cursor:default;">
+                Ø£ÙŽØ¹ÙÙˆÙ’Ø°Ù Ø¨ÙØ§Ù„Ù„Ù‡Ù Ù…ÙÙ†ÙŽ Ø§Ù„Ø´Ù‘ÙŽÙŠÙ’Ø·ÙŽØ§Ù†Ù Ø§Ù„Ø±Ù‘ÙŽØ¬ÙÙŠÙ’Ù…Ù. Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„Ù‡Ù Ø§Ù„Ø±Ù‘ÙŽØ­Ù’Ù…Ù°Ù†Ù Ø§Ù„Ø±Ù‘ÙŽØ­ÙÙŠÙ’Ù…Ù. Ø§ÙŽÙ„Ù’Ø­ÙŽÙ…Ù’Ø¯Ù Ù„ÙÙ„Ù‘Ù°Ù‡Ù Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹Ù°Ù„ÙŽÙ…ÙÙŠÙ’Ù†ÙŽ. Ø­ÙŽÙ…Ù’Ø¯ÙŽ Ø§Ù„Ø´Ù‘ÙŽØ§ÙƒÙØ±ÙÙŠÙ’Ù†ÙŽØŒ Ø­ÙŽÙ…Ù’Ø¯ÙŽ Ø§Ù„Ù†Ù‘ÙŽØ§Ø¹ÙÙ…ÙÙŠÙ’Ù†ÙŽØŒ Ø­ÙŽÙ…Ù’Ø¯Ù‹Ø§ ÙŠÙ‘ÙÙˆÙŽØ§ÙÙÙŠÙ’ Ù†ÙØ¹ÙŽÙ…ÙŽÙ‡Ù— ÙˆÙŽÙŠÙÙƒÙŽØ§ÙÙØ¦Ù Ù…ÙŽØ²ÙÙŠÙ’Ø¯ÙŽÙ‡Ù—. ÙŠÙŽØ§ Ø±ÙŽØ¨Ù‘ÙŽÙ†ÙŽØ§ Ù„ÙŽÙƒÙŽ Ø§Ù„Ù’Ø­ÙŽÙ…Ù’Ø¯Ù ÙƒÙŽÙ…ÙŽØ§ ÙŠÙŽÙ†Ù’Ø¨ÙŽØºÙÙŠÙ’ Ù„ÙØ¬ÙŽÙ„ÙŽØ§Ù„Ù ÙˆÙŽØ¬Ù’Ù‡ÙÙƒÙŽ Ø§Ù„Ù’ÙƒÙŽØ±ÙÙŠÙ’Ù…Ù ÙˆÙŽØ¹ÙŽØ¸ÙÙŠÙ’Ù…Ù Ø³ÙÙ„Ù’Ø·ÙŽØ§Ù†ÙÙƒÙŽ. Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ ØµÙŽÙ„Ù‘Ù Ø¹ÙŽÙ„Ù°Ù‰ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯Ù ÙˆÙ‘ÙŽØ¹ÙŽÙ„Ù°Ù‰ Ø§Ù°Ù„Ù Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ù…ÙØ­ÙÙ…Ù‘ÙŽØ¯Ù.<br><br>
+                Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ ØªÙŽÙ‚ÙŽØ¨Ù‘ÙŽÙ„Ù’ ÙˆÙŽØ£ÙŽÙˆÙ’ØµÙÙ„Ù’ Ø«ÙŽÙˆÙŽØ§Ø¨ÙŽ Ù…ÙŽØ§ Ù‚ÙŽØ±ÙŽØ£Ù’Ù†ÙŽØ§Ù‡Ù Ù…ÙÙ†ÙŽ Ø§Ù„Ù’Ù‚ÙØ±Ù’Ø§Ù°Ù†Ù Ø§Ù„Ù’Ø¹ÙŽØ¸ÙÙŠÙ’Ù…ÙØŒ ÙˆÙŽÙ…ÙŽØ§ Ù‡ÙŽÙ„Ù‘ÙŽÙ„Ù’Ù†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ§ Ø³ÙŽØ¨Ù‘ÙŽØ­Ù’Ù†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ§ Ø§Ø³Ù’ØªÙŽØºÙ’ÙÙŽØ±Ù’Ù†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ§ ØµÙŽÙ„Ù‘ÙŽÙŠÙ’Ù†ÙŽØ§ Ø¹ÙŽÙ„Ù°Ù‰ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯Ù ØµÙŽÙ„Ù‘ÙŽÙ‰ Ø§Ù„Ù„Ù‡Ù Ø¹ÙŽÙ„ÙŽÙŠÙ’Ù‡Ù ÙˆÙŽØ³ÙŽÙ„Ù‘ÙŽÙ…ÙŽ Ù‡ÙŽØ¯ÙÙŠÙ‘ÙŽØ©Ù‹ ÙˆÙ‘ÙŽØ§ØµÙÙ„ÙŽØ©Ù‹ØŒ ÙˆÙŽØ±ÙŽØ­Ù’Ù…ÙŽØ©Ù‹ Ù†Ù‘ÙŽØ§Ø²ÙÙ„ÙŽØ©Ù‹ØŒ ÙˆÙŽØ¨ÙŽØ±ÙŽÙƒÙŽØ©Ù‹ Ø´ÙŽØ§Ù…ÙÙ„ÙŽØ©Ù‹ØŒ Ø§ÙÙ„Ù°Ù‰ Ø­ÙŽØ¶ÙŽØ±ÙŽØ©Ù Ø­ÙŽØ¨ÙÙŠÙ’Ø¨ÙÙ†ÙŽØ§ ÙˆÙŽØ´ÙŽÙÙÙŠÙ’Ø¹ÙÙ†ÙŽØ§ ÙˆÙŽÙ‚ÙØ±Ù‘ÙŽØ©Ù Ø£ÙŽØ¹Ù’ÙŠÙÙ†ÙÙ†ÙŽØ§ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ ÙˆÙŽÙ…ÙŽÙˆÙ’Ù„ÙŽØ§Ù†ÙŽØ§ Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯Ù ØµÙŽÙ„Ù‘ÙŽÙ‰ Ø§Ù„Ù„Ù‡Ù Ø¹ÙŽÙ„ÙŽÙŠÙ’Ù‡Ù ÙˆÙŽØ³ÙŽÙ„Ù‘ÙŽÙ…ÙŽØŒ ÙˆÙŽØ§ÙÙ„Ù°Ù‰ Ø¬ÙŽÙ…ÙÙŠÙ’Ø¹Ù Ø¥ÙØ®Ù’ÙˆÙŽØ§Ù†ÙÙ‡Ù– Ù…ÙÙ†ÙŽ Ø§Ù„Ù’Ø£ÙŽÙ†Ù’Ø¨ÙÙŠÙŽØ§Ø¡Ù ÙˆÙŽØ§Ù„Ù’Ù…ÙØ±Ù’Ø³ÙŽÙ„ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ø£ÙŽÙˆÙ’Ù„ÙÙŠÙŽØ§Ø¡Ù ÙˆÙŽØ§Ù„Ø´Ù‘ÙÙ‡ÙŽØ¯ÙŽØ§Ø¡Ù ÙˆÙŽØ§Ù„ØµÙ‘ÙŽØ§Ù„ÙØ­ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„ØµÙ‘ÙŽØ­ÙŽØ§Ø¨ÙŽØ©Ù ÙˆÙŽØ§Ù„ØªÙ‘ÙŽØ§Ø¨ÙØ¹ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ø¹ÙÙ„ÙŽÙ…ÙŽØ§Ø¡Ù Ø§Ù„Ù’Ø¹ÙŽØ§Ù…ÙÙ„ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ù…ÙØµÙŽÙ†Ù‘ÙÙÙÙŠÙ’Ù†ÙŽ Ø§Ù„Ù’Ù…ÙØ®Ù’Ù„ÙØµÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ¬ÙŽÙ…ÙÙŠÙ’Ø¹Ù Ø§Ù„Ù’Ù…ÙØ¬ÙŽØ§Ù‡ÙØ¯ÙÙŠÙ’Ù†ÙŽ ÙÙÙŠÙ’ Ø³ÙŽØ¨ÙÙŠÙ’Ù„Ù Ø§Ù„Ù„Ù‡Ù Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹Ù°Ù„ÙŽÙ…ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ù…ÙŽÙ„ÙŽØ§Ø¦ÙÙƒÙŽØ©Ù Ø§Ù„Ù’Ù…ÙÙ‚ÙŽØ±Ù‘ÙŽØ¨ÙÙŠÙ’Ù†ÙŽØŒ Ø®ÙØµÙÙˆÙ’ØµÙ‹Ø§ Ø§ÙÙ„Ù°Ù‰ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ø§Ù„Ø´Ù‘ÙŽÙŠÙ’Ø®Ù Ø¹ÙŽØ¨Ù’Ø¯Ù Ø§Ù„Ù’Ù‚ÙŽØ§Ø¯ÙØ±Ù Ø§Ù„Ù’Ø¬ÙÙŠÙ’Ù„ÙŽØ§Ù†ÙÙŠÙ‘Ù.<br><br>
+                Ø«ÙÙ…Ù‘ÙŽ Ø§ÙÙ„Ù°Ù‰ Ø£ÙŽØ±Ù’ÙˆÙŽØ§Ø­Ù Ø¬ÙŽÙ…ÙÙŠÙ’Ø¹Ù Ø£ÙŽÙ‡Ù’Ù„Ù Ø§Ù„Ù’Ù‚ÙØ¨ÙÙˆÙ’Ø±Ù Ù…ÙÙ†ÙŽ Ø§Ù„Ù’Ù…ÙØ³Ù’Ù„ÙÙ…ÙÙŠÙ’Ù†ÙŽ ÙˆÙŽØ§Ù„Ù’Ù…ÙØ³Ù’Ù„ÙÙ…ÙŽØ§ØªÙØŒ ÙˆÙŽØ§Ù„Ù’Ù…ÙØ¤Ù’Ù…ÙÙ†ÙÙŠÙ’Ù†ÙŽ ÙˆÙŽØ§Ù„Ù’Ù…ÙØ¤Ù’Ù…ÙÙ†ÙŽØ§ØªÙØŒ Ù…ÙÙ†Ù’ Ù…Ù‘ÙŽØ´ÙŽØ§Ø±ÙÙ‚Ù Ø§Ù„Ù’Ø£ÙŽØ±Ù’Ø¶Ù ÙˆÙŽÙ…ÙŽØºÙŽØ§Ø±ÙØ¨ÙÙ‡ÙŽØ§ Ø¨ÙŽØ±Ù‘ÙÙ‡ÙŽØ§ ÙˆÙŽØ¨ÙŽØ­Ù’Ø±ÙÙ‡ÙŽØ§ØŒ Ø®ÙØµÙÙˆÙ’ØµÙ‹Ø§ Ø§ÙÙ„Ù°Ù‰ Ø§Ù°Ø¨ÙŽØ§Ø¦ÙÙ†ÙŽØ§ ÙˆÙŽØ§ÙÙ…Ù‘ÙŽÙ‡ÙŽØ§ØªÙÙ†ÙŽØ§ ÙˆÙŽØ£ÙŽØ¬Ù’Ø¯ÙŽØ§Ø¯ÙÙ†ÙŽØ§ ÙˆÙŽØ¬ÙŽØ¯Ù‘ÙŽØ§ØªÙÙ†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ´ÙŽØ§ÙŠÙØ®ÙÙ†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ´ÙŽØ§ÙŠÙØ®Ù Ù…ÙŽØ´ÙŽØ§ÙŠÙØ®ÙÙ†ÙŽØ§ ÙˆÙŽØ£ÙŽØ³ÙŽØ§ØªÙØ°ÙŽØªÙÙ†ÙŽØ§ ÙˆÙŽØ£ÙŽØ³ÙŽØ§ØªÙØ°ÙŽØ©Ù Ø£ÙŽØ³ÙŽØ§ØªÙØ°ÙŽØªÙÙ†ÙŽØ§ ÙˆÙŽÙ„ÙÙ…ÙŽÙ†Ù’ Ø£ÙŽØ­Ù’Ø³ÙŽÙ†ÙŽ Ø§ÙÙ„ÙŽÙŠÙ’Ù†ÙŽØ§ ÙˆÙŽÙ„ÙÙ…ÙŽÙ†Ù Ø§Ø¬Ù’ØªÙŽÙ…ÙŽØ¹Ù’Ù†ÙŽØ§ Ù‡Ù°Ù‡ÙÙ†ÙŽØ§ Ø¨ÙØ³ÙŽØ¨ÙŽØ¨ÙÙ‡Ù– ÙˆÙŽÙ„ÙØ£ÙŽØ¬Ù’Ù„ÙÙ‡Ù–.<br><br>
+                Ø®ÙØµÙÙˆÙ’ØµÙ‹Ø§ Ø§ÙÙ„Ù°Ù‰ Ø£ÙŽØ±Ù’ÙˆÙŽØ§Ø­Ù <strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong> ÙˆÙŽØ£ÙØµÙÙˆÙ’Ù„ÙÙ‡ÙÙ…Ù’ ÙˆÙŽÙÙØ±ÙÙˆÙ’Ø¹ÙÙ‡ÙÙ…Ù’.<br><br>
+                Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ Ø§ØºÙ’ÙÙØ±Ù’ Ù„ÙŽÙ‡ÙÙ…Ù’ ÙˆÙŽØ§Ø±Ù’Ø­ÙŽÙ…Ù’Ù‡ÙÙ…Ù’ ÙˆÙŽØ¹ÙŽØ§ÙÙÙ‡ÙÙ…Ù’ ÙˆÙŽØ§Ø¹Ù’ÙÙ Ø¹ÙŽÙ†Ù’Ù‡ÙÙ…Ù’. Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ Ø£ÙŽÙ†Ù’Ø²ÙÙ„Ù Ø§Ù„Ø±Ù‘ÙŽØ­Ù’Ù…ÙŽØ©ÙŽ ÙˆÙŽØ§Ù„Ù’Ù…ÙŽØºÙ’ÙÙØ±ÙŽØ©ÙŽ Ø¹ÙŽÙ„Ù°Ù‰ Ø£ÙŽÙ‡Ù’Ù„Ù Ø§Ù„Ù’Ù‚ÙØ¨ÙÙˆÙ’Ø±Ù Ù…ÙÙ†Ù’ Ø£ÙŽÙ‡Ù’Ù„Ù Ù„ÙŽØ§ Ø§ÙÙ„Ù°Ù‡ÙŽ Ø§ÙÙ„Ù‘ÙŽØ§ Ø§Ù„Ù„Ù‡Ù Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯ÙŒ Ø±Ù‘ÙŽØ³ÙÙˆÙ’Ù„Ù Ø§Ù„Ù„Ù‡Ù.<br><br>
+                Ø±ÙŽØ¨Ù‘ÙŽÙ†ÙŽØ§Ù“ Ø§Ù°ØªÙÙ†ÙŽØ§ ÙÙÙ‰ Ø§Ù„Ø¯Ù‘ÙÙ†Ù’ÙŠÙŽØ§ Ø­ÙŽØ³ÙŽÙ†ÙŽØ©Ù‹ ÙˆÙ‘ÙŽÙÙÙ‰ Ø§Ù„Ù’Ø§Ù°Ø®ÙØ±ÙŽØ©Ù Ø­ÙŽØ³ÙŽÙ†ÙŽØ©Ù‹ ÙˆÙ‘ÙŽÙ‚ÙÙ†ÙŽØ§ Ø¹ÙŽØ°ÙŽØ§Ø¨ÙŽ Ø§Ù„Ù†Ù‘ÙŽØ§Ø±Ù. Ø³ÙØ¨Ù’Ø­ÙŽØ§Ù†ÙŽ Ø±ÙŽØ¨Ù‘ÙÙƒÙŽ Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹ÙØ²Ù‘ÙŽØ©Ù Ø¹ÙŽÙ…Ù‘ÙŽØ§ ÙŠÙŽØµÙÙÙÙˆÙ’Ù†ÙŽØŒ ÙˆÙŽØ³ÙŽÙ„ÙŽØ§Ù…ÙŒ Ø¹ÙŽÙ„ÙŽÙ‰ Ø§Ù„Ù’Ù…ÙØ±Ù’Ø³ÙŽÙ„ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ø­ÙŽÙ…Ù’Ø¯Ù Ù„ÙÙ„Ù‘Ù°Ù‡Ù Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹Ù°Ù„ÙŽÙ…ÙÙŠÙ’Ù†ÙŽ. Ø§ÙŽÙ„Ù’ÙÙŽØ§ØªÙØ­ÙŽØ©Ù...
+            </div>
+            <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}; margin-top: 15px;">
+                A'udzubillahi minasy syaithanir rajim. Bismillahirrahmanirrahim. Alhamdulillahi rabbil 'alamin. Hamdasy syakirin, hamdan na'imin, hamdan yuwafi ni'amahu wa yukafi'u mazidah. Ya rabbana lakal hamdu kama yambaghi lijalali wajhikal karimi wa 'adhimi sulthanik. Allahumma shalli 'ala sayyidina muhammadin wa 'ala ali sayyidina muhammad.<br><br>
+                Allahumma taqabbal wa aushil tsawaba ma qara'nahu minal qur'anil 'adhimi, wama hallalna wama sabbahna wamastaghfarna wama shallaina 'ala sayyidina muhammadin shallallahu 'alaihi wa sallama hadiyyatan washilatan, wa rahmatan nazilatan, wa barakatan syamilatan, ila hadhrati habibina wa syafi'ina wa qurrati a'yunina sayyidina wa maulana muhammadin shallallahu 'alaihi wa sallam, wa ila jami'i ikhwanihi minal anbiya'i wal mursalin, wal auliya'i wasy syuhada'i wash shalihin, wash shahabati wat tabi'in, wal 'ulamail 'amilin, wal mushannifinal mukhlishin, wa jami'il mujahidina fi sabilillahi rabbil 'alamin, wal malaikatil muqarrabin, khushushan ila sayyidina asy syaikh 'abdil qadir al jilani.<br><br>
+                Tsumma ila arwahi jami'i ahlil quburi minal muslimina wal muslimati, wal mu'minina wal mu'minati, min masyariqil ardli wa magharibiha barriha wa bahriha, khushushan ila aba'ina wa ummahatina wa ajdadina wa jaddatina wa masyayikhina wa masyayikhi masyayikhina wa asatidzatina wa asatidzati asatidzatina wa liman ahsana ilaina wa liman ijtama'na hahuna bisababihi wa liajlihi.<br><br>
+                Khushushan ila arwahi <strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong> wa ushulihim wa furu'ihim.<br><br>
+                Allahummaghfirlahum warhamhum wa 'afihim wa'fu 'anhum. Allahumma anzilir rahmata wal maghfirata 'ala ahlil quburi min ahli la ilaha illallahu muhammadur rasulullah.<br><br>
+                Rabbana atina fid dunya hasanatan wa fil akhirati hasanatan wa qina 'adzaban nar. Subhana rabbika rabbil 'izzati 'amma yashifun, wa salamun 'alal mursalin, walhamdulillahi rabbil 'alamin. Al-Fatihah...
+            </div>
+            <div class="ayah-indo" style="margin-top: 15px; text-align:justify;">
+                Aku berlindung kepada Allah dari godaan setan yang terkutuk. Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Segala puji bagi Allah Tuhan semesta alam. Wahai Tuhan kami, hanya bagi-Mu segala puji sebagaimana yang patut bagi keagungan Dzat-Mu yang mulia dan kebesaran kekuasaan-Mu. Ya Allah, limpahkanlah rahmat kepada junjungan kami Nabi Muhammad dan keluarganya.<br><br>
+                Ya Allah, terimalah dan sampaikanlah pahala apa yang telah kami baca dari Al-Qur'an yang agung, tahlil, tasbih, istighfar, dan selawat kami kepada Nabi Muhammad SAW sebagai hadiah yang sampai dan berkah yang menyeluruh. Juga kepada seluruh saudaranya dari kalangan nabi dan rasul, para wali, syuhada, orang saleh, sahabat, tabi'in, ulama, penulis yang ikhlas, para mujahid, dan malaikat muqarrabin, khususnya kepada Syekh Abdul Qadir Al-Jailani.<br><br>
+                Kemudian kepada arwah seluruh penghuni kubur dari kalangan muslimin dan muslimat, khususnya kepada bapak-bapak kami, ibu-ibu kami, kakek-nenek kami, guru-guru kami, dan orang-orang yang karenanya kami berkumpul di sini.<br><br>
+                Khususnya kepada arwah <strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong> beserta leluhur dan keturunan mereka.<br><br>
+                Ya Allah, ampunilah mereka, rahmatilah mereka, dan maafkanlah mereka. Ya Allah, turunkanlah rahmat dan ampunan kepada penghulu kubur dari ahli "La ilaha illallah Muhammadur Rasulullah".<br><br>
+                Ya Tuhan kami, berikanlah kami kebaikan di dunia dan kebaikan di akhirat, serta peliharalah kami dari siksa neraka. Mahasuci Tuhanmu. Keselamatan semoga tercurah kepada para rasul, dan segala puji bagi Allah Tuhan semesta alam. Al-Fatihah...
+            </div>
+        </div>`;
+        
+        const mushafContent = document.getElementById('mushafContent');
+        mushafContent.innerHTML = html;
+        normalizeRenderedText(mushafContent);
+    }
+
+    function openMushaf(navKey = 'home') {
+        setActivePage('mushaf', navKey);
+    }
+
+    function closeMushaf() {
+        setMushafVariant('surah');
+        if (returnView === 'catalog') {
+            openCatalog();
+        } else {
+            showHome();
+        }
+        _0xSync();
+    }
+
+    async function loadSurah(n, targetAyat = null, isPilihan = false, rangeStart = null, rangeEnd = null) {
+        setMushafVariant('surah');
+        const qC = document.getElementById('mushafContent');
+        qC.innerHTML = "<div class='status-message'>Memuat Mushaf...</div>";
+        try {
+            const r = await fetch(`https://equran.id/api/v2/surat/${n}`);
+            if (!r.ok) throw new Error('api-failed');
+            const j = await r.json();
+            const d = j.data;
+            const totalAyat = Number(d.jumlahAyat) || d.ayat.length || getAyatCountForSurah(n);
+            const startAyat = Math.max(1, Math.min(totalAyat, Number(rangeStart) || 1));
+            const endAyat = Math.max(startAyat, Math.min(totalAyat, Number(rangeEnd) || totalAyat));
+            const isPartialRange = startAyat !== 1 || endAyat !== totalAyat;
+            document.getElementById('currentSurahName').innerText = isPartialRange
+                ? `${d.namaLatin} · Ayat ${startAyat}-${endAyat}`
+                : d.namaLatin;
+
+            if (!isPilihan) {
+                setMushafRange(n, startAyat, endAyat);
+            }
+            
+            let html = "";
+            if (startAyat === 1 && n != 1 && n != 9) html += `<div class="ayah-arab" style="text-align:center; border-bottom:1px solid var(--line); padding:20px;">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ</div>`;
+            
+            d.ayat
+            .filter((v) => v.nomorAyat >= startAyat && v.nomorAyat <= endAyat)
+            .forEach(v => {
+                const saveAttr = isPilihan ? 'style="cursor:default; opacity:0.7;"' : `onclick='_0xSet(${n}, ${v.nomorAyat}, ${JSON.stringify(d.namaLatin)}, ${d.jumlahAyat})' style="cursor:pointer;"`;
+                
+                html += `
+                <div class="ayah-block" id="block-${v.nomorAyat}">
+                    <div class="ayah-arab">
+                        ${v.teksArab} <span class="ayah-end" ${saveAttr}>&#xFD3F;${_0xAr(v.nomorAyat)}&#xFD3E;</span>
+                    </div>
+                    <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
+                        ${v.teksLatin}
+                    </div>
+                    <div class="ayah-indo" style="text-align:justify;">
+                        ${v.teksIndonesia}
+                    </div>
+                </div>`;
+            });
+            qC.innerHTML = html;
+            normalizeRenderedText(qC);
+
+            if(targetAyat && targetAyat >= startAyat && targetAyat <= endAyat) {
+                setTimeout(() => {
+                    const e = document.getElementById(`block-${targetAyat}`);
+                    if(e) { e.scrollIntoView({ behavior:'smooth', block:'center' }); e.classList.add('highlight'); }
+                }, 800);
+            }
+        } catch (e) {
+            qC.innerHTML = "<div class='status-message'>Gagal memuat API Mushaf. Periksa koneksi lalu coba lagi.</div>";
+        }
+    }
+
+    function _0xAr(n) {
+        return n.toString().replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+    }
+
+    async function _0xSet(s, a, n, t) {
+        await _0xSave(s, a, n, t);
+        document.querySelectorAll('.highlight').forEach(e => e.classList.remove('highlight'));
+        const currentBlock = document.getElementById(`block-${a}`);
+        if (currentBlock) {
+            currentBlock.classList.add('highlight');
+        }
+        document.getElementById('popupMessage').innerText = `Tanda: ${n} Ayat ${a}`;
+        document.getElementById('customPopup').style.display = 'flex';
+    }
+    
+    function closePopupAndGoHome() {
+        document.getElementById('customPopup').style.display = 'none';
+        closeMushaf();
+    }
+
+    showHome();
+    _0xSync();
+</script>
+</body>
+</html>
+

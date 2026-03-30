@@ -1,0 +1,1156 @@
+:root {
+    --bg-deep: #ffffff;
+    --bg-soft: #f9fafb;
+    --panel: #ffffff;
+    --surface-soft: #f3f4f6;
+    --surface-tint: #f0fdf4;
+    --line: rgba(17, 24, 39, 0.08);
+    --line-strong: rgba(22, 163, 74, 0.22);
+    --primary: #16a34a;
+    --gold: #16a34a;
+    --primary-soft: #dcfce7;
+    --accent: #16a34a;
+    --accent-soft: #166534;
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    --wa-color: #25d366;
+    --gmeet: #15803d;
+    --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text-main);
+    background:
+        radial-gradient(circle at top left, rgba(22, 163, 74, 0.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.05), transparent 22%),
+        linear-gradient(180deg, #ffffff 0%, #fcfffd 46%, #f6fbf8 100%);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.55;
+    background-image:
+        linear-gradient(rgba(17, 24, 39, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17, 24, 39, 0.018) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(180deg, transparent, #000 20%, #000 80%, transparent);
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    border: 0;
+}
+
+a {
+    color: inherit;
+}
+
+.site-shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px clamp(16px, 3vw, 36px) 120px;
+}
+
+.site-header {
+    position: sticky;
+    top: 16px;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    margin-bottom: 24px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(22px);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0;
+    color: var(--text-main);
+    cursor: pointer;
+    background: transparent;
+}
+
+.brand-mark,
+.title-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: linear-gradient(145deg, #22c55e, #15803d);
+    box-shadow: 0 12px 28px rgba(22, 163, 74, 0.18);
+}
+
+.title-logo {
+    width: 54px;
+    height: 54px;
+    border-radius: 18px;
+}
+
+.brand-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+}
+
+.brand-copy strong {
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.brand-copy span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.nav-chip {
+    min-height: 42px;
+    padding: 10px 18px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 999px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-main);
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.85);
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.nav-chip:hover,
+.nav-chip.is-active {
+    color: #ffffff;
+    border-color: transparent;
+    background: linear-gradient(145deg, #22c55e, #15803d);
+    box-shadow: 0 12px 28px rgba(22, 163, 74, 0.16);
+    transform: translateY(-1px);
+}
+
+.site-main {
+    min-height: calc(100vh - 120px);
+}
+
+.site-footer {
+    width: 100%;
+    margin: 40px auto 0;
+    padding: 18px 0 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.site-footer p {
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.page {
+    display: none;
+}
+
+.page.is-active {
+    display: block;
+}
+
+.page-home {
+    padding-top: 8px;
+    min-height: calc(100vh - 220px);
+}
+
+.home-blank-stage {
+    min-height: calc(100vh - 200px);
+    border: 1px dashed rgba(22, 163, 74, 0.16);
+    border-radius: 40px;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(22, 163, 74, 0.06), transparent 28%),
+        radial-gradient(circle at 85% 30%, rgba(134, 239, 172, 0.18), transparent 24%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(240, 253, 244, 0.88));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 22px 48px rgba(15, 23, 42, 0.05);
+}
+
+.home-dashboard {
+    min-height: calc(100vh - 240px);
+}
+
+.home-dashboard .main-title,
+.home-dashboard .hero-copy,
+.home-dashboard .home-card,
+.home-dashboard .home-card-copy,
+.home-dashboard .home-progress-value,
+.home-dashboard .home-last-read-ayat {
+    font-family: 'Noto Serif', serif;
+}
+
+.home-overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    gap: 20px;
+}
+
+.home-card {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-height: 248px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top right, rgba(134, 239, 172, 0.1), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #fbfdfb 100%);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
+.home-card-label {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.home-progress-value {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.home-progress-value strong {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    line-height: 1;
+    color: var(--text-main);
+}
+
+.home-progress-value span {
+    font-size: 1rem;
+    color: var(--text-muted);
+}
+
+.home-progress-track {
+    position: relative;
+    width: 100%;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(22, 163, 74, 0.1);
+}
+
+.home-progress-track span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #22c55e, #15803d);
+    transition: width 0.35s ease;
+}
+
+.home-card-copy {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.8;
+}
+
+.home-last-read-surah {
+    margin: 0;
+    font-family: 'Noto Serif', serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--text-main);
+}
+
+.home-last-read-ayat {
+    margin: -8px 0 0;
+    font-size: 1rem;
+    color: var(--accent-soft);
+}
+
+.home-card-actions {
+    margin-top: auto;
+}
+
+.home-secondary-btn {
+    color: var(--text-main);
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    background: #ffffff;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.home-calligraphy {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: min(300px, 100%);
+    padding: 10px 18px 0 0;
+}
+
+.home-calligraphy::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 28px;
+    width: min(100%, 250px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.08) 0%, rgba(22, 163, 74, 0.03) 46%, transparent 72%);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.home-calligraphy-image {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: clamp(170px, 19vw, 245px);
+    height: auto;
+    object-fit: contain;
+    opacity: 0.96;
+    filter: drop-shadow(0 12px 24px rgba(17, 24, 39, 0.08));
+}
+
+#catalogPage,
+#mushafPage {
+    padding-top: 8px;
+}
+
+.dashboard-card,
+.catalog-shell,
+.mushaf-container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(24px, 4vw, 40px);
+    border: 1px solid var(--line);
+    border-radius: 34px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 251, 0.98));
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-hero,
+.mushaf-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.section-kicker {
+    margin: 0 0 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.main-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.05;
+    color: var(--text-main);
+}
+
+.hero-copy {
+    max-width: 620px;
+    margin: 14px 0 0;
+    color: var(--text-muted);
+    line-height: 1.75;
+}
+
+.hero-status {
+    min-width: min(260px, 100%);
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+
+.hero-status span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.hero-status strong {
+    display: block;
+    color: var(--primary);
+}
+
+.greeting-calligraphy {
+    padding: 18px 20px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(22, 163, 74, 0.14);
+    border-radius: 24px;
+    font-family: 'Amiri', serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    text-align: center;
+    direction: rtl;
+    color: var(--primary);
+    background: var(--surface-tint);
+}
+
+.surah-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 22px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.btn-surah,
+.btn-back {
+    min-height: 46px;
+    padding: 10px 18px;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 999px;
+    color: var(--text-main);
+    cursor: pointer;
+    background: #ffffff;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-surah:hover,
+.btn-back:hover {
+    border-color: var(--line-strong);
+    background: var(--primary-soft);
+    transform: translateY(-1px);
+}
+
+.pray-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    width: 100%;
+    margin-bottom: 16px;
+    padding: 20px 22px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: #ffffff;
+}
+
+.item-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    flex-shrink: 0;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    background: linear-gradient(145deg, #22c55e, #15803d);
+}
+
+.item-content {
+    flex: 1;
+    width: 100%;
+}
+
+.item-content h3 {
+    margin: 0 0 8px;
+    color: var(--text-main);
+}
+
+.item-content p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.75;
+}
+
+.istighfar-box {
+    width: 100%;
+    padding: 22px;
+    margin-top: 12px;
+    border: 1px solid rgba(22, 163, 74, 0.14);
+    border-radius: 24px;
+    background: var(--surface-tint);
+    text-align: right;
+}
+
+.arabic-text,
+.ayah-arab {
+    font-family: 'Amiri', serif;
+    color: var(--text-main);
+    direction: rtl;
+}
+
+.arabic-text {
+    font-size: clamp(1.55rem, 2.6vw, 2rem);
+    line-height: 2.1;
+}
+
+.trans-text,
+.ayah-indo {
+    font-family: 'Noto Serif', serif;
+    color: var(--text-muted);
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.trans-text {
+    margin-top: 18px;
+    padding-left: 14px;
+    border-left: 2px solid rgba(22, 163, 74, 0.28);
+    font-style: italic;
+}
+
+.action-buttons,
+.mushaf-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.action-buttons {
+    margin-top: 18px;
+}
+
+.btn-compact {
+    flex: 1 1 220px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-main,
+.mushaf-open-btn,
+.btn-ok {
+    color: #ffffff;
+    background: linear-gradient(145deg, #22c55e, #15803d);
+    box-shadow: 0 14px 28px rgba(22, 163, 74, 0.16);
+}
+
+.btn-share-dashboard {
+    color: #042713;
+    background: linear-gradient(145deg, #39de7e, #9ef5bd);
+    box-shadow: 0 16px 30px rgba(37, 211, 102, 0.18);
+}
+
+.catalog-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.catalog-shortcuts {
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.catalog-shortcuts-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 0 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(22, 163, 74, 0.35) transparent;
+}
+
+.catalog-shortcut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 132px;
+    min-height: 46px;
+    padding: 0 18px;
+    border: 1px solid rgba(22, 163, 74, 0.16);
+    border-radius: 999px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-main);
+    text-align: center;
+    white-space: nowrap;
+    cursor: pointer;
+    background: linear-gradient(180deg, #ffffff 0%, #f6fdf8 100%);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.catalog-shortcut:hover {
+    transform: translateY(-1px);
+    border-color: rgba(22, 163, 74, 0.3);
+    background: linear-gradient(180deg, #ffffff 0%, #ecfdf3 100%);
+    box-shadow: 0 14px 24px rgba(15, 23, 42, 0.07);
+}
+
+.catalog-shortcut::before {
+    content: none;
+}
+
+.catalog-shortcut::after {
+    content: none;
+}
+
+.catalog-shortcut-copy {
+    display: block;
+}
+
+.catalog-shortcut-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.catalog-shortcut-note {
+    display: none;
+}
+
+.catalog-shortcut-arabic {
+    display: none;
+}
+
+.catalog-filter {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.catalog-filter-end {
+    margin-left: auto;
+}
+
+.catalog-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.catalog-select {
+    min-height: 48px;
+    padding: 0 42px 0 16px;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-main);
+    background-color: #ffffff;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--primary) 50%),
+        linear-gradient(135deg, var(--primary) 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px);
+    background-size: 6px 6px;
+    background-repeat: no-repeat;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+    appearance: none;
+}
+
+.catalog-status {
+    margin-bottom: 20px;
+}
+
+.catalog-status[hidden] {
+    display: none;
+}
+
+.catalog-status.catalog-status-warning {
+    color: var(--accent-soft);
+    border-color: rgba(22, 163, 74, 0.18);
+    background: var(--surface-tint);
+}
+
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.catalog-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 20px 22px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.catalog-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--line-strong);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+}
+
+.catalog-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border: 2px solid rgba(22, 163, 74, 0.55);
+    border-radius: 50%;
+    color: var(--text-main);
+    font-weight: 700;
+    flex-shrink: 0;
+    background: radial-gradient(circle at center, #ffffff 58%, rgba(220, 252, 231, 0.92) 100%);
+}
+
+.catalog-badge::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(22, 163, 74, 0.28);
+    border-radius: 50%;
+}
+
+.catalog-badge span {
+    position: relative;
+    z-index: 1;
+    font-size: 0.92rem;
+}
+
+.catalog-copy {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.catalog-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    font-size: clamp(0.92rem, 1.55vw, 1rem);
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.catalog-title-note {
+    color: var(--text-muted);
+    font-size: 0.78em;
+    font-weight: 500;
+}
+
+.catalog-meta {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.catalog-card-surah .catalog-title,
+.catalog-card-surah .catalog-title-note,
+.catalog-card-surah .catalog-meta {
+    font-family: 'Noto Serif', serif;
+}
+
+.catalog-arabic {
+    font-family: 'Amiri', serif;
+    font-size: clamp(2rem, 2.8vw, 2.4rem);
+    line-height: 1;
+    color: var(--text-main);
+    flex-shrink: 0;
+}
+
+.catalog-arabic-empty {
+    width: 72px;
+}
+
+.catalog-arrow {
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.gmeet-float {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 58px;
+    padding: 10px 16px 10px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    color: #fff4ed;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(145deg, rgba(255, 122, 89, 0.94), rgba(255, 99, 74, 0.9));
+    box-shadow: 0 22px 50px rgba(255, 122, 89, 0.26);
+}
+
+.gmeet-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: #ff6f52;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.mushaf-header {
+    align-items: center;
+}
+
+.current-surah-name {
+    margin: 0;
+    text-align: center;
+    color: var(--text-main);
+}
+
+.latin-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.latin-toggle input {
+    accent-color: var(--primary);
+}
+
+.mushaf-controls {
+    align-items: flex-end;
+    justify-content: flex-start;
+    margin-bottom: 26px;
+}
+
+.mushaf-control-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mushaf-control-surah {
+    flex: 1 1 320px;
+}
+
+.mushaf-control-ayat {
+    flex: 0 1 120px;
+}
+
+.mushaf-control-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.surah-select {
+    width: 100%;
+    max-width: 280px;
+    min-height: 52px;
+    padding: 0 16px;
+    border: 1px solid rgba(17, 24, 39, 0.1);
+    border-radius: 16px;
+    color: var(--text-main);
+    background: #ffffff;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.mushaf-control-surah .surah-select {
+    max-width: 360px;
+}
+
+.ayat-select {
+    max-width: 104px;
+}
+
+.mushaf-open-btn {
+    min-height: 52px;
+    padding: 0 22px;
+    border-radius: 16px;
+    cursor: pointer;
+    align-self: flex-end;
+}
+
+.ayah-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.ayah-arab {
+    font-size: clamp(2rem, 3vw, 2.7rem);
+    line-height: 2.1;
+    text-align: right;
+}
+
+.ayah-latin {
+    display: block;
+    font-family: 'Noto Serif', serif;
+    color: var(--accent-soft);
+    font-style: italic;
+    line-height: 1.8;
+}
+
+.ayah-end {
+    margin-right: 10px;
+    font-size: 1.9rem;
+    color: var(--primary);
+}
+
+.highlight {
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(22, 163, 74, 0.1);
+}
+
+#customPopup,
+#gmeetPopup {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(17, 24, 39, 0.16);
+    backdrop-filter: blur(8px);
+}
+
+.popup-card {
+    width: min(100%, 420px);
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    text-align: center;
+    background: #ffffff;
+    box-shadow: var(--shadow-lg);
+}
+
+.popup-card h2 {
+    margin: 0 0 10px;
+    color: var(--text-main);
+}
+
+.popup-card p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.75;
+}
+
+.btn-ok {
+    min-height: 48px;
+    margin-top: 18px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.status-message {
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    color: var(--text-muted);
+    text-align: center;
+    background: var(--surface-soft);
+}
+
+@media (max-width: 900px) {
+    .site-header,
+    .dashboard-hero,
+    .mushaf-header {
+        border-radius: 28px;
+    }
+
+    .dashboard-hero,
+    .mushaf-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .home-calligraphy {
+        width: 100%;
+        justify-content: center;
+        padding-top: 0;
+        padding-right: 0;
+    }
+
+    .home-calligraphy::before {
+        right: 50%;
+        width: min(100%, 220px);
+        transform: translate(50%, -50%);
+    }
+
+    .home-calligraphy-image {
+        width: min(216px, 68vw);
+    }
+
+    .home-overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home-card {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 1100px) {
+    .catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .site-shell {
+        padding-inline: 14px;
+        padding-bottom: 108px;
+    }
+
+    .site-header {
+        padding: 14px;
+        border-radius: 28px;
+    }
+
+    .brand,
+    .site-nav {
+        width: 100%;
+    }
+
+    .nav-chip {
+        flex: 1 1 calc(50% - 10px);
+    }
+
+    .catalog-toolbar {
+        gap: 14px;
+    }
+
+    .catalog-filter,
+    .catalog-filter-end {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+    }
+
+    .catalog-select {
+        width: min(200px, 56%);
+    }
+
+    .catalog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .catalog-card {
+        padding: 18px;
+    }
+
+    .catalog-arabic {
+        font-size: 1.9rem;
+    }
+
+    .mushaf-controls,
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn-compact,
+    .mushaf-open-btn,
+    .surah-select {
+        width: 100%;
+    }
+
+    .mushaf-control-field,
+    .ayat-select {
+        width: 100%;
+        max-width: none;
+    }
+
+    .gmeet-float {
+        right: 16px;
+        bottom: 16px;
+        padding-right: 14px;
+    }
+}
