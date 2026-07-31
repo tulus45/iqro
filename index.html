@@ -1,16 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Iqro Morning Pray menghadirkan mushaf pilihan dan bacaan tahlil dalam satu halaman modern.">
     <meta name="robots" content="noindex, noarchive, nosnippet">
-    <title>Iqro Morning Pray | Mushaf Pilihan &amp; Tahlil</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%2307110d'/%3E%3Ctext x='50%25' y='53%25' text-anchor='middle' dominant-baseline='middle' font-family='Arial' font-size='28' font-weight='700' fill='%23d6b267'%3EIQ%3C/text%3E%3C/svg%3E">
+    <title>Iqro Morning Pray | Jejak Tilawah</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260731-1">
+    <meta name="theme-color" content="#16a34a">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260731-17">
 </head>
 <body>
 <div class="site-shell">
@@ -19,12 +20,13 @@
             <span class="brand-mark">IQ</span>
             <span class="brand-copy">
                 <strong>Iqro</strong>
-                <span>Mushaf Pilihan &amp; Tahlil</span>
+                <span>Jejak Tilawah</span>
             </span>
         </button>
         <nav class="site-nav" aria-label="Navigasi utama">
             <button class="nav-chip is-active" type="button" data-nav="home" onclick="showHome()">Home</button>
             <button class="nav-chip" type="button" data-nav="quran" onclick="openCatalog()">Al-Quran</button>
+            <button class="nav-chip" type="button" data-nav="prayer" onclick="openPrayerSchedule()">Jadwal Salat</button>
             <button class="nav-chip" type="button" data-nav="tahlil" onclick="openTahlil()">Tahlil</button>
         </nav>
     </header>
@@ -39,7 +41,7 @@
                             <span class="title-logo">IQ</span>
                             Ringkasan Tilawah
                         </h1>
-                        <p class="hero-copy">Pantau pencapaian baca Al-Qur'an Anda dan lanjutkan kembali dari ayat terakhir yang sudah ditandai.</p>
+                        <p class="hero-copy">Setiap ayat adalah langkah mendekat pada-Nya. Kami menjaga batas bacaan Anda agar langkah mulia ini tak pernah terputus.</p>
                     </div>
                     <div class="home-calligraphy" aria-label="Al-Quran Karim">
                         <img class="home-calligraphy-image" src="quran.png" alt="Al-Quran Karim">
@@ -58,12 +60,20 @@
                         </div>
                     </article>
 
+                    <article id="homeDailyCard" class="home-card home-daily-card">
+                        <p class="home-card-label">Tilawah Hari Ini</p>
+                        <div class="home-daily-reading">
+                            <strong id="homeDailyAyat">0</strong>
+                            <span>ayat dibaca</span>
+                        </div>
+                    </article>
+
                     <article class="home-card home-last-read-card">
                         <p class="home-card-label">Terakhir Dibaca</p>
                         <h2 id="homeLastReadSurah" class="home-last-read-surah">Al-Fatihah</h2>
                         <p id="homeLastReadAyat" class="home-last-read-ayat">Ayat 1 dari 7 ayat</p>
                         <div class="action-buttons home-card-actions">
-                            <button class="btn-compact btn-main" type="button" onclick="resumeLastRead()">Lanjutkan Membaca</button>
+                            <button id="homeLastReadButton" class="btn-compact btn-main" type="button" onclick="resumeLastRead()">Mulai Bertilawah</button>
                         </div>
                     </article>
                 </div>
@@ -79,42 +89,42 @@
                                 <span class="catalog-shortcut-name">Yasin</span>
                                 <span class="catalog-shortcut-note">Surah 36</span>
                             </span>
-                            <span class="catalog-shortcut-arabic">ÙŠØ³</span>
+                            <span class="catalog-shortcut-arabic">يس</span>
                         </button>
                         <button class="catalog-shortcut" type="button" onclick="openPilihan(67, 'quran')">
                             <span class="catalog-shortcut-copy">
                                 <span class="catalog-shortcut-name">Al-Mulk</span>
                                 <span class="catalog-shortcut-note">Surah 67</span>
                             </span>
-                            <span class="catalog-shortcut-arabic">Ø§Ù„Ù…Ù„Ùƒ</span>
+                            <span class="catalog-shortcut-arabic">الملك</span>
                         </button>
                         <button class="catalog-shortcut" type="button" onclick="openPilihan(13, 'quran')">
                             <span class="catalog-shortcut-copy">
                                 <span class="catalog-shortcut-name">Ar-Ra'd</span>
                                 <span class="catalog-shortcut-note">Surah 13</span>
                             </span>
-                            <span class="catalog-shortcut-arabic">Ø§Ù„Ø±Ø¹Ø¯</span>
+                            <span class="catalog-shortcut-arabic">الرعد</span>
                         </button>
                         <button class="catalog-shortcut" type="button" onclick="openPilihan(55, 'quran')">
                             <span class="catalog-shortcut-copy">
                                 <span class="catalog-shortcut-name">Ar-Rahman</span>
                                 <span class="catalog-shortcut-note">Surah 55</span>
                             </span>
-                            <span class="catalog-shortcut-arabic">Ø§Ù„Ø±Ø­Ù…Ù†</span>
+                            <span class="catalog-shortcut-arabic">الرحمن</span>
                         </button>
                         <button class="catalog-shortcut" type="button" onclick="openPilihan(56, 'quran')">
                             <span class="catalog-shortcut-copy">
                                 <span class="catalog-shortcut-name">Waqi'ah</span>
                                 <span class="catalog-shortcut-note">Surah 56</span>
                             </span>
-                            <span class="catalog-shortcut-arabic">Ø§Ù„ÙˆØ§Ù‚Ø¹Ø©</span>
+                            <span class="catalog-shortcut-arabic">الواقعة</span>
                         </button>
                         <button class="catalog-shortcut" type="button" onclick="openPilihan(18, 'quran')">
                             <span class="catalog-shortcut-copy">
                                 <span class="catalog-shortcut-name">Kahfi</span>
                                 <span class="catalog-shortcut-note">Surah 18</span>
                             </span>
-                            <span class="catalog-shortcut-arabic">Ø§Ù„ÙƒÙ‡Ù</span>
+                            <span class="catalog-shortcut-arabic">الكهف</span>
                         </button>
                     </div>
                 </section>
@@ -137,6 +147,117 @@
                 </div>
                 <div id="catalogStatus" class="status-message catalog-status">Memuat daftar Al-Quran...</div>
                 <div id="catalogGrid" class="catalog-grid" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <section id="prayerPage" class="page page-prayer" aria-label="Jadwal salat harian">
+            <div class="prayer-shell">
+                <div class="prayer-hero">
+                    <div class="prayer-intro">
+                        <p class="section-kicker">Jadwal Salat</p>
+                        <h1 class="prayer-title">Waktu untuk kembali.</h1>
+                        <p class="prayer-lead">Satu hari bergerak cepat. Lima waktu menjaganya tetap terarah.</p>
+                        <div id="prayerCityControl" class="prayer-location-control">
+                            <span class="prayer-location-mark" aria-hidden="true"></span>
+                            <button id="prayerCityTrigger" class="prayer-location-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="prayerCityMenu" onclick="togglePrayerCityMenu(event)">
+                                <span class="prayer-location-copy">
+                                    <small id="prayerLocationModeLabel">Lokasi</small>
+                                    <strong id="prayerCityDisplay">Jakarta</strong>
+                                </span>
+                                <span class="prayer-location-chevron" aria-hidden="true"></span>
+                            </button>
+                            <select id="prayerCitySelect" class="prayer-city-native" tabindex="-1" aria-hidden="true" onchange="changePrayerCity(this.value)">
+                                <optgroup label="Waktu Indonesia Barat">
+                                    <option value="jakarta">Jakarta</option>
+                                    <option value="bandung">Bandung</option>
+                                    <option value="semarang">Semarang</option>
+                                    <option value="yogyakarta">Yogyakarta</option>
+                                    <option value="surabaya">Surabaya</option>
+                                    <option value="medan">Medan</option>
+                                    <option value="palembang">Palembang</option>
+                                </optgroup>
+                                <optgroup label="Waktu Indonesia Tengah">
+                                    <option value="denpasar">Denpasar</option>
+                                    <option value="banjarmasin">Banjarmasin</option>
+                                    <option value="balikpapan">Balikpapan</option>
+                                    <option value="makassar">Makassar</option>
+                                    <option value="manado">Manado</option>
+                                </optgroup>
+                                <optgroup label="Waktu Indonesia Timur">
+                                    <option value="jayapura">Jayapura</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div id="prayerCityMenu" class="prayer-city-menu" role="listbox" aria-label="Pilih lokasi jadwal salat" hidden></div>
+                    </div>
+
+                    <article class="prayer-next-card" aria-live="polite">
+                        <div class="prayer-next-topline">
+                            <span>Salat berikutnya</span>
+                            <span id="prayerTimezoneLabel">WIB</span>
+                        </div>
+                        <div class="prayer-next-main">
+                            <div>
+                                <p id="prayerNextName">Menyiapkan</p>
+                                <strong id="prayerNextTime">--:--</strong>
+                            </div>
+                            <span id="prayerNextIndex" class="prayer-next-index" aria-hidden="true">—</span>
+                        </div>
+                        <p id="prayerCountdown" class="prayer-countdown">Mengambil jadwal hari ini</p>
+                        <div class="prayer-countdown-track" aria-hidden="true">
+                            <span id="prayerCountdownProgress"></span>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="prayer-date-rail">
+                    <div>
+                        <span class="prayer-date-label">Hari ini</span>
+                        <strong id="prayerGregorianDate">—</strong>
+                    </div>
+                    <span class="prayer-date-divider" aria-hidden="true"></span>
+                    <div>
+                        <span class="prayer-date-label">Kalender Hijriah</span>
+                        <strong id="prayerHijriDate">—</strong>
+                    </div>
+                    <span id="prayerLocationBadge" class="prayer-location-badge">Jakarta</span>
+                </div>
+
+                <div id="prayerStatus" class="prayer-status" hidden></div>
+                <div id="prayerScheduleGrid" class="prayer-schedule-grid" aria-live="polite"></div>
+                <section class="qibla-panel" aria-labelledby="qiblaPanelTitle">
+                    <div class="qibla-copy">
+                        <p class="section-kicker">Arah Kiblat</p>
+                        <h2 id="qiblaPanelTitle">Kompas Kiblat</h2>
+                        <p>Putar perangkat hingga penunjuk hijau mengarah lurus ke atas.</p>
+                        <div class="qibla-bearing-line">
+                            <strong id="qiblaBearingValue">—°</strong>
+                            <span id="qiblaBearingCopy">Menghitung arah dari Jakarta</span>
+                        </div>
+                        <button id="qiblaCompassButton" class="qibla-compass-button" type="button" onclick="activateQiblaCompass()">Aktifkan kompas</button>
+                        <p id="qiblaCompassStatus" class="qibla-compass-status">Arah perkiraan berdasarkan pusat kota yang dipilih.</p>
+                    </div>
+
+                    <div class="qibla-compass-wrap">
+                        <div id="qiblaCompassFace" class="qibla-compass-face" role="img" aria-label="Kompas arah kiblat">
+                            <span class="qibla-cardinal is-north">U</span>
+                            <span class="qibla-cardinal is-east">T</span>
+                            <span class="qibla-cardinal is-south">S</span>
+                            <span class="qibla-cardinal is-west">B</span>
+                            <span class="qibla-compass-ring" aria-hidden="true"></span>
+                            <span id="qiblaPointer" class="qibla-pointer" aria-hidden="true">
+                                <span></span>
+                            </span>
+                            <span class="qibla-compass-center" aria-hidden="true"></span>
+                        </div>
+                        <span id="qiblaAlignmentLabel" class="qibla-alignment-label">Arah kiblat</span>
+                    </div>
+                </section>
+
+                <div class="prayer-source-note">
+                    <span>Metode Kementerian Agama RI · dihitung melalui AlAdhan</span>
+                    <a href="https://aladhan.com/calculation-methods" target="_blank" rel="noopener noreferrer">Sumber jadwal</a>
+                </div>
             </div>
         </section>
 
@@ -182,16 +303,34 @@
 <div id="customPopup"><div class="popup-card"><h2>Alhamdulillah!</h2><p id="popupMessage"></p><button class="btn-ok" type="button" onclick="closePopupAndGoHome()">Selesai</button></div></div>
 
 <script>
-    const progressStorageKey = 'iqro_tadarus_progress';
+    const progressStorageKeyPrefix = 'iqro_tadarus_progress';
+    let progressStorageKey = `${progressStorageKeyPrefix}:guest`;
     const defaultProgress = { surah: 1, ayat: 1, nama: 'Al-Fatihah', totalAyat: 7 };
     let _0xData = { ...defaultProgress };
     let hasSavedProgress = false;
     const pages = {
         home: document.getElementById('homePage'),
         catalog: document.getElementById('catalogPage'),
+        prayer: document.getElementById('prayerPage'),
         mushaf: document.getElementById('mushafPage')
     };
     let returnView = 'home';
+    let mushafProgressTrackingEnabled = false;
+
+    function setMushafProgressTracking(enabled) {
+        mushafProgressTrackingEnabled = enabled === true;
+    }
+
+    function selectProgressAccount(userId = '') {
+        const accountId = String(userId || '').trim() || 'guest';
+        const nextStorageKey = `${progressStorageKeyPrefix}:${accountId}`;
+        if (progressStorageKey === nextStorageKey) return;
+
+        progressStorageKey = nextStorageKey;
+        hasSavedProgress = false;
+        _0xData = { ...defaultProgress };
+        void _0xSync();
+    }
 
     const surahList = ["Al-Fatihah","Al-Baqarah","Ali 'Imran","An-Nisa'","Al-Ma'idah","Al-An'am","Al-A'raf","Al-Anfal","At-Taubah","Yunus","Hud","Yusuf","Ar-Ra'd","Ibrahim","Al-Hijr","An-Nahl","Al-Isra'","Al-Kahf","Maryam","Ta-Ha","Al-Anbiya'","Al-Hajj","Al-Mu'minun","An-Nur","Al-Furqan","Asy-Syu'ara'","An-Naml","Al-Qasas","Al-'Ankabut","Ar-Rum","Luqman","As-Sajdah","Al-Ahzab","Saba'","Fatir","Ya-Sin","As-Saffat","Sad","Az-Zumar","Gafir","Fussilat","Asy-Syura","Az-Zukhruf","Ad-Dukhan","Al-Jasiyah","Al-Ahqaf","Muhammad","Al-Fath","Al-Hujurat","Qaf","Az-Zariyat","At-Tur","An-Najm","Al-Qamar","Ar-Rahman","Al-Waqi'ah","Al-Hadid","Al-Mujadalah","Al-Hasyr","Al-Mumtahanah","As-Saff","Al-Jumu'ah","Al-Munafiqun","At-Tagabun","At-Talaq","At-Tahrim","Al-Mulk","Al-Qalam","Al-Haqqah","Al-Ma'arij","Nuh","Al-Jinn","Al-Muzzammil","Al-Muddassir","Al-Qiyamah","Al-Insan","Al-Mursalat","An-Naba'","An-Nazi'at","'Abasa","At-Takwir","Al-Infitar","Al-Mutaffifin","Al-Insyiqaq","Al-Buruj","At-Tariq","Al-A'la","Al-Gasyiyah","Al-Fajr","Al-Balad","Asy-Syams","Al-Lail","Ad-Duha","Asy-Syarh","At-Tin","Al-'Alaq","Al-Qadr","Al-Bayyinah","Az-Zalzalah","Al-'Adiyat","Al-Qari'ah","At-Takasur","Al-'Asr","Al-Humazah","Al-Fil","Quraisy","Al-Ma'un","Al-Kausar","Al-Kafirun","An-Nasr","Al-Lahab","Al-Ikhlas","Al-Falaq","An-Nas"];
     const surahAyatCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
@@ -333,6 +472,7 @@
     }
 
     function openCatalog() {
+        setMushafProgressTracking(false);
         setActivePage('catalog', 'quran');
         renderCatalog();
         ensureCatalogData();
@@ -441,6 +581,18 @@
         const currentAyatCount = counts[surah - 1] || Math.max(1, Number(_0xData.totalAyat) || defaultProgress.totalAyat);
         const ayat = Math.max(1, Math.min(currentAyatCount, Number(_0xData.ayat) || defaultProgress.ayat));
         const nama = String(_0xData.nama || surahList[surah - 1] || defaultProgress.nama);
+
+        if (!hasSavedProgress) {
+            return {
+                surah,
+                ayat,
+                nama,
+                currentAyatCount,
+                readAyat: 0,
+                totalAyat: counts.length === 114 ? counts.reduce((sum, value) => sum + value, 0) : null,
+                percent: 0
+            };
+        }
 
         if (counts.length !== 114) {
             return {
@@ -756,6 +908,7 @@
     }
 
     function openCatalogSurah(nomor) {
+        setMushafProgressTracking(false);
         document.getElementById('mushafControls').style.display = 'flex';
         setMushafRange(nomor);
         openMushaf('quran');
@@ -766,6 +919,7 @@
         const juz = juzCatalog.find((item) => item.nomor === nomor);
         if (!juz) return;
 
+        setMushafProgressTracking(false);
         document.getElementById('mushafControls').style.display = 'flex';
         setMushafRange(juz.startSurah, juz.startAyat);
         openMushaf('quran');
@@ -809,13 +963,23 @@
         const progressBar = document.getElementById('homeProgressBar');
         const lastReadSurah = document.getElementById('homeLastReadSurah');
         const lastReadAyat = document.getElementById('homeLastReadAyat');
+        const lastReadButton = document.getElementById('homeLastReadButton');
 
-        if (!progressPercent || !progressReadAyat || !progressBar || !lastReadSurah || !lastReadAyat) {
+        if (!progressPercent || !progressReadAyat || !progressBar || !lastReadSurah || !lastReadAyat || !lastReadButton) {
             return;
         }
 
-        lastReadSurah.textContent = summary.nama;
-        lastReadAyat.textContent = `Ayat ${summary.ayat} dari ${summary.currentAyatCount} ayat`;
+        if (hasSavedProgress) {
+            lastReadSurah.textContent = summary.nama;
+            lastReadAyat.textContent = `Ayat ${summary.ayat} dari ${summary.currentAyatCount} ayat`;
+            lastReadButton.textContent = 'Lanjutkan Tilawah';
+            lastReadButton.setAttribute('aria-label', `Lanjutkan tilawah ${summary.nama} ayat ${summary.ayat}`);
+        } else {
+            lastReadSurah.textContent = 'Belum Ada Riwayat';
+            lastReadAyat.textContent = 'Awali tilawah dari Al-Fatihah';
+            lastReadButton.textContent = 'Mulai Bertilawah';
+            lastReadButton.setAttribute('aria-label', 'Mulai bertilawah dari Al-Fatihah');
+        }
 
         if (summary.percent === null || summary.readAyat === null || summary.totalAyat === null) {
             const metadataUnavailable = catalogState.loaded && Boolean(catalogState.message);
@@ -831,6 +995,7 @@
     }
 
     function resumeLastRead() {
+        setMushafProgressTracking(true);
         setMushafVariant('surah');
         document.getElementById('mushafControls').style.display = 'flex';
         setMushafRange(_0xData.surah);
@@ -850,6 +1015,7 @@
     }
 
     function openPilihan(num, navKey = 'home') {
+        setMushafProgressTracking(false);
         setMushafVariant('surah');
         document.getElementById('mushafControls').style.display = 'none';
         setMushafRange(num);
@@ -858,23 +1024,42 @@
     }
     
     function openTahlil() {
+        setMushafProgressTracking(false);
         setMushafVariant('tahlil');
         document.getElementById('mushafControls').style.display = 'none';
         openMushaf('tahlil');
         document.getElementById('currentSurahName').innerText = "Bacaan Tahlil";
+
+        const memorialNames = typeof window.getTahlilMemorialNames === 'function'
+            ? window.getTahlilMemorialNames()
+            : [];
+        const memorialNamesHtml = memorialNames.length
+            ? memorialNames.map((name) => escapeHtml(name)).join(', ')
+            : '[... Sebutkan Nama-nama Arwah ...]';
+        const memorialNamesTarget = `<strong class="tahlil-memorial-target" dir="ltr">${memorialNamesHtml}</strong>`;
         
         let html = "";
         dataTahlil.forEach((v, index) => {
+            let renderedArab = v.arab;
+            let renderedLatin = v.latin;
+            let renderedIndo = v.indo;
+            if (index === 3 && memorialNames.length) {
+                renderedArab = v.arab.replace('............', memorialNamesTarget);
+                renderedLatin = v.latin.replace('............', memorialNamesTarget);
+                renderedIndo = v.indo
+                    .replace('............', memorialNamesTarget)
+                    .replace(' (Sebutkan nama-nama arwah yang dituju)', '');
+            }
             html += `
             <div class="ayah-block">
                 <div class="ayah-arab" style="cursor:default;">
-                    ${v.arab} <span class="ayah-end" style="opacity:0.5;">&#xFD3F;${_0xAr(index + 1)}&#xFD3E;</span>
+                    ${renderedArab} <span class="ayah-end" style="opacity:0.5;">&#xFD3F;${_0xAr(index + 1)}&#xFD3E;</span>
                 </div>
                 <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
-                    ${v.latin}
+                    ${renderedLatin}
                 </div>
                 <div class="ayah-indo" style="text-align:justify;">
-                    ${v.indo}
+                    ${renderedIndo}
                 </div>
             </div>`;
         });
@@ -884,12 +1069,12 @@
         <div class="ayah-block" style="background-color: var(--surface-tint); padding: 30px; border-radius: 15px; margin-top: 20px; border: 1px solid var(--line-strong);">
             <h3 style="text-align:center; color: var(--primary); margin-top: 0;">Doa Tahlil</h3>
             <div class="ayah-arab" style="cursor:default;">
-                Ø£ÙŽØ¹ÙÙˆÙ’Ø°Ù Ø¨ÙØ§Ù„Ù„Ù‡Ù Ù…ÙÙ†ÙŽ Ø§Ù„Ø´Ù‘ÙŽÙŠÙ’Ø·ÙŽØ§Ù†Ù Ø§Ù„Ø±Ù‘ÙŽØ¬ÙÙŠÙ’Ù…Ù. Ø¨ÙØ³Ù’Ù…Ù Ø§Ù„Ù„Ù‡Ù Ø§Ù„Ø±Ù‘ÙŽØ­Ù’Ù…Ù°Ù†Ù Ø§Ù„Ø±Ù‘ÙŽØ­ÙÙŠÙ’Ù…Ù. Ø§ÙŽÙ„Ù’Ø­ÙŽÙ…Ù’Ø¯Ù Ù„ÙÙ„Ù‘Ù°Ù‡Ù Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹Ù°Ù„ÙŽÙ…ÙÙŠÙ’Ù†ÙŽ. Ø­ÙŽÙ…Ù’Ø¯ÙŽ Ø§Ù„Ø´Ù‘ÙŽØ§ÙƒÙØ±ÙÙŠÙ’Ù†ÙŽØŒ Ø­ÙŽÙ…Ù’Ø¯ÙŽ Ø§Ù„Ù†Ù‘ÙŽØ§Ø¹ÙÙ…ÙÙŠÙ’Ù†ÙŽØŒ Ø­ÙŽÙ…Ù’Ø¯Ù‹Ø§ ÙŠÙ‘ÙÙˆÙŽØ§ÙÙÙŠÙ’ Ù†ÙØ¹ÙŽÙ…ÙŽÙ‡Ù— ÙˆÙŽÙŠÙÙƒÙŽØ§ÙÙØ¦Ù Ù…ÙŽØ²ÙÙŠÙ’Ø¯ÙŽÙ‡Ù—. ÙŠÙŽØ§ Ø±ÙŽØ¨Ù‘ÙŽÙ†ÙŽØ§ Ù„ÙŽÙƒÙŽ Ø§Ù„Ù’Ø­ÙŽÙ…Ù’Ø¯Ù ÙƒÙŽÙ…ÙŽØ§ ÙŠÙŽÙ†Ù’Ø¨ÙŽØºÙÙŠÙ’ Ù„ÙØ¬ÙŽÙ„ÙŽØ§Ù„Ù ÙˆÙŽØ¬Ù’Ù‡ÙÙƒÙŽ Ø§Ù„Ù’ÙƒÙŽØ±ÙÙŠÙ’Ù…Ù ÙˆÙŽØ¹ÙŽØ¸ÙÙŠÙ’Ù…Ù Ø³ÙÙ„Ù’Ø·ÙŽØ§Ù†ÙÙƒÙŽ. Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ ØµÙŽÙ„Ù‘Ù Ø¹ÙŽÙ„Ù°Ù‰ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯Ù ÙˆÙ‘ÙŽØ¹ÙŽÙ„Ù°Ù‰ Ø§Ù°Ù„Ù Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ù…ÙØ­ÙÙ…Ù‘ÙŽØ¯Ù.<br><br>
-                Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ ØªÙŽÙ‚ÙŽØ¨Ù‘ÙŽÙ„Ù’ ÙˆÙŽØ£ÙŽÙˆÙ’ØµÙÙ„Ù’ Ø«ÙŽÙˆÙŽØ§Ø¨ÙŽ Ù…ÙŽØ§ Ù‚ÙŽØ±ÙŽØ£Ù’Ù†ÙŽØ§Ù‡Ù Ù…ÙÙ†ÙŽ Ø§Ù„Ù’Ù‚ÙØ±Ù’Ø§Ù°Ù†Ù Ø§Ù„Ù’Ø¹ÙŽØ¸ÙÙŠÙ’Ù…ÙØŒ ÙˆÙŽÙ…ÙŽØ§ Ù‡ÙŽÙ„Ù‘ÙŽÙ„Ù’Ù†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ§ Ø³ÙŽØ¨Ù‘ÙŽØ­Ù’Ù†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ§ Ø§Ø³Ù’ØªÙŽØºÙ’ÙÙŽØ±Ù’Ù†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ§ ØµÙŽÙ„Ù‘ÙŽÙŠÙ’Ù†ÙŽØ§ Ø¹ÙŽÙ„Ù°Ù‰ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯Ù ØµÙŽÙ„Ù‘ÙŽÙ‰ Ø§Ù„Ù„Ù‡Ù Ø¹ÙŽÙ„ÙŽÙŠÙ’Ù‡Ù ÙˆÙŽØ³ÙŽÙ„Ù‘ÙŽÙ…ÙŽ Ù‡ÙŽØ¯ÙÙŠÙ‘ÙŽØ©Ù‹ ÙˆÙ‘ÙŽØ§ØµÙÙ„ÙŽØ©Ù‹ØŒ ÙˆÙŽØ±ÙŽØ­Ù’Ù…ÙŽØ©Ù‹ Ù†Ù‘ÙŽØ§Ø²ÙÙ„ÙŽØ©Ù‹ØŒ ÙˆÙŽØ¨ÙŽØ±ÙŽÙƒÙŽØ©Ù‹ Ø´ÙŽØ§Ù…ÙÙ„ÙŽØ©Ù‹ØŒ Ø§ÙÙ„Ù°Ù‰ Ø­ÙŽØ¶ÙŽØ±ÙŽØ©Ù Ø­ÙŽØ¨ÙÙŠÙ’Ø¨ÙÙ†ÙŽØ§ ÙˆÙŽØ´ÙŽÙÙÙŠÙ’Ø¹ÙÙ†ÙŽØ§ ÙˆÙŽÙ‚ÙØ±Ù‘ÙŽØ©Ù Ø£ÙŽØ¹Ù’ÙŠÙÙ†ÙÙ†ÙŽØ§ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ ÙˆÙŽÙ…ÙŽÙˆÙ’Ù„ÙŽØ§Ù†ÙŽØ§ Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯Ù ØµÙŽÙ„Ù‘ÙŽÙ‰ Ø§Ù„Ù„Ù‡Ù Ø¹ÙŽÙ„ÙŽÙŠÙ’Ù‡Ù ÙˆÙŽØ³ÙŽÙ„Ù‘ÙŽÙ…ÙŽØŒ ÙˆÙŽØ§ÙÙ„Ù°Ù‰ Ø¬ÙŽÙ…ÙÙŠÙ’Ø¹Ù Ø¥ÙØ®Ù’ÙˆÙŽØ§Ù†ÙÙ‡Ù– Ù…ÙÙ†ÙŽ Ø§Ù„Ù’Ø£ÙŽÙ†Ù’Ø¨ÙÙŠÙŽØ§Ø¡Ù ÙˆÙŽØ§Ù„Ù’Ù…ÙØ±Ù’Ø³ÙŽÙ„ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ø£ÙŽÙˆÙ’Ù„ÙÙŠÙŽØ§Ø¡Ù ÙˆÙŽØ§Ù„Ø´Ù‘ÙÙ‡ÙŽØ¯ÙŽØ§Ø¡Ù ÙˆÙŽØ§Ù„ØµÙ‘ÙŽØ§Ù„ÙØ­ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„ØµÙ‘ÙŽØ­ÙŽØ§Ø¨ÙŽØ©Ù ÙˆÙŽØ§Ù„ØªÙ‘ÙŽØ§Ø¨ÙØ¹ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ø¹ÙÙ„ÙŽÙ…ÙŽØ§Ø¡Ù Ø§Ù„Ù’Ø¹ÙŽØ§Ù…ÙÙ„ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ù…ÙØµÙŽÙ†Ù‘ÙÙÙÙŠÙ’Ù†ÙŽ Ø§Ù„Ù’Ù…ÙØ®Ù’Ù„ÙØµÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ¬ÙŽÙ…ÙÙŠÙ’Ø¹Ù Ø§Ù„Ù’Ù…ÙØ¬ÙŽØ§Ù‡ÙØ¯ÙÙŠÙ’Ù†ÙŽ ÙÙÙŠÙ’ Ø³ÙŽØ¨ÙÙŠÙ’Ù„Ù Ø§Ù„Ù„Ù‡Ù Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹Ù°Ù„ÙŽÙ…ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ù…ÙŽÙ„ÙŽØ§Ø¦ÙÙƒÙŽØ©Ù Ø§Ù„Ù’Ù…ÙÙ‚ÙŽØ±Ù‘ÙŽØ¨ÙÙŠÙ’Ù†ÙŽØŒ Ø®ÙØµÙÙˆÙ’ØµÙ‹Ø§ Ø§ÙÙ„Ù°Ù‰ Ø³ÙŽÙŠÙ‘ÙØ¯ÙÙ†ÙŽØ§ Ø§Ù„Ø´Ù‘ÙŽÙŠÙ’Ø®Ù Ø¹ÙŽØ¨Ù’Ø¯Ù Ø§Ù„Ù’Ù‚ÙŽØ§Ø¯ÙØ±Ù Ø§Ù„Ù’Ø¬ÙÙŠÙ’Ù„ÙŽØ§Ù†ÙÙŠÙ‘Ù.<br><br>
-                Ø«ÙÙ…Ù‘ÙŽ Ø§ÙÙ„Ù°Ù‰ Ø£ÙŽØ±Ù’ÙˆÙŽØ§Ø­Ù Ø¬ÙŽÙ…ÙÙŠÙ’Ø¹Ù Ø£ÙŽÙ‡Ù’Ù„Ù Ø§Ù„Ù’Ù‚ÙØ¨ÙÙˆÙ’Ø±Ù Ù…ÙÙ†ÙŽ Ø§Ù„Ù’Ù…ÙØ³Ù’Ù„ÙÙ…ÙÙŠÙ’Ù†ÙŽ ÙˆÙŽØ§Ù„Ù’Ù…ÙØ³Ù’Ù„ÙÙ…ÙŽØ§ØªÙØŒ ÙˆÙŽØ§Ù„Ù’Ù…ÙØ¤Ù’Ù…ÙÙ†ÙÙŠÙ’Ù†ÙŽ ÙˆÙŽØ§Ù„Ù’Ù…ÙØ¤Ù’Ù…ÙÙ†ÙŽØ§ØªÙØŒ Ù…ÙÙ†Ù’ Ù…Ù‘ÙŽØ´ÙŽØ§Ø±ÙÙ‚Ù Ø§Ù„Ù’Ø£ÙŽØ±Ù’Ø¶Ù ÙˆÙŽÙ…ÙŽØºÙŽØ§Ø±ÙØ¨ÙÙ‡ÙŽØ§ Ø¨ÙŽØ±Ù‘ÙÙ‡ÙŽØ§ ÙˆÙŽØ¨ÙŽØ­Ù’Ø±ÙÙ‡ÙŽØ§ØŒ Ø®ÙØµÙÙˆÙ’ØµÙ‹Ø§ Ø§ÙÙ„Ù°Ù‰ Ø§Ù°Ø¨ÙŽØ§Ø¦ÙÙ†ÙŽØ§ ÙˆÙŽØ§ÙÙ…Ù‘ÙŽÙ‡ÙŽØ§ØªÙÙ†ÙŽØ§ ÙˆÙŽØ£ÙŽØ¬Ù’Ø¯ÙŽØ§Ø¯ÙÙ†ÙŽØ§ ÙˆÙŽØ¬ÙŽØ¯Ù‘ÙŽØ§ØªÙÙ†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ´ÙŽØ§ÙŠÙØ®ÙÙ†ÙŽØ§ ÙˆÙŽÙ…ÙŽØ´ÙŽØ§ÙŠÙØ®Ù Ù…ÙŽØ´ÙŽØ§ÙŠÙØ®ÙÙ†ÙŽØ§ ÙˆÙŽØ£ÙŽØ³ÙŽØ§ØªÙØ°ÙŽØªÙÙ†ÙŽØ§ ÙˆÙŽØ£ÙŽØ³ÙŽØ§ØªÙØ°ÙŽØ©Ù Ø£ÙŽØ³ÙŽØ§ØªÙØ°ÙŽØªÙÙ†ÙŽØ§ ÙˆÙŽÙ„ÙÙ…ÙŽÙ†Ù’ Ø£ÙŽØ­Ù’Ø³ÙŽÙ†ÙŽ Ø§ÙÙ„ÙŽÙŠÙ’Ù†ÙŽØ§ ÙˆÙŽÙ„ÙÙ…ÙŽÙ†Ù Ø§Ø¬Ù’ØªÙŽÙ…ÙŽØ¹Ù’Ù†ÙŽØ§ Ù‡Ù°Ù‡ÙÙ†ÙŽØ§ Ø¨ÙØ³ÙŽØ¨ÙŽØ¨ÙÙ‡Ù– ÙˆÙŽÙ„ÙØ£ÙŽØ¬Ù’Ù„ÙÙ‡Ù–.<br><br>
-                Ø®ÙØµÙÙˆÙ’ØµÙ‹Ø§ Ø§ÙÙ„Ù°Ù‰ Ø£ÙŽØ±Ù’ÙˆÙŽØ§Ø­Ù <strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong> ÙˆÙŽØ£ÙØµÙÙˆÙ’Ù„ÙÙ‡ÙÙ…Ù’ ÙˆÙŽÙÙØ±ÙÙˆÙ’Ø¹ÙÙ‡ÙÙ…Ù’.<br><br>
-                Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ Ø§ØºÙ’ÙÙØ±Ù’ Ù„ÙŽÙ‡ÙÙ…Ù’ ÙˆÙŽØ§Ø±Ù’Ø­ÙŽÙ…Ù’Ù‡ÙÙ…Ù’ ÙˆÙŽØ¹ÙŽØ§ÙÙÙ‡ÙÙ…Ù’ ÙˆÙŽØ§Ø¹Ù’ÙÙ Ø¹ÙŽÙ†Ù’Ù‡ÙÙ…Ù’. Ø§ÙŽÙ„Ù„Ù‘Ù°Ù‡ÙÙ…Ù‘ÙŽ Ø£ÙŽÙ†Ù’Ø²ÙÙ„Ù Ø§Ù„Ø±Ù‘ÙŽØ­Ù’Ù…ÙŽØ©ÙŽ ÙˆÙŽØ§Ù„Ù’Ù…ÙŽØºÙ’ÙÙØ±ÙŽØ©ÙŽ Ø¹ÙŽÙ„Ù°Ù‰ Ø£ÙŽÙ‡Ù’Ù„Ù Ø§Ù„Ù’Ù‚ÙØ¨ÙÙˆÙ’Ø±Ù Ù…ÙÙ†Ù’ Ø£ÙŽÙ‡Ù’Ù„Ù Ù„ÙŽØ§ Ø§ÙÙ„Ù°Ù‡ÙŽ Ø§ÙÙ„Ù‘ÙŽØ§ Ø§Ù„Ù„Ù‡Ù Ù…ÙØ­ÙŽÙ…Ù‘ÙŽØ¯ÙŒ Ø±Ù‘ÙŽØ³ÙÙˆÙ’Ù„Ù Ø§Ù„Ù„Ù‡Ù.<br><br>
-                Ø±ÙŽØ¨Ù‘ÙŽÙ†ÙŽØ§Ù“ Ø§Ù°ØªÙÙ†ÙŽØ§ ÙÙÙ‰ Ø§Ù„Ø¯Ù‘ÙÙ†Ù’ÙŠÙŽØ§ Ø­ÙŽØ³ÙŽÙ†ÙŽØ©Ù‹ ÙˆÙ‘ÙŽÙÙÙ‰ Ø§Ù„Ù’Ø§Ù°Ø®ÙØ±ÙŽØ©Ù Ø­ÙŽØ³ÙŽÙ†ÙŽØ©Ù‹ ÙˆÙ‘ÙŽÙ‚ÙÙ†ÙŽØ§ Ø¹ÙŽØ°ÙŽØ§Ø¨ÙŽ Ø§Ù„Ù†Ù‘ÙŽØ§Ø±Ù. Ø³ÙØ¨Ù’Ø­ÙŽØ§Ù†ÙŽ Ø±ÙŽØ¨Ù‘ÙÙƒÙŽ Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹ÙØ²Ù‘ÙŽØ©Ù Ø¹ÙŽÙ…Ù‘ÙŽØ§ ÙŠÙŽØµÙÙÙÙˆÙ’Ù†ÙŽØŒ ÙˆÙŽØ³ÙŽÙ„ÙŽØ§Ù…ÙŒ Ø¹ÙŽÙ„ÙŽÙ‰ Ø§Ù„Ù’Ù…ÙØ±Ù’Ø³ÙŽÙ„ÙÙŠÙ’Ù†ÙŽØŒ ÙˆÙŽØ§Ù„Ù’Ø­ÙŽÙ…Ù’Ø¯Ù Ù„ÙÙ„Ù‘Ù°Ù‡Ù Ø±ÙŽØ¨Ù‘Ù Ø§Ù„Ù’Ø¹Ù°Ù„ÙŽÙ…ÙÙŠÙ’Ù†ÙŽ. Ø§ÙŽÙ„Ù’ÙÙŽØ§ØªÙØ­ÙŽØ©Ù...
+                أَعُوْذُ بِاللهِ مِنَ الشَّيْطَانِ الرَّجِيْمِ. بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ. اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ. حَمْدَ الشَّاكِرِيْنَ، حَمْدَ النَّاعِمِيْنَ، حَمْدًا يُّوَافِيْ نِعَمَهٗ وَيُكَافِئُ مَزِيْدَهٗ. يَا رَبَّنَا لَكَ الْحَمْدُ كَمَا يَنْبَغِيْ لِجَلَالِ وَجْهِكَ الْكَرِيْمِ وَعَظِيْمِ سُلْطَانِكَ. اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَّعَلٰى اٰلِ سَيِّدِنَا مُحِمَّدٍ.<br><br>
+                اَللّٰهُمَّ تَقَبَّلْ وَأَوْصِلْ ثَوَابَ مَا قَرَأْنَاهُ مِنَ الْقُرْاٰنِ الْعَظِيْمِ، وَمَا هَلَّلْنَا وَمَا سَبَّحْنَا وَمَا اسْتَغْفَرْنَا وَمَا صَلَّيْنَا عَلٰى سَيِّدِنَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ هَدِيَّةً وَّاصِلَةً، وَرَحْمَةً نَّازِلَةً، وَبَرَكَةً شَامِلَةً، اِلٰى حَضَرَةِ حَبِيْبِنَا وَشَفِيْعِنَا وَقُرَّةِ أَعْيُنِنَا سَيِّدِنَا وَمَوْلَانَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ، وَاِلٰى جَمِيْعِ إِخْوَانِهٖ مِنَ الْأَنْبِيَاءِ وَالْمُرْسَلِيْنَ، وَالْأَوْلِيَاءِ وَالشُّهَدَاءِ وَالصَّالِحِيْنَ، وَالصَّحَابَةِ وَالتَّابِعِيْنَ، وَالْعُلَمَاءِ الْعَامِلِيْنَ، وَالْمُصَنِّفِيْنَ الْمُخْلِصِيْنَ، وَجَمِيْعِ الْمُجَاهِدِيْنَ فِيْ سَبِيْلِ اللهِ رَبِّ الْعٰلَمِيْنَ، وَالْمَلَائِكَةِ الْمُقَرَّبِيْنَ، خُصُوْصًا اِلٰى سَيِّدِنَا الشَّيْخِ عَبْدِ الْقَادِرِ الْجِيْلَانِيِّ.<br><br>
+                ثُمَّ اِلٰى أَرْوَاحِ جَمِيْعِ أَهْلِ الْقُبُوْرِ مِنَ الْمُسْلِمِيْنَ وَالْمُسْلِمَاتِ، وَالْمُؤْمِنِيْنَ وَالْمُؤْمِنَاتِ، مِنْ مَّشَارِقِ الْأَرْضِ وَمَغَارِبِهَا بَرِّهَا وَبَحْرِهَا، خُصُوْصًا اِلٰى اٰبَائِنَا وَاُمَّهَاتِنَا وَأَجْدَادِنَا وَجَدَّاتِنَا وَمَشَايِخِنَا وَمَشَايِخِ مَشَايِخِنَا وَأَسَاتِذَتِنَا وَأَسَاتِذَةِ أَسَاتِذَتِنَا وَلِمَنْ أَحْسَنَ اِلَيْنَا وَلِمَنِ اجْتَمَعْنَا هٰهُنَا بِسَبَبِهٖ وَلِأَجْلِهٖ.<br><br>
+                خُصُوْصًا اِلٰى أَرْوَاحِ <strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong> وَأُصُوْلِهِمْ وَفُرُوْعِهِمْ.<br><br>
+                اَللّٰهُمَّ اغْفِرْ لَهُمْ وَارْحَمْهُمْ وَعَافِهِمْ وَاعْفُ عَنْهُمْ. اَللّٰهُمَّ أَنْزِلِ الرَّحْمَةَ وَالْمَغْفِرَةَ عَلٰى أَهْلِ الْقُبُوْرِ مِنْ أَهْلِ لَا اِلٰهَ اِلَّا اللهُ مُحَمَّدٌ رَّسُوْلُ اللهِ.<br><br>
+                رَبَّنَآ اٰتِنَا فِى الدُّنْيَا حَسَنَةً وَّفِى الْاٰخِرَةِ حَسَنَةً وَّقِنَا عَذَابَ النَّارِ. سُبْحَانَ رَبِّكَ رَبِّ الْعِزَّةِ عَمَّا يَصِفُوْنَ، وَسَلَامٌ عَلَى الْمُرْسَلِيْنَ، وَالْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ. اَلْفَاتِحَةُ...
             </div>
             <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}; margin-top: 15px;">
                 A'udzubillahi minasy syaithanir rajim. Bismillahirrahmanirrahim. Alhamdulillahi rabbil 'alamin. Hamdasy syakirin, hamdan na'imin, hamdan yuwafi ni'amahu wa yukafi'u mazidah. Ya rabbana lakal hamdu kama yambaghi lijalali wajhikal karimi wa 'adhimi sulthanik. Allahumma shalli 'ala sayyidina muhammadin wa 'ala ali sayyidina muhammad.<br><br>
@@ -909,6 +1094,7 @@
             </div>
         </div>`;
         
+        html = html.replaceAll('<strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong>', memorialNamesTarget);
         const mushafContent = document.getElementById('mushafContent');
         mushafContent.innerHTML = html;
         normalizeRenderedText(mushafContent);
@@ -928,7 +1114,7 @@
         _0xSync();
     }
 
-    async function loadSurah(n, targetAyat = null, isPilihan = false, rangeStart = null, rangeEnd = null) {
+    async function loadSurah(n, targetAyat = null, hideRangeControls = false, rangeStart = null, rangeEnd = null) {
         setMushafVariant('surah');
         const qC = document.getElementById('mushafContent');
         qC.innerHTML = "<div class='status-message'>Memuat Mushaf...</div>";
@@ -945,7 +1131,7 @@
                 ? `${d.namaLatin} · Ayat ${startAyat}-${endAyat}`
                 : d.namaLatin;
 
-            if (!isPilihan) {
+            if (!hideRangeControls) {
                 setMushafRange(n, startAyat, endAyat);
             }
             
@@ -955,12 +1141,15 @@
             d.ayat
             .filter((v) => v.nomorAyat >= startAyat && v.nomorAyat <= endAyat)
             .forEach(v => {
-                const saveAttr = isPilihan ? 'style="cursor:default; opacity:0.7;"' : `onclick='_0xSet(${n}, ${v.nomorAyat}, ${JSON.stringify(d.namaLatin)}, ${d.jumlahAyat})' style="cursor:pointer;"`;
+                const markerClass = mushafProgressTrackingEnabled ? ' is-progress-marker' : '';
+                const saveAttr = mushafProgressTrackingEnabled
+                    ? `data-surah="${n}" data-ayat="${v.nomorAyat}" data-surah-name="${encodeURIComponent(String(d.namaLatin || ''))}" data-total-ayat="${d.jumlahAyat}" onclick="markLastReadFromElement(this)" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); markLastReadFromElement(this);}" role="button" tabindex="0" aria-label="Tandai ayat ${v.nomorAyat} sebagai terakhir dibaca"`
+                    : 'aria-disabled="true"';
                 
                 html += `
                 <div class="ayah-block" id="block-${v.nomorAyat}">
                     <div class="ayah-arab">
-                        ${v.teksArab} <span class="ayah-end" ${saveAttr}>&#xFD3F;${_0xAr(v.nomorAyat)}&#xFD3E;</span>
+                        ${v.teksArab} <span class="ayah-end${markerClass}" ${saveAttr}>&#xFD3F;${_0xAr(v.nomorAyat)}&#xFD3E;</span>
                     </div>
                     <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
                         ${v.teksLatin}
@@ -988,7 +1177,19 @@
         return n.toString().replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
     }
 
+    function markLastReadFromElement(marker) {
+        if (!mushafProgressTrackingEnabled || !marker) return;
+        const surahName = decodeURIComponent(String(marker.dataset.surahName || ''));
+        void _0xSet(
+            Number(marker.dataset.surah),
+            Number(marker.dataset.ayat),
+            surahName,
+            Number(marker.dataset.totalAyat)
+        );
+    }
+
     async function _0xSet(s, a, n, t) {
+        if (!mushafProgressTrackingEnabled) return;
         await _0xSave(s, a, n, t);
         document.querySelectorAll('.highlight').forEach(e => e.classList.remove('highlight'));
         const currentBlock = document.getElementById(`block-${a}`);
@@ -1007,6 +1208,11 @@
     showHome();
     _0xSync();
 </script>
+<script src="community.js?v=20260731-20"></script>
+<script src="prayer.js?v=20260731-6"></script>
+<script src="admin.js?v=20260731-6"></script>
 </body>
 </html>
+
+
 
