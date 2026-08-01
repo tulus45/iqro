@@ -129,6 +129,7 @@ function storeSessionToken(token) {
   } else {
     window.localStorage.removeItem(iqroSessionStorageKey);
   }
+  return Promise.resolve(window.IqroNative?.setSessionToken?.(communityState.token)).catch(() => undefined);
 }
 
 function clearSessionState(renderNow = true) {
@@ -224,8 +225,16 @@ function setCommunityMessage(message = '', tone = 'info', sticky = false) {
   }
 }
 
+function payloadRequiresPasswordChange(payload) {
+  return payload?.requiresPasswordChange === true || payload?.user?.mustChangePassword === true;
+}
+
 function applyAppState(payload) {
-  communityState.me = payload?.user || null;
+  const nextUser = payload?.user ? { ...payload.user } : null;
+  if (nextUser) {
+    nextUser.mustChangePassword = payloadRequiresPasswordChange(payload);
+  }
+  communityState.me = nextUser;
   selectProgressAccount(communityState.me?.id || '');
   communityState.friends = Array.isArray(payload?.friends) ? payload.friends : [];
   communityState.groups = Array.isArray(payload?.groups) ? payload.groups : [];
@@ -292,10 +301,14 @@ function setHomeAuthMode(mode) {
 
 function syncProtectedNavigation() {
   const authenticated = Boolean(communityState.token && communityState.me && !communityState.me.mustChangePassword);
-  document.querySelectorAll('.nav-chip').forEach((button) => {
+  document.querySelectorAll('.site-nav .nav-chip').forEach((button) => {
     const isPublicHome = button.dataset.nav === 'home';
     if (!isPublicHome && button.dataset.nav !== 'manage-users') button.hidden = !authenticated;
   });
+
+  const mobileTabBar = document.getElementById('mobileTabBar');
+  if (mobileTabBar) mobileTabBar.hidden = !authenticated;
+  if (!authenticated) closeMobileMenu();
 
   const dashboard = document.querySelector('.home-dashboard');
   if (dashboard) dashboard.hidden = !authenticated;
@@ -322,6 +335,10 @@ function renderHomeCommunityBoard() {
   const hasSession = Boolean(communityState.token && communityState.me);
   const requiresPasswordChange = Boolean(hasSession && communityState.me.mustChangePassword);
   const authenticated = Boolean(hasSession && !requiresPasswordChange);
+  document.body.classList.toggle(
+    'is-login-screen',
+    !authenticated && !requiresPasswordChange && communityState.authMode === 'login'
+  );
   gate.hidden = authenticated;
   if (authenticated) return;
 
@@ -373,7 +390,7 @@ function renderHomeCommunityBoard() {
   const panelTitle = isRegister ? 'Mulai perjalanan tilawah' : (isForgot ? 'Lupa password?' : 'Lanjutkan Langkah Spiritualmu');
 
   gate.innerHTML = `
-    <div class="auth-gate-card">
+    <div class="auth-gate-card auth-gate-card-${isRegister ? 'register' : (isForgot ? 'forgot' : 'login')}">
       <div class="auth-gate-intro">
         <div class="auth-gate-calligraphy" aria-hidden="true"><img src="quran.png" alt=""></div>
         <p class="section-kicker">Ruang Tilawah Pribadi</p>
@@ -1302,6 +1319,17 @@ function patchCoreIqroFunctions() {
 }
 
 async function restoreCommunitySession() {
+  try {
+    await window.iqroNativeReady;
+    const nativeToken = await window.IqroNative?.getSessionToken?.();
+    if (!communityState.token && nativeToken) {
+      communityState.token = nativeToken;
+      window.localStorage.setItem(iqroSessionStorageKey, nativeToken);
+    }
+  } catch (error) {
+    // Penyimpanan native gagal tidak boleh menghalangi alur login web.
+  }
+
   if (!communityState.token) {
     renderHomeCommunityBoard();
     renderCommunityPage();
@@ -1352,10 +1380,13 @@ async function completeUserAuthentication(form, endpoint, fallbackMessage) {
   renderHomeCommunityBoard();
   try {
     const payload = await apiFetch(endpoint, { method: 'POST', body });
-    storeSessionToken(payload.token || '');
+    const requiresPasswordChange = payloadRequiresPasswordChange(payload);
+    await storeSessionToken(payload.token || '');
     applyAppState(payload);
-    if (!communityState.me?.mustChangePassword) await reconcileProgressAfterAuth();
-    communityState.message = '';
+    if (!requiresPasswordChange) await reconcileProgressAfterAuth();
+    communityState.message = requiresPasswordChange
+      ? 'Buat password baru terlebih dahulu untuk membuka seluruh fitur Iqro.'
+      : '';
     form.reset();
     showHome();
   } catch (error) {

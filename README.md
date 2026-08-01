@@ -38,7 +38,7 @@ Aplikasi Iqro terdiri dari frontend statis di root project dan backend API ringa
 - Ganti password sendiri dari halaman Komunitas
 - Menyimpan daftar nama almarhum/almarhumah per akun untuk ditampilkan otomatis pada bacaan Tahlil
 - Menyimpan progress tilawah ke akun
-- Melihat aktivitas kontak berupa jumlah ayat unik yang ditandai hari ini dan bacaan terakhir
+- Melihat aktivitas kontak berupa jumlah ayat unik yang dilalui dalam Tilawah hari ini dan bacaan terakhir
 - Menambah teman berdasarkan nomor HP terdaftar
 - Membuat group keluarga dan menambah anggota
 - Melihat ringkasan progress teman dan group
@@ -152,3 +152,23 @@ Web server perlu mengarahkan trafik berikut:
 
 - `https://iqro.alus.my.id/` ke frontend statis `/var/www/iqro`
 - `https://iqro.alus.my.id/api/...` ke `127.0.0.1:4720`
+
+## Aplikasi Android
+
+Aplikasi Android menggunakan Capacitor 8 dengan package ID `id.my.alus.iqro`. UI yang sama tetap dapat dipakai di web, sedangkan mode native menambahkan safe area Android, izin GPS native, tombol Back yang terkontrol, dan persistensi token sesi melalui Android SharedPreferences. Password tidak disimpan sebagai teks biasa.
+
+Prasyarat build:
+
+- Android Studio/JDK 21
+- Android SDK Platform 36 dan Build Tools terkait
+- Variabel `ANDROID_HOME` menunjuk ke folder SDK
+
+Perintah kerja:
+
+```powershell
+npm.cmd install
+npm.cmd run mobile:sync
+npm.cmd run mobile:build
+```
+
+APK debug akan tersedia di `android/app/build/outputs/apk/debug/app-debug.apk`. Untuk rilis Play Store, buat signing key sendiri dan konfigurasi release signing di Gradle; jangan menyimpan signing key atau password-nya di repository.

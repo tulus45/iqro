@@ -1,0 +1,17 @@
+{
+  "appId": "id.my.alus.iqro",
+  "appName": "Iqro",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#f4f7f3",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "LIGHT",
+      "hidden": false,
+      "animation": "NONE"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "iqro-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android application wrapper for Iqro Morning Pray",
+  "scripts": {
+    "mobile:prepare": "node scripts/prepare-mobile.cjs",
+    "mobile:sync": "npm run mobile:prepare && cap sync android",
+    "mobile:build": "npm run mobile:sync && cd android && gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.0",
+    "@capacitor/geolocation": "8.2.0",
+    "@capacitor/preferences": "8.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.0",
+    "esbuild": "^0.25.0"
+  }
+}

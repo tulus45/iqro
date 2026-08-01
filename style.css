@@ -2300,6 +2300,10 @@ a {
     margin-bottom: 26px;
 }
 
+#mushafPage.is-tahlil #mushafControls {
+    display: none !important;
+}
+
 .mushaf-control-field {
     display: flex;
     flex-direction: column;
@@ -2372,9 +2376,29 @@ a {
 }
 
 .ayah-end {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.55em;
+    height: 1.55em;
     margin-right: 10px;
     font-size: 1.9rem;
+    line-height: 1;
     color: var(--primary);
+    border: 3px double currentColor;
+    border-radius: 50%;
+    vertical-align: middle;
+    direction: ltr;
+    unicode-bidi: isolate;
+    box-sizing: border-box;
+}
+
+.ayah-number {
+    display: block;
+    font-family: 'Amiri', 'Times New Roman', serif;
+    font-size: 0.64em;
+    font-weight: 700;
+    line-height: 1;
 }
 
 .ayah-end.is-progress-marker {
@@ -2397,6 +2421,38 @@ a {
     padding: 10px 12px;
     border-radius: 18px;
     background: rgba(22, 163, 74, 0.1);
+}
+
+.tilawah-next-surah {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin: 30px 0 8px;
+    padding: 26px;
+    border: 1px solid rgba(22, 163, 74, 0.18);
+    border-radius: 22px;
+    background: rgba(22, 163, 74, 0.06);
+    text-align: center;
+}
+
+.tilawah-next-surah p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+.tilawah-next-surah-button {
+    min-height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+.tilawah-next-surah-button:disabled {
+    cursor: wait;
+    opacity: 0.7;
 }
 
 #customPopup,

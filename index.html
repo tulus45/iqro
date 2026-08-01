@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Iqro Morning Pray menghadirkan mushaf pilihan dan bacaan tahlil dalam satu halaman modern.">
     <meta name="robots" content="noindex, noarchive, nosnippet">
     <title>Iqro Morning Pray | Jejak Tilawah</title>
@@ -11,7 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260731-17">
+    <link rel="stylesheet" href="style.css?v=20260801-4">
+    <link rel="stylesheet" href="mobile.css?v=20260801-6">
 </head>
 <body>
 <div class="site-shell">
@@ -300,6 +301,53 @@
     </footer>
 </div>
 
+<nav id="mobileTabBar" class="mobile-tab-bar" aria-label="Navigasi aplikasi" hidden>
+    <button class="nav-chip mobile-tab-button is-active" type="button" data-nav="home" onclick="showHome()" aria-label="Beranda">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5H15v-6H9v6H3.5a.5.5 0 0 1-.5-.5z"/></svg>
+        <span>Beranda</span>
+    </button>
+    <button class="nav-chip mobile-tab-button" type="button" data-nav="quran" onclick="openCatalog()" aria-label="Al-Qur'an">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H11v18H6.5A2.5 2.5 0 0 0 4 22zm16 0A2.5 2.5 0 0 0 17.5 2H13v18h4.5A2.5 2.5 0 0 1 20 22z"/></svg>
+        <span>Qur'an</span>
+    </button>
+    <button class="nav-chip mobile-tab-button" type="button" data-nav="prayer" onclick="openPrayerSchedule()" aria-label="Jadwal salat">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>
+        <span>Salat</span>
+    </button>
+    <button class="nav-chip mobile-tab-button" type="button" data-nav="more" onclick="openMobileMenu()" aria-label="Menu lainnya" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+        <span>Lainnya</span>
+    </button>
+</nav>
+
+<div id="mobileMenuBackdrop" class="mobile-menu-backdrop" hidden onclick="closeMobileMenu()">
+    <section class="mobile-menu-sheet" role="dialog" aria-modal="true" aria-labelledby="mobileMenuTitle" onclick="event.stopPropagation()">
+        <div class="mobile-menu-handle" aria-hidden="true"></div>
+        <header class="mobile-menu-header">
+            <div>
+                <p>Menu</p>
+                <h2 id="mobileMenuTitle">Lainnya</h2>
+            </div>
+            <button class="mobile-menu-close" type="button" onclick="closeMobileMenu()" aria-label="Tutup menu">&times;</button>
+        </header>
+        <div class="mobile-menu-grid">
+            <button class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openTahlil()">
+                <span class="mobile-menu-icon">?</span><span><strong>Tahlil</strong><small>Dzikir dan doa</small></span>
+            </button>
+            <button class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openCommunity()">
+                <span class="mobile-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span><strong>Komunitas</strong><small>Sahabat tilawah</small></span>
+            </button>
+            <button class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openSettings()">
+                <span class="mobile-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.94 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 0 0 8.97 4.6 1.7 1.7 0 0 0 10 3.08V3h4v.08A1.7 1.7 0 0 0 15.06 4.6a1.7 1.7 0 0 0 1.88-.34L17 4.2 19.83 7l-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15z"/></svg></span><span><strong>Pengaturan</strong><small>Akun dan preferensi</small></span>
+            </button>
+            <button id="mobileManageUsersButton" class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openUserManagement()" hidden>
+                <span class="mobile-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m9.5-3v6m3-3h-6"/></svg></span><span><strong>Kelola User</strong><small>Akses pemilik</small></span>
+            </button>
+        </div>
+        <button class="mobile-menu-signout" type="button" onclick="closeMobileMenu(); logoutCommunity()">Keluar dari akun</button>
+    </section>
+</div>
+
 <div id="customPopup"><div class="popup-card"><h2>Alhamdulillah!</h2><p id="popupMessage"></p><button class="btn-ok" type="button" onclick="closePopupAndGoHome()">Selesai</button></div></div>
 
 <script>
@@ -445,11 +493,38 @@
         { arab: "اَلْفَاتِحَةُ", latin: "Al-Fâtiḫah...", indo: "(Membaca Surah Al-Fatihah sebagai penutup zikir dan pengantar doa Tahlil)." }
     ];
 
+    const mobileMoreNavKeys = new Set(['tahlil', 'community', 'settings', 'manage-users']);
+    let currentNavKey = 'home';
+
     function setActiveNav(navKey) {
+        currentNavKey = navKey;
         document.querySelectorAll('.nav-chip').forEach((button) => {
-            button.classList.toggle('is-active', button.dataset.nav === navKey);
+            const isMoreDestination = button.dataset.nav === 'more' && mobileMoreNavKeys.has(navKey);
+            button.classList.toggle('is-active', button.dataset.nav === navKey || isMoreDestination);
         });
     }
+
+    function openMobileMenu() {
+        const backdrop = document.getElementById('mobileMenuBackdrop');
+        if (!backdrop) return;
+        backdrop.hidden = false;
+        document.body.classList.add('mobile-menu-open');
+        document.querySelector('.mobile-tab-button[data-nav="more"]')?.classList.add('is-active');
+        window.setTimeout(() => backdrop.classList.add('is-open'), 10);
+    }
+
+    function closeMobileMenu() {
+        const backdrop = document.getElementById('mobileMenuBackdrop');
+        if (!backdrop || backdrop.hidden) return;
+        backdrop.classList.remove('is-open');
+        document.body.classList.remove('mobile-menu-open');
+        document.querySelector('.mobile-tab-button[data-nav="more"]')?.classList.toggle('is-active', mobileMoreNavKeys.has(currentNavKey));
+        window.setTimeout(() => { backdrop.hidden = true; }, 180);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeMobileMenu();
+    });
 
     function setActivePage(pageKey, navKey = pageKey) {
         Object.entries(pages).forEach(([key, element]) => {
@@ -998,9 +1073,15 @@
         setMushafProgressTracking(true);
         setMushafVariant('surah');
         document.getElementById('mushafControls').style.display = 'flex';
-        setMushafRange(_0xData.surah);
+        const savedSurah = Math.max(1, Math.min(114, Number(_0xData.surah) || 1));
+        const savedTotalAyat = getAyatCountForSurah(savedSurah);
+        const savedAyat = Math.max(1, Math.min(savedTotalAyat, Number(_0xData.ayat) || 1));
+        const shouldOpenNextSurah = hasSavedProgress && savedSurah < 114 && savedAyat >= savedTotalAyat;
+        const resumeSurah = shouldOpenNextSurah ? savedSurah + 1 : savedSurah;
+        const resumeAyat = shouldOpenNextSurah ? 1 : savedAyat;
+        setMushafRange(resumeSurah);
         openMushaf('home');
-        loadSurah(_0xData.surah, _0xData.ayat, false);
+        loadSurah(resumeSurah, resumeAyat, false);
     }
 
     function toggleLatin() {
@@ -1053,7 +1134,7 @@
             html += `
             <div class="ayah-block">
                 <div class="ayah-arab" style="cursor:default;">
-                    ${renderedArab} <span class="ayah-end" style="opacity:0.5;">&#xFD3F;${_0xAr(index + 1)}&#xFD3E;</span>
+                    ${renderedArab} <span class="ayah-end" style="opacity:0.5;"><span class="ayah-number">${_0xAr(index + 1)}</span></span>
                 </div>
                 <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
                     ${renderedLatin}
@@ -1149,7 +1230,7 @@
                 html += `
                 <div class="ayah-block" id="block-${v.nomorAyat}">
                     <div class="ayah-arab">
-                        ${v.teksArab} <span class="ayah-end${markerClass}" ${saveAttr}>&#xFD3F;${_0xAr(v.nomorAyat)}&#xFD3E;</span>
+                        ${v.teksArab} <span class="ayah-end${markerClass}" ${saveAttr}><span class="ayah-number">${_0xAr(v.nomorAyat)}</span></span>
                     </div>
                     <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
                         ${v.teksLatin}
@@ -1159,6 +1240,26 @@
                     </div>
                 </div>`;
             });
+
+            if (mushafProgressTrackingEnabled && endAyat === totalAyat && Number(n) < 114) {
+                const nextSurah = Number(n) + 1;
+                const nextSurahName = surahList[nextSurah - 1] || `Surah ${nextSurah}`;
+                html += `
+                <div class="tilawah-next-surah">
+                    <p>Anda telah sampai di penghujung ${escapeHtml(String(d.namaLatin || `Surah ${n}`))}.</p>
+                    <button
+                        class="btn-main tilawah-next-surah-button"
+                        type="button"
+                        data-surah="${Number(n)}"
+                        data-total-ayat="${totalAyat}"
+                        data-surah-name="${encodeURIComponent(String(d.namaLatin || `Surah ${n}`))}"
+                        onclick="continueTilawahToNextSurah(this)"
+                    >
+                        Lanjutkan ke ${escapeHtml(nextSurahName)}
+                    </button>
+                </div>`;
+            }
+
             qC.innerHTML = html;
             normalizeRenderedText(qC);
 
@@ -1188,7 +1289,23 @@
         );
     }
 
-    async function _0xSet(s, a, n, t) {
+    async function continueTilawahToNextSurah(button) {
+        if (!mushafProgressTrackingEnabled || !button) return;
+
+        const currentSurah = Math.max(1, Math.min(113, Number(button.dataset.surah) || 1));
+        const totalAyat = Math.max(1, Number(button.dataset.totalAyat) || getAyatCountForSurah(currentSurah));
+        const surahName = decodeURIComponent(String(button.dataset.surahName || ''));
+        const nextSurah = currentSurah + 1;
+
+        button.disabled = true;
+        button.textContent = 'Menyiapkan surat berikutnya...';
+        await _0xSet(currentSurah, totalAyat, surahName, totalAyat, { showPopup: false });
+
+        setMushafRange(nextSurah);
+        await loadSurah(nextSurah, 1, false);
+    }
+
+    async function _0xSet(s, a, n, t, options = {}) {
         if (!mushafProgressTrackingEnabled) return;
         await _0xSave(s, a, n, t);
         document.querySelectorAll('.highlight').forEach(e => e.classList.remove('highlight'));
@@ -1196,6 +1313,7 @@
         if (currentBlock) {
             currentBlock.classList.add('highlight');
         }
+        if (options.showPopup === false) return;
         document.getElementById('popupMessage').innerText = `Tanda: ${n} Ayat ${a}`;
         document.getElementById('customPopup').style.display = 'flex';
     }
@@ -1208,9 +1326,10 @@
     showHome();
     _0xSync();
 </script>
-<script src="community.js?v=20260731-20"></script>
-<script src="prayer.js?v=20260731-6"></script>
-<script src="admin.js?v=20260731-6"></script>
+<script src="mobile-runtime.js?v=20260801-1"></script>
+<script src="community.js?v=20260801-2"></script>
+<script src="prayer.js?v=20260801-1"></script>
+<script src="admin.js?v=20260801-1"></script>
 </body>
 </html>
 

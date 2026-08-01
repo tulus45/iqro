@@ -479,6 +479,26 @@ function usePrayerCityFallback(message, locationRequestId) {
   void loadPrayerSchedule(true);
 }
 
+function applyPrayerDevicePosition(position, locationRequestId) {
+  if (locationRequestId !== prayerState.locationRequestId) return;
+  const latitude = Number(position.coords?.latitude);
+  const longitude = Number(position.coords?.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    usePrayerCityFallback('Koordinat dari perangkat tidak valid.', locationRequestId);
+    return;
+  }
+  prayerState.coordinates = {
+    latitude,
+    longitude,
+    accuracy: Number(position.coords?.accuracy) || null
+  };
+  prayerState.locating = false;
+  prayerState.locationNotice = '';
+  qiblaState.status = 'Arah kiblat dihitung dari lokasi perangkat.';
+  renderPrayerPage();
+  void loadPrayerSchedule(true);
+}
+
 function requestPrayerDeviceLocation() {
   closePrayerCityMenu();
   const locationRequestId = ++prayerState.locationRequestId;
@@ -495,6 +515,19 @@ function requestPrayerDeviceLocation() {
   window.localStorage.setItem(prayerLocationModeStorageKey, 'auto');
   renderPrayerPage();
 
+  if (window.IqroNative?.isNative) {
+    window.IqroNative.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 12000,
+      maximumAge: 300000
+    }).then((position) => {
+      applyPrayerDevicePosition(position, locationRequestId);
+    }).catch((error) => {
+      usePrayerCityFallback(prayerLocationErrorMessage(error), locationRequestId);
+    });
+    return;
+  }
+
   if (!window.isSecureContext) {
     usePrayerCityFallback('GPS browser hanya tersedia melalui HTTPS atau localhost.', locationRequestId);
     return;
@@ -505,23 +538,7 @@ function requestPrayerDeviceLocation() {
   }
 
   navigator.geolocation.getCurrentPosition((position) => {
-    if (locationRequestId !== prayerState.locationRequestId) return;
-    const latitude = Number(position.coords?.latitude);
-    const longitude = Number(position.coords?.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      usePrayerCityFallback('Koordinat dari perangkat tidak valid.', locationRequestId);
-      return;
-    }
-    prayerState.coordinates = {
-      latitude,
-      longitude,
-      accuracy: Number(position.coords?.accuracy) || null
-    };
-    prayerState.locating = false;
-    prayerState.locationNotice = '';
-    qiblaState.status = 'Arah kiblat dihitung dari lokasi perangkat.';
-    renderPrayerPage();
-    void loadPrayerSchedule(true);
+    applyPrayerDevicePosition(position, locationRequestId);
   }, (error) => {
     usePrayerCityFallback(prayerLocationErrorMessage(error), locationRequestId);
   }, {

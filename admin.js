@@ -226,6 +226,8 @@ function renderUserManagementPage() {
 
 function ensureUserManagementUi() {
   const nav = document.querySelector('.site-nav');
+  const mobileManageButton = document.getElementById('mobileManageUsersButton');
+  if (mobileManageButton) mobileManageButton.hidden = !hasUserManagementAccess();
   const existingButton = nav?.querySelector('[data-nav="manage-users"]');
   const existingPage = document.getElementById('userManagementPage');
 

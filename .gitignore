@@ -3,3 +3,9 @@ Thumbs.db
 
 server/data/app-db.json
 server/.env
+node_modules/
+www/
+android/.gradle/
+android/.idea/
+android/local.properties
+output/

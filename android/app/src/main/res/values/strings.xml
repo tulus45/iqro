@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Iqro</string>
+    <string name="title_activity_main">Iqro</string>
+    <string name="package_name">id.my.alus.iqro</string>
+    <string name="custom_url_scheme">id.my.alus.iqro</string>
+</resources>

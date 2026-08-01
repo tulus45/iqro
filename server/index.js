@@ -567,6 +567,46 @@ function recordDailyAyah(db, userId, surah, ayat) {
   return true;
 }
 
+function ayahSequenceNumber(surah, ayat) {
+  const safeSurah = Math.max(1, Math.min(114, Number(surah) || 1));
+  const totalAyat = SURAH_AYAT_COUNTS[safeSurah - 1] || 1;
+  const safeAyat = Math.max(1, Math.min(totalAyat, Number(ayat) || 1));
+  return SURAH_AYAT_COUNTS.slice(0, safeSurah - 1).reduce((sum, value) => sum + value, 0) + safeAyat;
+}
+
+function ayahPositionFromSequence(sequenceNumber) {
+  let remaining = Math.max(1, Math.min(
+    SURAH_AYAT_COUNTS.reduce((sum, value) => sum + value, 0),
+    Number(sequenceNumber) || 1
+  ));
+
+  for (let index = 0; index < SURAH_AYAT_COUNTS.length; index += 1) {
+    if (remaining <= SURAH_AYAT_COUNTS[index]) {
+      return { surah: index + 1, ayat: remaining };
+    }
+    remaining -= SURAH_AYAT_COUNTS[index];
+  }
+
+  return { surah: 114, ayat: SURAH_AYAT_COUNTS[113] };
+}
+
+function recordDailyProgressRange(db, userId, previousProgress, nextProgress) {
+  const nextSequence = ayahSequenceNumber(nextProgress?.surah, nextProgress?.ayat);
+  const previousSequence = previousProgress
+    ? ayahSequenceNumber(previousProgress.surah, previousProgress.ayat)
+    : null;
+  const startSequence = previousSequence !== null && nextSequence > previousSequence
+    ? previousSequence + 1
+    : (previousSequence === null ? nextSequence - Math.max(1, Number(nextProgress?.ayat) || 1) + 1 : nextSequence);
+
+  let recorded = 0;
+  for (let sequence = startSequence; sequence <= nextSequence; sequence += 1) {
+    const position = ayahPositionFromSequence(sequence);
+    if (recordDailyAyah(db, userId, position.surah, position.ayat)) recorded += 1;
+  }
+  return recorded;
+}
+
 function computeProgressSummary(progress) {
   if (!progress) return null;
   const currentAyatCount = SURAH_AYAT_COUNTS[progress.surah - 1] || progress.totalAyat || 1;
@@ -655,7 +695,12 @@ function appState(db, user) {
     .filter((group) => Array.isArray(group.memberIds) && group.memberIds.includes(user.id))
     .map((group) => groupView(db, group))
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
-  return { user: userView(db, user, { includeMemorialNames: true, includeDailyReading: true }), friends, groups };
+  return {
+    requiresPasswordChange: Boolean(user.mustChangePassword),
+    user: userView(db, user, { includeMemorialNames: true, includeDailyReading: true }),
+    friends,
+    groups
+  };
 }
 
 function managerState(db, manager, options = {}) {
@@ -1098,6 +1143,7 @@ function createServer() {
         const body = await parseJsonBody(req);
         const surah = Math.max(1, Math.min(114, Number(body.surah) || 1));
         const totalAyat = SURAH_AYAT_COUNTS[surah - 1] || Math.max(1, Number(body.totalAyat) || 1);
+        const previousProgress = progressRecord(db, userAuth.subject.id);
         db.progressByUserId[userAuth.subject.id] = {
           surah,
           ayat: Math.max(1, Math.min(totalAyat, Number(body.ayat) || 1)),
@@ -1105,7 +1151,9 @@ function createServer() {
           totalAyat,
           updatedAt: nowIso()
         };
-        if (body.trackDaily === true) recordDailyAyah(db, userAuth.subject.id, surah, db.progressByUserId[userAuth.subject.id].ayat);
+        if (body.trackDaily === true) {
+          recordDailyProgressRange(db, userAuth.subject.id, previousProgress, db.progressByUserId[userAuth.subject.id]);
+        }
         dirty = true;
         finish(200, { message: 'Progress tilawah tersimpan ke akun.', ...appState(db, userAuth.subject) });
         return;
@@ -1284,4 +1332,10 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createServer, normalizePhone, computeProgressSummary, isValidPassword: validPassword };
+module.exports = {
+  createServer,
+  normalizePhone,
+  computeProgressSummary,
+  recordDailyProgressRange,
+  isValidPassword: validPassword
+};
