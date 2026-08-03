@@ -38,7 +38,7 @@ const DEV_OWNER_PASSWORD = 'Admin#Iqro2026';
 const MAX_MEMORIAL_NAMES = 20;
 const MAX_MEMORIAL_NAME_LENGTH = 80;
 const DAILY_READING_TIME_ZONE = 'Asia/Jakarta';
-const DAILY_READING_HISTORY_DAYS = 45;
+const DAILY_READING_HISTORY_DAYS = 93;
 const PRAYER_TIMES_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 const prayerTimesCache = new Map();
 const PRAYER_LOCATIONS = Object.freeze({
@@ -73,6 +73,41 @@ function readingDateKey(date = new Date()) {
     return output;
   }, {});
   return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function parseReadingDateKey(dateKey) {
+  const match = String(dateKey || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  return new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+}
+
+function readingDateKeyFromUtcDate(date) {
+  return [
+    String(date.getUTCFullYear()).padStart(4, '0'),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0')
+  ].join('-');
+}
+
+function shiftReadingDateKey(dateKey, dayOffset) {
+  const date = parseReadingDateKey(dateKey);
+  if (!date) return dateKey;
+  date.setUTCDate(date.getUTCDate() + Number(dayOffset || 0));
+  return readingDateKeyFromUtcDate(date);
+}
+
+function countDailyAyatInRange(records, startDateKey, endDateKey) {
+  if (!isObj(records)) return 0;
+  return Object.entries(records).reduce((total, [dateKey, ayahKeys]) => {
+    if (dateKey < startDateKey || dateKey > endDateKey || !Array.isArray(ayahKeys)) return total;
+    return total + ayahKeys.length;
+  }, 0);
+}
+
+function readingPeriodComparison(current, previous) {
+  const safeCurrent = Math.max(0, Number(current) || 0);
+  const safePrevious = Math.max(0, Number(previous) || 0);
+  return { current: safeCurrent, previous: safePrevious, difference: safeCurrent - safePrevious };
 }
 
 function isObj(value) {
@@ -230,7 +265,7 @@ ${whatsappClosingSalam}`;
   return whatsappDelivery(owner.phone, message);
 }
 function emptyDb() {
-  return { users: [], sessions: [], friendships: [], groups: [], progressByUserId: {}, dailyReadingByUserId: {} };
+  return { users: [], sessions: [], friendships: [], friendRequests: [], groups: [], progressByUserId: {}, dailyReadingByUserId: {} };
 }
 
 function normalizeUser(value) {
@@ -261,6 +296,7 @@ function normalizeUser(value) {
     mustChangePassword: Boolean(value.mustChangePassword),
     passwordResetAt: String(value.passwordResetAt || ''),
     passwordResetRequest,
+    shareReadingStats: value.shareReadingStats === true,
     createdAt,
     updatedAt: String(value.updatedAt || createdAt),
     lastLoginAt: String(value.lastLoginAt || '')
@@ -304,6 +340,19 @@ function normalizeFriendship(value) {
   const userBId = String(value.userBId || '').trim();
   if (!userAId || !userBId || userAId === userBId) return null;
   return { id: String(value.id || `fr_${crypto.randomUUID()}`), userAId, userBId, createdAt: String(value.createdAt || nowIso()) };
+}
+
+function normalizeFriendRequest(value) {
+  if (!isObj(value)) return null;
+  const fromUserId = String(value.fromUserId || '').trim();
+  const toUserId = String(value.toUserId || '').trim();
+  if (!fromUserId || !toUserId || fromUserId === toUserId) return null;
+  return {
+    id: String(value.id || `frq_${crypto.randomUUID()}`),
+    fromUserId,
+    toUserId,
+    createdAt: String(value.createdAt || nowIso())
+  };
 }
 
 function normalizeGroup(value) {
@@ -373,6 +422,7 @@ function normalizeDb(value) {
     users: Array.isArray(raw.users) ? raw.users.map(normalizeUser).filter(Boolean) : [],
     sessions: Array.isArray(raw.sessions) ? raw.sessions.map(normalizeSession).filter(Boolean) : [],
     friendships: Array.isArray(raw.friendships) ? raw.friendships.map(normalizeFriendship).filter(Boolean) : [],
+    friendRequests: Array.isArray(raw.friendRequests) ? raw.friendRequests.map(normalizeFriendRequest).filter(Boolean) : [],
     groups: Array.isArray(raw.groups) ? raw.groups.map(normalizeGroup).filter(Boolean) : [],
     progressByUserId: normalizeProgressMap(raw.progressByUserId),
     dailyReadingByUserId: normalizeDailyReadingMap(raw.dailyReadingByUserId)
@@ -551,9 +601,56 @@ function progressRecord(db, userId) {
 
 function dailyReadingView(db, userId) {
   const date = readingDateKey();
-  const ayahKeys = db.dailyReadingByUserId?.[userId]?.[date];
-  const ayatCount = Array.isArray(ayahKeys) ? ayahKeys.length : 0;
-  return { date, ayatCount, hasReadToday: ayatCount > 0 };
+  const records = db.dailyReadingByUserId?.[userId] || {};
+  const todayDate = parseReadingDateKey(date);
+  const yesterdayDateKey = shiftReadingDateKey(date, -1);
+  const day = readingPeriodComparison(
+    countDailyAyatInRange(records, date, date),
+    countDailyAyatInRange(records, yesterdayDateKey, yesterdayDateKey)
+  );
+
+  const mondayOffset = todayDate ? (todayDate.getUTCDay() + 6) % 7 : 0;
+  const currentWeekStart = shiftReadingDateKey(date, -mondayOffset);
+  const previousWeekStart = shiftReadingDateKey(currentWeekStart, -7);
+  const previousWeekEnd = shiftReadingDateKey(date, -7);
+  const week = readingPeriodComparison(
+    countDailyAyatInRange(records, currentWeekStart, date),
+    countDailyAyatInRange(records, previousWeekStart, previousWeekEnd)
+  );
+
+  const currentYear = todayDate?.getUTCFullYear() || new Date().getUTCFullYear();
+  const currentMonth = todayDate?.getUTCMonth() || 0;
+  const currentDay = todayDate?.getUTCDate() || 1;
+  const currentMonthStart = readingDateKeyFromUtcDate(new Date(Date.UTC(currentYear, currentMonth, 1)));
+  const previousMonthStartDate = new Date(Date.UTC(currentYear, currentMonth - 1, 1));
+  const previousMonthLastDay = new Date(Date.UTC(currentYear, currentMonth, 0)).getUTCDate();
+  const previousMonthEndDate = new Date(Date.UTC(
+    previousMonthStartDate.getUTCFullYear(),
+    previousMonthStartDate.getUTCMonth(),
+    Math.min(currentDay, previousMonthLastDay)
+  ));
+  const previousMonthStart = readingDateKeyFromUtcDate(previousMonthStartDate);
+  const previousMonthEnd = readingDateKeyFromUtcDate(previousMonthEndDate);
+  const previousMonthFullEnd = readingDateKeyFromUtcDate(new Date(Date.UTC(currentYear, currentMonth, 0)));
+  const previousMonthTotal = countDailyAyatInRange(records, previousMonthStart, previousMonthFullEnd);
+  const month = readingPeriodComparison(
+    countDailyAyatInRange(records, currentMonthStart, date),
+    countDailyAyatInRange(records, previousMonthStart, previousMonthEnd)
+  );
+
+  return {
+    date,
+    ayatCount: day.current,
+    hasReadToday: day.current > 0,
+    comparisonBasis: 'period-to-date',
+    comparisons: { day, week, month },
+    totals: {
+      today: day.current,
+      week: week.current,
+      currentMonth: month.current,
+      previousMonth: previousMonthTotal
+    }
+  };
 }
 
 function recordDailyAyah(db, userId, surah, ayat) {
@@ -637,7 +734,15 @@ function isFriend(db, firstUserId, secondUserId) {
   ));
 }
 
+function findFriendRequest(db, firstUserId, secondUserId) {
+  return db.friendRequests.find((request) => (
+    (request.fromUserId === firstUserId && request.toUserId === secondUserId) ||
+    (request.fromUserId === secondUserId && request.toUserId === firstUserId)
+  ));
+}
+
 function userView(db, user, options = {}) {
+  if (!user) return null;
   const includeProgress = options.includeProgress !== false;
   const progress = includeProgress ? progressRecord(db, user.id) : null;
   const summary = includeProgress ? computeProgressSummary(progress) : null;
@@ -653,9 +758,14 @@ function userView(db, user, options = {}) {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     lastLoginAt: user.lastLoginAt,
-    isOwner: Boolean(options.isOwner)
+    isOwner: Boolean(options.isOwner),
+    shareReadingStats: Boolean(user.shareReadingStats)
   };
-  if (includeProgress) view.progress = progress ? { ...progress, summary } : null;
+  if (includeProgress) {
+    view.progress = progress
+      ? (options.progressSummaryOnly ? { updatedAt: progress.updatedAt, summary } : { ...progress, summary })
+      : null;
+  }
   if (options.includeDailyReading) view.dailyReading = dailyReadingView(db, user.id);
   if (options.includeMemorialNames) view.memorialNames = normalizeMemorialNames(user.memorialNames);
   if (options.includeAdminFields) view.hasPassword = Boolean(user.passwordHash);
@@ -663,14 +773,21 @@ function userView(db, user, options = {}) {
   return view;
 }
 
-function groupView(db, group) {
+function groupView(db, group, viewerUserId) {
   const members = (Array.isArray(group.memberIds) ? group.memberIds : [])
     .map((memberId) => db.users.find((user) => user.id === memberId))
     .filter(Boolean)
-    .map((user) => userView(db, user, {
-      isOwner: user.id === group.ownerUserId,
-      includeDailyReading: true
-    }))
+    .map((user) => {
+      const canViewStats = user.id === viewerUserId || (
+        user.shareReadingStats === true && isFriend(db, viewerUserId, user.id)
+      );
+      return userView(db, user, {
+        isOwner: user.id === group.ownerUserId,
+        includeProgress: canViewStats,
+        progressSummaryOnly: true,
+        includeDailyReading: canViewStats
+      });
+    })
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
   const ready = members.filter((member) => member.progress?.summary?.percent != null);
   const averagePercent = ready.length ? Number((ready.reduce((sum, member) => sum + member.progress.summary.percent, 0) / ready.length).toFixed(2)) : null;
@@ -689,16 +806,39 @@ function appState(db, user) {
   const friends = friendIds(db, user.id)
     .map((friendUserId) => db.users.find((item) => item.id === friendUserId))
     .filter(Boolean)
-    .map((friend) => userView(db, friend, { includeDailyReading: true }))
+    .map((friend) => userView(db, friend, {
+      includeProgress: false,
+      includeDailyReading: friend.shareReadingStats === true
+    }))
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
+  const incomingFriendRequests = db.friendRequests
+    .filter((request) => request.toUserId === user.id)
+    .map((request) => ({
+      id: request.id,
+      createdAt: request.createdAt,
+      user: userView(db, db.users.find((item) => item.id === request.fromUserId), { includeProgress: false })
+    }))
+    .filter((request) => request.user?.id)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  const outgoingFriendRequests = db.friendRequests
+    .filter((request) => request.fromUserId === user.id)
+    .map((request) => ({
+      id: request.id,
+      createdAt: request.createdAt,
+      user: userView(db, db.users.find((item) => item.id === request.toUserId), { includeProgress: false })
+    }))
+    .filter((request) => request.user?.id)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
   const groups = db.groups
     .filter((group) => Array.isArray(group.memberIds) && group.memberIds.includes(user.id))
-    .map((group) => groupView(db, group))
+    .map((group) => groupView(db, group, user.id))
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
   return {
     requiresPasswordChange: Boolean(user.mustChangePassword),
     user: userView(db, user, { includeMemorialNames: true, includeDailyReading: true }),
     friends,
+    incomingFriendRequests,
+    outgoingFriendRequests,
     groups
   };
 }
@@ -760,6 +900,7 @@ function createUser(phone, name, password, options = {}) {
     phone,
     name: cleanText(name, `Sahabat ${phone.slice(-4)}`, 60),
     memorialNames: [],
+    shareReadingStats: false,
     role: 'user',
     accountStatus,
     passwordHash: hashSecret(password),
@@ -1086,6 +1227,24 @@ function createServer() {
         return;
       }
 
+      if (requestUrl.pathname === '/api/me/privacy' && req.method === 'PUT') {
+        if (!needUser(userAuth, finish)) return;
+        const body = await parseJsonBody(req);
+        if (typeof body.shareReadingStats !== 'boolean') {
+          return finish(400, { message: 'Pilihan berbagi statistik tidak valid.' });
+        }
+        userAuth.subject.shareReadingStats = body.shareReadingStats;
+        userAuth.subject.updatedAt = nowIso();
+        dirty = true;
+        finish(200, {
+          message: body.shareReadingStats
+            ? 'Statistik tilawah sekarang dibagikan kepada teman yang sudah Anda setujui.'
+            : 'Statistik tilawah sekarang bersifat privat.',
+          ...appState(db, userAuth.subject)
+        });
+        return;
+      }
+
       if (requestUrl.pathname === '/api/me/memorial-names' && req.method === 'PUT') {
         if (!needUser(userAuth, finish)) return;
         const body = await parseJsonBody(req);
@@ -1166,12 +1325,55 @@ function createServer() {
         if (!phone) return finish(400, { message: 'Nomor HP teman belum valid.' });
         const friend = db.users.find((item) => item.phone === phone);
         if (!friend) return finish(404, { message: 'Nomor HP tersebut belum pernah login di Iqro.' });
+        if (friend.accountStatus !== 'active') return finish(409, { message: 'Akun teman tersebut belum aktif.' });
         if (friend.id === userAuth.subject.id) return finish(400, { message: 'Nomor HP Anda sendiri tidak bisa ditambahkan sebagai teman.' });
-        if (!isFriend(db, userAuth.subject.id, friend.id)) {
-          db.friendships.push({ id: `fr_${crypto.randomUUID()}`, userAId: userAuth.subject.id, userBId: friend.id, createdAt: nowIso() });
-          dirty = true;
+        if (isFriend(db, userAuth.subject.id, friend.id)) {
+          return finish(200, { message: `${friend.name} sudah ada di daftar teman Anda.`, ...appState(db, userAuth.subject) });
         }
-        finish(200, { message: `${friend.name} berhasil ditambahkan sebagai teman.`, ...appState(db, userAuth.subject) });
+        const existingRequest = findFriendRequest(db, userAuth.subject.id, friend.id);
+        if (existingRequest) {
+          const message = existingRequest.fromUserId === userAuth.subject.id
+            ? `Permintaan pertemanan kepada ${friend.name} masih menunggu persetujuan.`
+            : `${friend.name} sudah mengirim permintaan kepada Anda. Silakan terima dari daftar permintaan masuk.`;
+          return finish(200, { message, ...appState(db, userAuth.subject) });
+        }
+        db.friendRequests.push({
+          id: `frq_${crypto.randomUUID()}`,
+          fromUserId: userAuth.subject.id,
+          toUserId: friend.id,
+          createdAt: nowIso()
+        });
+        dirty = true;
+        finish(200, { message: `Permintaan pertemanan dikirim kepada ${friend.name}.`, ...appState(db, userAuth.subject) });
+        return;
+      }
+
+      const friendRequestMatch = requestUrl.pathname.match(/^\/api\/friend-requests\/([^/]+)\/(accept|decline)$/);
+      if (friendRequestMatch && req.method === 'POST') {
+        if (!needUser(userAuth, finish)) return;
+        const requestId = decodeURIComponent(friendRequestMatch[1]);
+        const action = friendRequestMatch[2];
+        const friendRequest = db.friendRequests.find((item) => item.id === requestId);
+        if (!friendRequest || friendRequest.toUserId !== userAuth.subject.id) {
+          return finish(404, { message: 'Permintaan pertemanan tidak ditemukan.' });
+        }
+        const requester = db.users.find((item) => item.id === friendRequest.fromUserId);
+        db.friendRequests = db.friendRequests.filter((item) => item.id !== friendRequest.id);
+        if (action === 'accept' && requester && !isFriend(db, userAuth.subject.id, requester.id)) {
+          db.friendships.push({
+            id: `fr_${crypto.randomUUID()}`,
+            userAId: requester.id,
+            userBId: userAuth.subject.id,
+            createdAt: nowIso()
+          });
+        }
+        dirty = true;
+        finish(200, {
+          message: action === 'accept'
+            ? `${requester?.name || 'Sahabat'} sekarang menjadi teman Anda.`
+            : 'Permintaan pertemanan ditolak.',
+          ...appState(db, userAuth.subject)
+        });
         return;
       }
 
@@ -1201,7 +1403,7 @@ function createServer() {
         if (!needUser(userAuth, finish)) return;
         const group = db.groups.find((item) => item.id === addMemberMatch[1]);
         if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (!Array.isArray(group.memberIds) || !group.memberIds.includes(userAuth.subject.id)) return finish(403, { message: 'Anda belum menjadi anggota group ini.' });
+        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya admin group yang dapat menambahkan anggota.' });
         const body = await parseJsonBody(req);
         const phone = normalizePhone(body.phone);
         if (!phone) return finish(400, { message: 'Nomor HP anggota belum valid.' });
@@ -1213,6 +1415,26 @@ function createServer() {
           dirty = true;
         }
         finish(200, { message: `${member.name} berhasil masuk ke group ${group.name}.`, ...appState(db, userAuth.subject) });
+        return;
+      }
+
+      const removeMemberMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/members\/([^/]+)$/);
+      if (removeMemberMatch && req.method === 'DELETE') {
+        if (!needUser(userAuth, finish)) return;
+        const groupId = decodeURIComponent(removeMemberMatch[1]);
+        const memberId = decodeURIComponent(removeMemberMatch[2]);
+        const group = db.groups.find((item) => item.id === groupId);
+        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya admin group yang dapat menghapus anggota.' });
+        if (memberId === group.ownerUserId) return finish(400, { message: 'Admin group tidak dapat dihapus dari group.' });
+        if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
+        const member = db.users.find((item) => item.id === memberId);
+        group.memberIds = group.memberIds.filter((item) => item !== memberId);
+        dirty = true;
+        finish(200, {
+          message: `${member?.name || 'Anggota'} berhasil dikeluarkan dari group ${group.name}.`,
+          ...appState(db, userAuth.subject)
+        });
         return;
       }
 
@@ -1290,6 +1512,9 @@ function createServer() {
         const friendshipCount = db.friendships.length;
         db.friendships = db.friendships.filter((item) => item.userAId !== user.id && item.userBId !== user.id);
         const removedFriendshipCount = friendshipCount - db.friendships.length;
+        const friendRequestCount = db.friendRequests.length;
+        db.friendRequests = db.friendRequests.filter((item) => item.fromUserId !== user.id && item.toUserId !== user.id);
+        const removedFriendRequestCount = friendRequestCount - db.friendRequests.length;
         delete db.progressByUserId[user.id];
         delete db.dailyReadingByUserId[user.id];
 
@@ -1309,7 +1534,7 @@ function createServer() {
         dirty = true;
         finish(200, {
           message: `Akun ${user.name} berhasil dihapus.`,
-          cleanup: { revokedSessionCount, removedFriendshipCount, transferredGroupCount, removedGroupCount },
+          cleanup: { revokedSessionCount, removedFriendshipCount, removedFriendRequestCount, transferredGroupCount, removedGroupCount },
           ...managerState(db, userAuth.subject, managementOptions)
         });
         return;
@@ -1337,5 +1562,6 @@ module.exports = {
   normalizePhone,
   computeProgressSummary,
   recordDailyProgressRange,
+  dailyReadingView,
   isValidPassword: validPassword
 };

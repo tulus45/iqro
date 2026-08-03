@@ -198,7 +198,6 @@ body.mobile-menu-open {
     }
 
     .home-dashboard .home-progress-value span,
-    .home-dashboard .home-daily-reading span,
     .home-dashboard .home-last-read-ayat {
         font-size: 0.68rem;
         line-height: 1.3;
@@ -211,6 +210,41 @@ body.mobile-menu-open {
 
     .home-dashboard .home-daily-card {
         justify-content: flex-start;
+    }
+
+    .home-dashboard .home-reading-comparisons {
+        gap: 1px;
+    }
+
+    .home-dashboard .home-comparison-row {
+        grid-template-columns: minmax(0, 1fr) auto minmax(29px, auto);
+        gap: 4px;
+        min-height: 23px;
+        padding: 2px 0;
+    }
+
+    .home-dashboard .home-comparison-period {
+        gap: 0;
+    }
+
+    .home-dashboard .home-comparison-period > strong {
+        font-size: 0.58rem;
+        line-height: 1.1;
+    }
+
+    .home-dashboard .home-comparison-period small {
+        font-size: 0.48rem;
+        line-height: 1.1;
+    }
+
+    .home-dashboard .home-comparison-current {
+        font-size: 0.9rem;
+    }
+
+    .home-dashboard .home-comparison-trend {
+        min-width: 27px;
+        padding: 3px 4px;
+        font-size: 0.48rem;
     }
 
     .home-dashboard .home-daily-reading {
@@ -365,8 +399,9 @@ body.mobile-menu-open {
     .page-prayer .prayer-next-card {
         width: 100%;
         min-height: 0;
-        padding: 10px 12px;
-        border-radius: 16px;
+        padding: 9px 12px 8px;
+        border-radius: 15px;
+        box-shadow: 0 16px 32px rgba(6, 78, 44, 0.16);
     }
 
     .page-prayer .prayer-next-topline {
@@ -379,7 +414,7 @@ body.mobile-menu-open {
     }
 
     .page-prayer .prayer-next-main {
-        margin-top: 5px;
+        margin-top: 3px;
     }
 
     .page-prayer .prayer-next-main p {
@@ -388,15 +423,15 @@ body.mobile-menu-open {
     }
 
     .page-prayer .prayer-next-main strong {
-        font-size: 1.7rem;
+        font-size: 1.55rem;
     }
 
     .page-prayer .prayer-next-index {
-        font-size: 2.1rem;
+        font-size: 1.75rem;
     }
 
     .page-prayer .prayer-countdown {
-        margin: 5px 0 4px;
+        margin: 3px 0;
         font-size: 0.58rem;
     }
 
@@ -500,6 +535,7 @@ body.mobile-menu-open {
         margin-top: 5px;
         padding: 5px 8px;
         font-size: 0.57rem;
+        white-space: nowrap;
     }
 
     .page-prayer .qibla-compass-wrap {
@@ -604,6 +640,37 @@ body.mobile-menu-open {
         line-height: 2.05;
     }
 
+    html[data-quran-size="small"] .ayah-arab {
+        font-size: clamp(1.72rem, 7.1vw, 2.12rem);
+    }
+
+    html[data-quran-size="large"] .ayah-arab {
+        font-size: clamp(2.12rem, 8.8vw, 2.62rem);
+    }
+
+    html[data-quran-spacing="relaxed"] .ayah-arab {
+        line-height: 2.32;
+    }
+
+    .settings-quran-card {
+        gap: 16px;
+    }
+
+    .quran-font-option {
+        min-height: 116px;
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .quran-font-option-sample {
+        font-size: 1.52rem;
+    }
+
+    .quran-preview {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
     .auth-gate-card {
         padding: 8px;
         border-radius: 24px;
@@ -631,138 +698,267 @@ body.mobile-menu-open {
         border-radius: 7px 7px 18px 18px;
     }
 
-    body.is-login-screen .site-shell {
-        min-height: calc(100dvh - var(--app-safe-top));
-        padding-top: 8px;
-        padding-bottom: max(8px, var(--app-safe-bottom));
+    body.is-auth-entry-screen {
+        background: #fbfcfa;
     }
 
-    body.is-login-screen .site-header {
-        min-height: 54px;
-        padding: 7px 10px;
-        margin-bottom: 8px;
-        border-radius: 18px;
+    body.is-auth-entry-screen::before {
+        display: none;
     }
 
-    body.is-login-screen .site-header .brand-mark {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
+    body.is-auth-entry-screen .site-shell {
+        min-height: calc(100dvh - var(--app-safe-top) - var(--app-safe-bottom));
+        padding: 8px 12px max(8px, var(--app-safe-bottom));
+        background: rgba(255, 255, 255, 0.7);
     }
 
-    body.is-login-screen .auth-gate-card-login {
-        gap: 6px;
-        padding: 6px;
+    body.is-auth-entry-screen .site-header {
+        position: relative;
+        top: auto;
+        min-height: 66px;
+        padding: 9px 12px;
+        margin-bottom: 0;
         border-radius: 22px;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.065);
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-intro {
-        min-height: 124px;
-        padding: 14px 16px;
-        gap: 5px;
-        border-radius: 16px 16px 6px 6px;
+    body.is-auth-entry-screen .site-header .brand-mark {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-intro::before {
-        top: -230px;
-        right: -170px;
+    body.is-auth-entry-screen .page-home {
+        padding-top: 0;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-calligraphy {
-        top: 12px;
-        right: 16px;
-        width: 72px;
+    body.is-auth-entry-screen .auth-gate-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        min-height: calc(100dvh - var(--app-safe-top) - var(--app-safe-bottom) - 82px);
+        padding: 0 12px;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-intro .section-kicker {
-        margin-bottom: 3px;
-        font-size: 0.66rem;
-        letter-spacing: 0.16em;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-intro {
+        display: block;
+        flex: 0 0 clamp(180px, 28dvh, 290px);
+        min-height: 0;
+        padding: 0;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-title {
-        max-width: calc(100% - 72px);
-        font-size: clamp(1.5rem, 7vw, 1.9rem);
-        line-height: 1.02;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-intro::before {
+        top: 22px;
+        right: -28px;
+        width: 230px;
+        height: 230px;
+        border: 0;
+        background: radial-gradient(circle, rgba(22, 163, 74, 0.045), transparent 68%);
+        box-shadow: none;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-panel {
-        gap: 8px;
-        padding: 12px 14px 14px;
-        border-radius: 6px 6px 16px 16px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-calligraphy {
+        top: 42px;
+        right: -8px;
+        width: clamp(132px, 42vw, 190px);
+        opacity: 0.13;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-mode-tabs {
-        padding: 2px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-calligraphy img {
+        opacity: 1;
+        filter: grayscale(1);
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-mode-button {
-        min-width: 78px;
-        min-height: 32px;
-        padding: 5px 12px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-intro .section-kicker,
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-title {
+        display: none;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel {
+        flex: 1 1 auto;
+        justify-content: flex-start;
+        align-self: stretch;
+        gap: 22px;
+        min-height: 0;
+        margin: 0;
+        padding: 0 2px 10px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-mode-tabs {
+        display: none;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel-heading {
+        display: block;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel-heading .home-card-label,
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel-heading > p:last-child {
+        display: none;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel-heading .community-section-title {
+        max-width: 330px;
+        color: #166534;
+        font-size: clamp(2.05rem, 10vw, 2.75rem);
+        line-height: 1.03;
+        letter-spacing: -0.045em;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-message {
+        padding: 10px 12px;
+        border-radius: 12px;
         font-size: 0.78rem;
+        line-height: 1.4;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-panel-heading {
-        gap: 3px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-form {
+        gap: 14px;
     }
 
-    body.is-login-screen .auth-gate-card-login .home-card-label {
-        font-size: 0.68rem;
-        letter-spacing: 0.12em;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-form .community-field {
+        gap: 7px;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-panel-heading .community-section-title {
-        font-size: 1.4rem;
-        line-height: 1.08;
-    }
-
-    body.is-login-screen .auth-gate-card-login .auth-gate-panel-heading > p:last-child {
-        font-size: 0.75rem;
-        line-height: 1.35;
-    }
-
-    body.is-login-screen .auth-gate-card-login .auth-gate-message {
-        padding: 8px 10px;
-        border-radius: 11px;
-        font-size: 0.74rem;
-        line-height: 1.35;
-    }
-
-    body.is-login-screen .auth-gate-card-login .auth-gate-form {
-        gap: 8px;
-    }
-
-    body.is-login-screen .auth-gate-card-login .auth-gate-form .community-field {
-        gap: 4px;
-    }
-
-    body.is-login-screen .auth-gate-card-login .auth-gate-form .community-field span {
-        font-size: 0.78rem;
-    }
-
-    body.is-login-screen .auth-gate-card-login .auth-gate-form .community-input {
-        min-height: 40px;
-        padding: 8px 12px;
-        border-radius: 11px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-form .community-field > span:first-child {
         font-size: 0.84rem;
+        font-weight: 700;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-forgot-password {
-        margin-top: -3px;
-        font-size: 0.74rem;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-form .community-input {
+        min-height: 58px;
+        padding: 13px 14px;
+        border: 1px solid rgba(17, 24, 39, 0.18);
+        border-radius: 15px;
+        font-size: 1rem;
+        font-weight: 450;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: none;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-submit {
-        min-width: 128px;
-        min-height: 40px;
-        padding: 8px 18px;
-        border-radius: 11px;
-        font-size: 0.82rem;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-form .community-input:focus {
+        border-color: #166534;
+        box-shadow: 0 0 0 2px rgba(22, 101, 52, 0.08);
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-switch {
+    body.is-auth-entry-screen .auth-gate-card .auth-password-control,
+    body.is-auth-entry-screen .auth-gate-card .auth-password-control .community-input {
+        width: 100%;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-password-control .community-input {
+        padding-right: 52px;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-password-meta {
+        margin-top: -7px;
         font-size: 0.76rem;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-password-meta > span {
+        color: #66736b;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-forgot-password {
+        flex: 0 0 auto;
+        font-size: 0.76rem;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-submit {
+        align-self: stretch;
+        width: 100%;
+        min-height: 56px;
+        margin-top: 14px;
+        padding: 12px 18px;
+        border-radius: 14px;
+        font-size: 1rem;
+        box-shadow: 0 14px 28px rgba(22, 163, 74, 0.2);
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-switch {
+        margin-top: auto;
+        padding-top: 18px;
+        color: #27332c;
+        font-size: 0.88rem;
+        text-align: center;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-intro {
+        flex-basis: clamp(76px, 11dvh, 106px);
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-intro::before {
+        top: -22px;
+        width: 160px;
+        height: 160px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-calligraphy {
+        top: 10px;
+        right: -2px;
+        width: 96px;
+        opacity: 0.1;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-panel {
+        gap: 13px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-panel-heading .community-section-title {
+        font-size: clamp(1.9rem, 9vw, 2.35rem);
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-form {
+        gap: 10px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-form .community-field {
+        gap: 5px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-form .community-input {
+        min-height: 50px;
+        padding-block: 10px;
+        font-size: 0.9rem;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-reward-consent {
+        gap: 9px;
+        padding: 10px 11px;
+        border-radius: 13px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-reward-consent span {
+        font-size: 0.7rem;
+        line-height: 1.45;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-reward-consent strong {
+        margin-bottom: 1px;
+        font-size: 0.66rem;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-submit {
+        min-height: 50px;
+        margin-top: 2px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-switch {
+        padding-top: 8px;
     }
 
     .mobile-tab-bar:not([hidden]) {
@@ -983,22 +1179,59 @@ body.mobile-menu-open {
 }
 
 @media (max-width: 720px) and (max-height: 720px) {
-    body.is-login-screen .auth-gate-card-login .auth-gate-intro {
-        min-height: 92px;
-        padding-block: 10px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-intro {
+        flex-basis: 118px;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-calligraphy {
-        top: 8px;
-        width: 56px;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-calligraphy {
+        top: 18px;
+        width: 108px;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-title {
-        font-size: 1.35rem;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel {
+        gap: 13px;
     }
 
-    body.is-login-screen .auth-gate-card-login .auth-gate-panel-heading > p:last-child {
-        display: none;
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-panel-heading .community-section-title {
+        font-size: 1.85rem;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-form .community-input {
+        min-height: 48px;
+    }
+
+    body.is-auth-entry-screen .auth-gate-card .auth-gate-submit {
+        min-height: 48px;
+        margin-top: 4px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-intro {
+        flex-basis: 58px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-calligraphy {
+        top: 4px;
+        width: 72px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-panel {
+        gap: 8px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-form {
+        gap: 7px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-form .community-input {
+        min-height: 44px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-reward-consent {
+        padding: 8px 9px;
+    }
+
+    body.is-register-screen .auth-gate-card .auth-gate-switch {
+        padding-top: 2px;
     }
 }
 

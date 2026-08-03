@@ -132,7 +132,13 @@ function renderQiblaCompass() {
   }
   if (status) status.textContent = isAligned ? 'Arah kiblat sudah sejajar.' : qiblaState.status;
   if (alignment) alignment.textContent = isAligned ? 'Sudah sejajar' : 'Arah kiblat';
-  if (button) button.textContent = qiblaState.active ? 'Kompas aktif' : 'Aktifkan kompas';
+  if (button) {
+    button.textContent = qiblaState.active ? 'Perbarui arah' : 'Gunakan sensor arah';
+    button.classList.toggle('is-active', qiblaState.active);
+    button.setAttribute('aria-label', qiblaState.active
+      ? 'Perbarui pembacaan sensor arah kiblat'
+      : 'Gunakan sensor arah perangkat untuk kompas kiblat');
+  }
   if (face) {
     face.classList.toggle('is-aligned', isAligned);
     face.setAttribute('aria-label', `Arah kiblat ${Math.round(bearing)} derajat dari utara${isAligned ? ', sudah sejajar' : ''}`);

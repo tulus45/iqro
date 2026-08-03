@@ -1,14 +1,120 @@
 const iqroSessionStorageKey = 'iqro_session_token';
 const iqroPlayStoreUrl = 'https://play.google.com/store/apps/details?id=com.example.iqro';
+const quranDisplayStorageKey = 'iqro_quran_display_preferences';
+const quranDisplayDefaults = Object.freeze({
+  font: 'lpmq',
+  size: 'normal',
+  spacing: 'normal'
+});
+const quranDisplayAllowedValues = Object.freeze({
+  font: ['lpmq', 'scheherazade', 'madinah'],
+  size: ['small', 'normal', 'large'],
+  spacing: ['normal', 'relaxed']
+});
+const quranSettingsPreviewText = 'وَاِذْ قَالَ رَبُّكَ لِلْمَلٰۤىِٕكَةِ اِنِّيْ جَاعِلٌ فِى الْاَرْضِ خَلِيْفَةً ۗ قَالُوْٓا اَتَجْعَلُ فِيْهَا مَنْ يُّفْسِدُ فِيْهَا وَيَسْفِكُ الدِّمَاۤءَۚ وَنَحْنُ نُسَبِّحُ بِحَمْدِكَ وَنُقَدِّسُ لَكَ ۗ قَالَ اِنِّيْٓ اَعْلَمُ مَا لَا تَعْلَمُوْنَ';
+const quranMadinahSettingsPreviewText = 'وَإِذۡ قَالَ رَبُّكَ لِلۡمَلَٰٓئِكَةِ إِنِّي جَاعِلٞ فِي ٱلۡأَرۡضِ خَلِيفَةٗۖ قَالُوٓاْ أَتَجۡعَلُ فِيهَا مَن يُفۡسِدُ فِيهَا وَيَسۡفِكُ ٱلدِّمَآءَ وَنَحۡنُ نُسَبِّحُ بِحَمۡدِكَ وَنُقَدِّسُ لَكَۖ قَالَ إِنِّيٓ أَعۡلَمُ مَا لَا تَعۡلَمُونَ';
+const kfgqpcHafsAssetUrl = 'assets/quran/kfgqpc-hafs-v2.0.json';
+let kfgqpcHafsDataPromise = null;
+
+function stripKfgqpcAyahMarker(value) {
+  return String(value || '').replace(/[\u00A0 ]*[\uFC00-\uFD1D]$/u, '');
+}
+
+async function loadKfgqpcHafsData() {
+  if (!kfgqpcHafsDataPromise) {
+    kfgqpcHafsDataPromise = fetch(kfgqpcHafsAssetUrl)
+      .then((response) => {
+        if (!response.ok) throw new Error('kfgqpc-data-unavailable');
+        return response.json();
+      })
+      .then((payload) => {
+        if (
+          payload?.metadata?.ayahCount !== 6236
+          || payload?.metadata?.surahCount !== 114
+          || !Array.isArray(payload?.surahs)
+          || payload.surahs.length !== 114
+        ) {
+          throw new Error('kfgqpc-data-invalid');
+        }
+        return payload;
+      })
+      .catch((error) => {
+        kfgqpcHafsDataPromise = null;
+        throw error;
+      });
+  }
+  return kfgqpcHafsDataPromise;
+}
+
+async function getKfgqpcHafsSurah(surahNumber) {
+  const payload = await loadKfgqpcHafsData();
+  const surah = payload.surahs[Number(surahNumber) - 1];
+  if (!Array.isArray(surah) || !surah.length) throw new Error('kfgqpc-surah-invalid');
+  return surah;
+}
+
+function sanitizeQuranDisplayPreferences(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  return Object.fromEntries(
+    Object.entries(quranDisplayDefaults).map(([key, fallback]) => {
+      const candidate = String(source[key] || '');
+      return [key, quranDisplayAllowedValues[key].includes(candidate) ? candidate : fallback];
+    })
+  );
+}
+
+function readQuranDisplayPreferences() {
+  try {
+    return sanitizeQuranDisplayPreferences(JSON.parse(window.localStorage.getItem(quranDisplayStorageKey) || '{}'));
+  } catch (error) {
+    return { ...quranDisplayDefaults };
+  }
+}
+
+let quranDisplayPreferences = readQuranDisplayPreferences();
+
+function applyQuranDisplayPreferences(preferences = quranDisplayPreferences) {
+  const next = sanitizeQuranDisplayPreferences(preferences);
+  const root = document.documentElement;
+  root.dataset.quranFont = next.font;
+  root.dataset.quranSize = next.size;
+  root.dataset.quranSpacing = next.spacing;
+  quranDisplayPreferences = next;
+}
+
+function saveQuranDisplayPreferences(next) {
+  quranDisplayPreferences = sanitizeQuranDisplayPreferences(next);
+  window.localStorage.setItem(quranDisplayStorageKey, JSON.stringify(quranDisplayPreferences));
+  applyQuranDisplayPreferences();
+}
+
+function updateQuranDisplayPreference(key, value) {
+  if (!Object.prototype.hasOwnProperty.call(quranDisplayDefaults, key)) return;
+  saveQuranDisplayPreferences({ ...quranDisplayPreferences, [key]: value });
+  renderSettingsPage();
+}
+
+function resetQuranDisplayPreferences() {
+  saveQuranDisplayPreferences(quranDisplayDefaults);
+  renderSettingsPage();
+}
+
+applyQuranDisplayPreferences();
+
 const communityState = {
   token: window.localStorage.getItem(iqroSessionStorageKey) || '',
   me: null,
   friends: [],
+  incomingFriendRequests: [],
+  outgoingFriendRequests: [],
   groups: [],
   communityTab: 'contacts',
   communityAction: '',
   selectedGroupId: '',
   addingMemberGroupId: '',
+  selectedGroupContactPhone: '',
+  groupContactPickerOpen: false,
+  removingGroupMemberId: '',
   installSuggestionPhone: '',
   memorialDraft: null,
   authMode: 'login',
@@ -137,11 +243,16 @@ function clearSessionState(renderNow = true) {
   communityState.me = null;
   selectProgressAccount('');
   communityState.friends = [];
+  communityState.incomingFriendRequests = [];
+  communityState.outgoingFriendRequests = [];
   communityState.groups = [];
   communityState.communityTab = 'contacts';
   communityState.communityAction = '';
   communityState.selectedGroupId = '';
   communityState.addingMemberGroupId = '';
+  communityState.selectedGroupContactPhone = '';
+  communityState.groupContactPickerOpen = false;
+  communityState.removingGroupMemberId = '';
   communityState.installSuggestionPhone = '';
   communityState.memorialDraft = null;
   communityState.loading = false;
@@ -237,6 +348,8 @@ function applyAppState(payload) {
   communityState.me = nextUser;
   selectProgressAccount(communityState.me?.id || '');
   communityState.friends = Array.isArray(payload?.friends) ? payload.friends : [];
+  communityState.incomingFriendRequests = Array.isArray(payload?.incomingFriendRequests) ? payload.incomingFriendRequests : [];
+  communityState.outgoingFriendRequests = Array.isArray(payload?.outgoingFriendRequests) ? payload.outgoingFriendRequests : [];
   communityState.groups = Array.isArray(payload?.groups) ? payload.groups : [];
   window.syncUserManagementAccess?.();
   renderHomeCommunityBoard();
@@ -299,6 +412,19 @@ function setHomeAuthMode(mode) {
   renderHomeCommunityBoard();
 }
 
+function toggleAuthPassword(button) {
+  const control = button?.closest('.auth-password-control');
+  const input = control?.querySelector('input');
+  if (!input) return;
+
+  const showPassword = input.type === 'password';
+  input.type = showPassword ? 'text' : 'password';
+  button.classList.toggle('is-visible', showPassword);
+  button.setAttribute('aria-label', showPassword ? 'Sembunyikan password' : 'Tampilkan password');
+  button.setAttribute('aria-pressed', String(showPassword));
+  input.focus({ preventScroll: true });
+}
+
 function syncProtectedNavigation() {
   const authenticated = Boolean(communityState.token && communityState.me && !communityState.me.mustChangePassword);
   document.querySelectorAll('.site-nav .nav-chip').forEach((button) => {
@@ -322,12 +448,40 @@ function syncProtectedNavigation() {
 function renderHomeCommunityBoard() {
   const gate = document.getElementById('homeAuthGate');
   const dailyCard = document.getElementById('homeDailyCard');
-  const dailyAyat = document.getElementById('homeDailyAyat');
-  const ayatToday = Math.max(0, Number(communityState.me?.dailyReading?.ayatCount || 0));
-  if (dailyCard && dailyAyat) {
-    dailyAyat.textContent = formatNumberId(ayatToday);
+  const dailyReading = communityState.me?.dailyReading || {};
+  const comparisonFallback = {
+    current: Math.max(0, Number(dailyReading.ayatCount) || 0),
+    previous: 0,
+    difference: Math.max(0, Number(dailyReading.ayatCount) || 0)
+  };
+  const comparisonItems = [
+    ['Day', dailyReading.comparisons?.day || comparisonFallback, 'hari ini', 'kemarin'],
+    ['Week', dailyReading.comparisons?.week || { current: 0, previous: 0, difference: 0 }, 'minggu ini', 'minggu lalu'],
+    ['Month', dailyReading.comparisons?.month || { current: 0, previous: 0, difference: 0 }, 'bulan ini', 'bulan lalu']
+  ];
+  comparisonItems.forEach(([key, comparison]) => {
+    const row = document.getElementById(`home${key}Comparison`);
+    const current = document.getElementById(`home${key}Current`);
+    const previous = document.getElementById(`home${key}Previous`);
+    const trend = document.getElementById(`home${key}Trend`);
+    const currentValue = Math.max(0, Number(comparison?.current) || 0);
+    const previousValue = Math.max(0, Number(comparison?.previous) || 0);
+    const difference = currentValue - previousValue;
+    if (current) current.textContent = formatNumberId(currentValue);
+    if (previous) previous.textContent = formatNumberId(previousValue);
+    if (trend) trend.textContent = difference > 0 ? `↑${formatNumberId(difference)}` : (difference < 0 ? `↓${formatNumberId(Math.abs(difference))}` : '—');
+    if (row) {
+      row.classList.toggle('is-up', difference > 0);
+      row.classList.toggle('is-down', difference < 0);
+      row.classList.toggle('is-even', difference === 0);
+    }
+  });
+  if (dailyCard) {
+    const ayatToday = Math.max(0, Number(dailyReading.ayatCount) || 0);
     dailyCard.classList.toggle('is-active', ayatToday > 0);
-    dailyCard.setAttribute('aria-label', `${formatNumberId(ayatToday)} ayat dibaca hari ini`);
+    dailyCard.setAttribute('aria-label', comparisonItems.map(([, comparison, currentLabel, previousLabel]) => (
+      `${currentLabel} ${formatNumberId(Math.max(0, Number(comparison?.current) || 0))} ayat, ${previousLabel} ${formatNumberId(Math.max(0, Number(comparison?.previous) || 0))} ayat`
+    )).join('. '));
   }
   syncProtectedNavigation();
   if (!gate) return;
@@ -335,10 +489,11 @@ function renderHomeCommunityBoard() {
   const hasSession = Boolean(communityState.token && communityState.me);
   const requiresPasswordChange = Boolean(hasSession && communityState.me.mustChangePassword);
   const authenticated = Boolean(hasSession && !requiresPasswordChange);
-  document.body.classList.toggle(
-    'is-login-screen',
-    !authenticated && !requiresPasswordChange && communityState.authMode === 'login'
-  );
+  const isLoginScreen = !authenticated && !requiresPasswordChange && communityState.authMode === 'login';
+  const isRegisterScreen = !authenticated && !requiresPasswordChange && communityState.authMode === 'register';
+  document.body.classList.toggle('is-login-screen', isLoginScreen);
+  document.body.classList.toggle('is-register-screen', isRegisterScreen);
+  document.body.classList.toggle('is-auth-entry-screen', isLoginScreen || isRegisterScreen);
   gate.hidden = authenticated;
   if (authenticated) return;
 
@@ -387,7 +542,7 @@ function renderHomeCommunityBoard() {
     : (isRegister ? 'Kirim Permohonan' : (isForgot ? 'Kirim via WhatsApp' : 'Masuk'));
   const formHandler = isRegister ? 'submitPhoneRegister' : (isForgot ? 'submitForgotPassword' : 'submitPhoneLogin');
   const panelLabel = isRegister ? 'Buat Akun Baru' : (isForgot ? 'Pemulihan Akun' : 'Selamat Datang Kembali');
-  const panelTitle = isRegister ? 'Mulai perjalanan tilawah' : (isForgot ? 'Lupa password?' : 'Lanjutkan Langkah Spiritualmu');
+  const panelTitle = isRegister ? 'Buat Akun' : (isForgot ? 'Lupa password?' : 'Jejak Tilawah');
 
   gate.innerHTML = `
     <div class="auth-gate-card auth-gate-card-${isRegister ? 'register' : (isForgot ? 'forgot' : 'login')}">
@@ -421,12 +576,18 @@ function renderHomeCommunityBoard() {
             <input class="community-input" type="tel" name="phone" placeholder="08xxxxxxxxxx" autocomplete="tel" required>
           </label>
           ${isForgot ? '' : `
-            <label class="community-field">
+            <label class="community-field auth-password-field">
               <span>Password</span>
-              <input class="community-input" type="password" name="password" placeholder="Minimal 6 karakter" autocomplete="${isRegister ? 'new-password' : 'current-password'}" minlength="6" required>
+              <span class="auth-password-control">
+                <input class="community-input" type="password" name="password" placeholder="${isRegister ? 'Minimal 6 karakter' : ''}" autocomplete="${isRegister ? 'new-password' : 'current-password'}" minlength="6" required>
+                <button class="auth-password-toggle" type="button" onclick="toggleAuthPassword(this)" aria-label="Tampilkan password" aria-pressed="false">
+                  <svg class="auth-password-icon auth-password-icon-hidden" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 4.3A10.7 10.7 0 0 1 12 4c5.4 0 9 5.2 9 5.2a15.2 15.2 0 0 1-2.2 2.7M6.6 6.6C4.4 8 3 10.2 3 10.2S6.6 16 12 16c1.2 0 2.3-.3 3.3-.7"/></svg>
+                  <svg class="auth-password-icon auth-password-icon-visible" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                </button>
+              </span>
             </label>
           `}
-          ${!isRegister && !isForgot ? '<button class="auth-forgot-password" type="button" onclick="setHomeAuthMode(\'forgot\')">Lupa password?</button>' : ''}
+          ${!isRegister && !isForgot ? '<div class="auth-password-meta"><span>Kata sandi minimal 6 karakter</span><button class="auth-forgot-password" type="button" onclick="setHomeAuthMode(\'forgot\')">Lupa password?</button></div>' : ''}
           ${isRegister ? `
             <label class="auth-reward-consent">
               <input type="checkbox" name="rewardConsent" value="accepted" required>
@@ -447,7 +608,7 @@ function renderHomeCommunityBoard() {
           ` : ''}
           <button class="btn-compact btn-main auth-gate-submit" type="submit" ${communityState.loading ? 'disabled' : ''}>${submitLabel}</button>
         </form>
-        <p class="auth-gate-switch">${isForgot ? 'Sudah ingat password?' : (isRegister ? 'Sudah punya akun?' : 'Belum punya akun?')} <button type="button" onclick="setHomeAuthMode('${isForgot || isRegister ? 'login' : 'register'}')">${isForgot || isRegister ? 'Masuk' : 'Buat akun'}</button></p>
+        <p class="auth-gate-switch">${isForgot ? 'Sudah ingat password?' : (isRegister ? 'Sudah punya akun?' : 'Belum punya akun?')} <button type="button" onclick="setHomeAuthMode('${isForgot || isRegister ? 'login' : 'register'}')">${isForgot || isRegister ? 'Masuk' : 'Daftar di sini'}</button></p>
       </div>
     </div>
   `;
@@ -559,9 +720,10 @@ function renderAuthPanel() {
 }
 
 function getProgressCaption(progress) {
-  if (progress?.summary) {
+  if (progress?.summary && progress.nama && progress.ayat) {
     return `${progress.nama} ayat ${progress.ayat} dari ${progress.summary.currentAyatCount} (${formatPercentSafe(progress.summary.percent)})`;
   }
+  if (progress?.summary) return `Progress tilawah ${formatPercentSafe(progress.summary.percent)}`;
   if (!progress?.summary) {
     return 'Belum ada progress tilawah tersimpan.';
   }
@@ -667,6 +829,9 @@ function setCommunityTab(tab) {
   communityState.communityAction = '';
   communityState.selectedGroupId = '';
   communityState.addingMemberGroupId = '';
+  communityState.selectedGroupContactPhone = '';
+  communityState.groupContactPickerOpen = false;
+  communityState.removingGroupMemberId = '';
   communityState.installSuggestionPhone = '';
   renderCommunityPage();
 }
@@ -743,6 +908,24 @@ function renderAddGroupIcon() {
   `;
 }
 
+function renderRemoveMemberIcon() {
+  return `
+    <svg viewBox='0 0 24 24' aria-hidden='true'>
+      <circle cx='9' cy='7' r='3.5'></circle>
+      <path d='M3 20a6 6 0 0 1 12 0'></path>
+      <path d='M16.5 11.5h5'></path>
+    </svg>
+  `;
+}
+
+function renderCancelIcon() {
+  return `
+    <svg viewBox='0 0 24 24' aria-hidden='true'>
+      <path d='m7 7 10 10M17 7 7 17'></path>
+    </svg>
+  `;
+}
+
 function renderWhatsappIcon() {
   return `
     <svg viewBox='0 0 24 24' aria-hidden='true'>
@@ -774,7 +957,7 @@ function renderFriendComposer() {
       <div class='community-composer-head'>
         <div>
           <p class='section-kicker'>Kontak Baru</p>
-          <h2>Tambah Teman</h2>
+          <h2>Kirim Permintaan</h2>
         </div>
         <button class='community-icon-button' type='button' onclick='closeCommunityAction()' aria-label='Tutup tambah teman'>&times;</button>
       </div>
@@ -783,7 +966,7 @@ function renderFriendComposer() {
           <span>Nomor HP Teman</span>
           <input class='community-input' type='tel' name='phone' value='${escapeHtml(communityState.installSuggestionPhone)}' placeholder='08xxxxxxxxxx' autocomplete='tel' required autofocus>
         </label>
-        <button class='btn-compact btn-main' type='submit' ${communityState.loading ? 'disabled' : ''}>${communityState.loading ? 'Menambahkan...' : 'Tambah Teman'}</button>
+        <button class='btn-compact btn-main' type='submit' ${communityState.loading ? 'disabled' : ''}>${communityState.loading ? 'Mengirim...' : 'Kirim Permintaan'}</button>
       </form>
       ${renderInstallSuggestion()}
     </section>
@@ -843,35 +1026,84 @@ function renderCommunityComposer() {
   return '';
 }
 
+function renderFriendRequestPanels() {
+  const incoming = communityState.incomingFriendRequests;
+  const outgoing = communityState.outgoingFriendRequests;
+  if (!incoming.length && !outgoing.length) return '';
+
+  return `
+    <div class='community-request-stack'>
+      ${incoming.length ? `
+        <section class='community-request-panel' aria-label='Permintaan pertemanan masuk'>
+          <div class='community-request-heading'>
+            <div><p class='section-kicker'>Permintaan Masuk</p><h3>${incoming.length} sahabat menunggu jawaban</h3></div>
+          </div>
+          ${incoming.map((request) => `
+            <article class='community-request-row'>
+              <span class='community-avatar'>${escapeHtml(getCommunityInitial(request.user?.name))}</span>
+              <div class='community-request-copy'>
+                <strong>${escapeHtml(request.user?.name || 'Sahabat Iqro')}</strong>
+                <span>${escapeHtml(request.user?.phoneDisplay || '')}</span>
+              </div>
+              <div class='community-request-actions'>
+                <button class='btn-compact community-button-secondary' type='button' onclick='respondFriendRequest("${escapeHtml(request.id)}", "decline")' ${communityState.loading ? 'disabled' : ''}>Tolak</button>
+                <button class='btn-compact btn-main' type='button' onclick='respondFriendRequest("${escapeHtml(request.id)}", "accept")' ${communityState.loading ? 'disabled' : ''}>Terima</button>
+              </div>
+            </article>
+          `).join('')}
+        </section>
+      ` : ''}
+      ${outgoing.length ? `
+        <section class='community-request-panel is-outgoing' aria-label='Permintaan pertemanan terkirim'>
+          <div class='community-request-heading'>
+            <div><p class='section-kicker'>Menunggu Persetujuan</p><h3>${outgoing.length} permintaan terkirim</h3></div>
+          </div>
+          ${outgoing.map((request) => `
+            <article class='community-request-row'>
+              <span class='community-avatar'>${escapeHtml(getCommunityInitial(request.user?.name))}</span>
+              <div class='community-request-copy'>
+                <strong>${escapeHtml(request.user?.name || 'Sahabat Iqro')}</strong>
+                <span>${escapeHtml(request.user?.phoneDisplay || '')}</span>
+              </div>
+              <span class='community-request-status'>Menunggu</span>
+            </article>
+          `).join('')}
+        </section>
+      ` : ''}
+    </div>
+  `;
+}
+
 function renderContactDirectory() {
+  const requestPanels = renderFriendRequestPanels();
   if (!communityState.friends.length) {
-    return '<div class=community-empty>Belum ada kontak. Gunakan tombol Tambah Teman untuk menambahkan teman.</div>';
+    return `${requestPanels}<div class=community-empty>Belum ada teman yang disetujui. Kirim permintaan menggunakan nomor HP teman.</div>`;
   }
 
   const sortedFriends = [...communityState.friends].sort((left, right) => {
-    const dailyDifference = Number(right.dailyReading?.ayatCount || 0) - Number(left.dailyReading?.ayatCount || 0);
-    if (dailyDifference) return dailyDifference;
-    const activityDifference = (Date.parse(right.progress?.updatedAt || '') || 0) - (Date.parse(left.progress?.updatedAt || '') || 0);
-    if (activityDifference) return activityDifference;
+    const weeklyDifference = Number(right.dailyReading?.totals?.week || 0) - Number(left.dailyReading?.totals?.week || 0);
+    if (weeklyDifference) return weeklyDifference;
     return String(left.name || '').localeCompare(String(right.name || ''), 'id-ID');
   });
   const activeTodayCount = sortedFriends.filter((friend) => Number(friend.dailyReading?.ayatCount || 0) > 0).length;
+  const sharingCount = sortedFriends.filter((friend) => friend.dailyReading?.totals).length;
 
   return `
+    ${requestPanels}
     <section class='community-activity-summary' aria-label='Ringkasan aktivitas tilawah hari ini'>
       <div>
         <p>Aktivitas Tilawah Hari Ini</p>
-        <strong>${activeTodayCount} dari ${sortedFriends.length} sahabat sudah tilawah</strong>
+        <strong>${sharingCount ? `${activeTodayCount} dari ${sharingCount} sahabat yang berbagi sudah tilawah` : 'Belum ada sahabat yang membagikan statistik'}</strong>
       </div>
-      <span>${activeTodayCount}/${sortedFriends.length}</span>
+      <span>${activeTodayCount}/${sharingCount}</span>
     </section>
     <div class='community-contact-list community-activity-list'>
       ${sortedFriends.map((friend) => {
-        const ayatToday = Math.max(0, Number(friend.dailyReading?.ayatCount || 0));
+        const totals = friend.dailyReading?.totals;
+        const ayatToday = Math.max(0, Number(totals?.today || 0));
+        const ayatWeek = Math.max(0, Number(totals?.week || 0));
+        const ayatPreviousMonth = Math.max(0, Number(totals?.previousMonth || 0));
         const hasReadToday = ayatToday > 0;
-        const lastRead = friend.progress
-          ? `Terakhir: ${escapeHtml(friend.progress.nama)} · Ayat ${Math.max(1, Number(friend.progress.ayat) || 1)}`
-          : 'Belum ada bacaan yang ditandai';
         return `
         <article class='community-contact-row community-activity-row${hasReadToday ? ' is-active-today' : ''}'>
           <span class='community-avatar'>${escapeHtml(getCommunityInitial(friend.name))}</span>
@@ -883,12 +1115,14 @@ function renderContactDirectory() {
               ${hasReadToday ? "<span class='community-reading-status is-active'>Sudah tilawah</span>" : ''}
               <span>${escapeHtml(friend.phoneDisplay)}</span>
             </div>
-            <p class='community-last-read'>${lastRead}</p>
           </div>
-          <div class='community-daily-stat${hasReadToday ? ' is-active' : ''}'>
-            <strong>${ayatToday}</strong>
-            <span>ayat hari ini</span>
-          </div>
+          ${totals ? `
+            <div class='community-period-stats' aria-label='Statistik tilawah ${escapeHtml(friend.name)}'>
+              <span><strong>${ayatToday}</strong><small>Hari ini</small></span>
+              <span><strong>${ayatWeek}</strong><small>Minggu ini</small></span>
+              <span><strong>${ayatPreviousMonth}</strong><small>Bulan lalu</small></span>
+            </div>
+          ` : `<div class='community-private-stat'><strong>Privat</strong><span>Belum dibagikan</span></div>`}
         </article>
       `;
       }).join('')}
@@ -929,6 +1163,8 @@ function renderGroupDetail(group) {
   const memberIds = new Set(group.members.map((member) => member.id));
   const availableFriends = communityState.friends.filter((friend) => !memberIds.has(friend.id));
   const isAddingMember = communityState.addingMemberGroupId === group.id;
+  const isGroupAdmin = group.ownerUserId === communityState.me?.id;
+  const selectedFriend = availableFriends.find((friend) => friend.phone === communityState.selectedGroupContactPhone);
   return `
     <section class='community-group-detail'>
       <header class='community-group-detail-head'>
@@ -937,31 +1173,48 @@ function renderGroupDetail(group) {
           <p class='section-kicker'>Detail Group</p>
           <h2>${escapeHtml(group.name)}</h2>
         </div>
-        <span class='community-badge'>${group.averagePercent != null ? escapeHtml(formatPercentSafe(group.averagePercent)) : 'Menunggu'}</span>
       </header>
       <div class='community-group-summary'>
         <span><strong>${group.memberCount}</strong> anggota</span>
         <span>Rata-rata progress <strong>${group.averagePercent != null ? escapeHtml(formatPercentSafe(group.averagePercent)) : 'belum tersedia'}</strong></span>
       </div>
-      ${availableFriends.length && isAddingMember ? `
+      ${isGroupAdmin && availableFriends.length && isAddingMember ? `
         <form class='community-inline-form community-group-add-member' onsubmit='return submitAddMember(event)'>
           <input type='hidden' name='groupId' value='${escapeHtml(group.id)}'>
-          <label class='community-field community-inline-field'>
+          <div class='community-field community-inline-field'>
             <span>Pilih Kontak</span>
-            <select class='community-input' name='phone' required>
-              <option value=''>Pilih kontak yang akan ditambahkan</option>
-              ${availableFriends.map((friend) => `<option value='${escapeHtml(friend.phone)}'>${escapeHtml(friend.name)} · ${escapeHtml(friend.phoneDisplay)}</option>`).join('')}
-            </select>
-          </label>
+            <input type='hidden' name='phone' value='${escapeHtml(selectedFriend?.phone || '')}'>
+            <div class='community-contact-select${communityState.groupContactPickerOpen ? ' is-open' : ''}'>
+              <button class='community-contact-select-trigger' type='button' onclick='toggleGroupContactPicker()' aria-haspopup='listbox' aria-expanded='${communityState.groupContactPickerOpen}'>
+                ${selectedFriend ? `
+                  <span class='community-avatar'>${escapeHtml(getCommunityInitial(selectedFriend.name))}</span>
+                  <span class='community-contact-select-copy'><strong>${escapeHtml(selectedFriend.name)}</strong><small>${escapeHtml(selectedFriend.phoneDisplay)}</small></span>
+                ` : `<span class='community-contact-select-placeholder'>Pilih kontak yang akan ditambahkan</span>`}
+                <svg viewBox='0 0 24 24' aria-hidden='true'><path d='m7 9 5 5 5-5'/></svg>
+              </button>
+              ${communityState.groupContactPickerOpen ? `
+                <div class='community-contact-select-menu' role='listbox' aria-label='Pilih kontak group'>
+                  ${availableFriends.map((friend) => `
+                    <button class='community-contact-select-option${friend.phone === selectedFriend?.phone ? ' is-selected' : ''}' type='button' role='option' aria-selected='${friend.phone === selectedFriend?.phone}' onclick='selectGroupContact("${escapeHtml(friend.phone)}")'>
+                      <span class='community-avatar'>${escapeHtml(getCommunityInitial(friend.name))}</span>
+                      <span class='community-contact-select-copy'><strong>${escapeHtml(friend.name)}</strong><small>${escapeHtml(friend.phoneDisplay)}</small></span>
+                      <span class='community-contact-select-check' aria-hidden='true'>✓</span>
+                    </button>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          </div>
           <div class='community-group-add-member-actions'>
             <button class='btn-compact community-button-secondary' type='button' onclick='closeAddMemberForm()' ${communityState.loading ? 'disabled' : ''}>Batal</button>
-            <button class='btn-compact btn-main' type='submit' ${communityState.loading ? 'disabled' : ''}>Tambah</button>
+            <button class='btn-compact btn-main' type='submit' ${communityState.loading || !selectedFriend ? 'disabled' : ''}>Tambah</button>
           </div>
         </form>
       ` : ''}
       <div class='community-member-list community-group-member-list'>
         ${group.members.map((member) => {
           const ayatToday = Math.max(0, Number(member.dailyReading?.ayatCount || 0));
+          const isRemoving = communityState.removingGroupMemberId === member.id;
           return `
             <div class='community-member-row'>
               <span class='community-avatar'>${escapeHtml(getCommunityInitial(member.name))}</span>
@@ -969,9 +1222,18 @@ function renderGroupDetail(group) {
                 <strong>${escapeHtml(member.name)}${member.isOwner ? ' · Admin' : ''}</strong>
                 <p>${escapeHtml(member.phoneDisplay)} · ${escapeHtml(getProgressCaption(member.progress))}</p>
               </div>
-              <div class='community-daily-stat${ayatToday > 0 ? ' is-active' : ''}'>
-                <strong>${ayatToday}</strong>
-                <span>ayat hari ini</span>
+              <div class='community-member-controls'>
+                <div class='community-daily-stat${ayatToday > 0 ? ' is-active' : ''}'>
+                  <strong>${ayatToday}</strong>
+                  <span>ayat hari ini</span>
+                </div>
+                ${isGroupAdmin && !member.isOwner ? (isRemoving ? `
+                  <div class='community-member-remove-confirm'>
+                    <span>Yakin?</span>
+                    <button class='community-member-icon-button is-cancel' type='button' onclick='cancelRemoveGroupMember()' aria-label='Batalkan mengeluarkan ${escapeHtml(member.name)}' title='Batal'>${renderCancelIcon()}</button>
+                    <button class='community-member-icon-button is-confirm' type='button' onclick='removeGroupMember("${escapeHtml(group.id)}", "${escapeHtml(member.id)}")' aria-label='Keluarkan ${escapeHtml(member.name)} dari group' title='Keluarkan anggota' ${communityState.loading ? 'disabled' : ''}>${renderRemoveMemberIcon()}</button>
+                  </div>
+                ` : `<button class='community-member-icon-button' type='button' onclick='requestRemoveGroupMember("${escapeHtml(member.id)}")' aria-label='Keluarkan ${escapeHtml(member.name)} dari group' title='Keluarkan anggota'>${renderRemoveMemberIcon()}</button>`) : ''}
               </div>
             </div>
           `;
@@ -985,6 +1247,9 @@ function openGroupDetail(groupId) {
   if (!communityState.groups.some((group) => group.id === groupId)) return;
   communityState.selectedGroupId = groupId;
   communityState.addingMemberGroupId = '';
+  communityState.selectedGroupContactPhone = '';
+  communityState.groupContactPickerOpen = false;
+  communityState.removingGroupMemberId = '';
   communityState.communityAction = '';
   renderCommunityPage();
 }
@@ -992,17 +1257,57 @@ function openGroupDetail(groupId) {
 function closeGroupDetail() {
   communityState.selectedGroupId = '';
   communityState.addingMemberGroupId = '';
+  communityState.selectedGroupContactPhone = '';
+  communityState.groupContactPickerOpen = false;
+  communityState.removingGroupMemberId = '';
   renderCommunityPage();
 }
 
 function openAddMemberForm(groupId) {
   if (communityState.selectedGroupId !== groupId) return;
+  const group = communityState.groups.find((item) => item.id === groupId);
+  if (!group || group.ownerUserId !== communityState.me?.id) return;
   communityState.addingMemberGroupId = groupId;
+  communityState.selectedGroupContactPhone = '';
+  communityState.groupContactPickerOpen = false;
+  communityState.removingGroupMemberId = '';
   renderCommunityPage();
 }
 
 function closeAddMemberForm() {
   communityState.addingMemberGroupId = '';
+  communityState.selectedGroupContactPhone = '';
+  communityState.groupContactPickerOpen = false;
+  renderCommunityPage();
+}
+
+function toggleGroupContactPicker() {
+  if (!communityState.addingMemberGroupId) return;
+  communityState.groupContactPickerOpen = !communityState.groupContactPickerOpen;
+  renderCommunityPage();
+}
+
+function selectGroupContact(phone) {
+  const selectedGroup = communityState.groups.find((group) => group.id === communityState.selectedGroupId);
+  if (!selectedGroup || selectedGroup.ownerUserId !== communityState.me?.id) return;
+  const memberIds = new Set(selectedGroup.members.map((member) => member.id));
+  const friend = communityState.friends.find((item) => item.phone === phone && !memberIds.has(item.id));
+  if (!friend) return;
+  communityState.selectedGroupContactPhone = friend.phone;
+  communityState.groupContactPickerOpen = false;
+  renderCommunityPage();
+}
+
+function requestRemoveGroupMember(memberId) {
+  const selectedGroup = communityState.groups.find((group) => group.id === communityState.selectedGroupId);
+  if (!selectedGroup || selectedGroup.ownerUserId !== communityState.me?.id || memberId === selectedGroup.ownerUserId) return;
+  communityState.removingGroupMemberId = memberId;
+  communityState.groupContactPickerOpen = false;
+  renderCommunityPage();
+}
+
+function cancelRemoveGroupMember() {
+  communityState.removingGroupMemberId = '';
   renderCommunityPage();
 }
 
@@ -1019,7 +1324,8 @@ function renderCommunityDirectory() {
     ? null
     : communityState.groups.find((group) => group.id === communityState.selectedGroupId);
   const selectedGroupMemberIds = new Set(selectedGroup?.members.map((member) => member.id) || []);
-  const canAddGroupMember = selectedGroup
+  const isSelectedGroupAdmin = selectedGroup?.ownerUserId === communityState.me.id;
+  const canAddGroupMember = selectedGroup && isSelectedGroupAdmin
     ? communityState.friends.some((friend) => !selectedGroupMemberIds.has(friend.id))
     : false;
   const primaryActionLabel = selectedGroup
@@ -1029,7 +1335,7 @@ function renderCommunityDirectory() {
   const primaryActionContent = selectedGroup
     ? renderAddFriendIcon()
     : (isContacts ? renderAddFriendIcon() : renderAddGroupIcon());
-  const shouldShowPrimaryAction = !selectedGroup || canAddGroupMember;
+  const shouldShowPrimaryAction = !selectedGroup || (isSelectedGroupAdmin && canAddGroupMember);
   const directoryContent = communityState.communityAction === 'friend'
     ? ''
     : `<div class='community-directory-content' role='tabpanel'>${isContacts ? renderContactDirectory() : renderGroupDirectory()}</div>`;
@@ -1082,17 +1388,129 @@ function getMemorialDraftValue() {
   return communityState.memorialDraft ?? getMemorialNames().join('\n');
 }
 
+function renderQuranPreferenceButton(group, value, label) {
+  const selected = quranDisplayPreferences[group] === value;
+  return `
+    <button
+      class="quran-choice-button${selected ? ' is-selected' : ''}"
+      type="button"
+      aria-pressed="${selected}"
+      onclick="updateQuranDisplayPreference('${group}', '${value}')"
+    >${label}</button>
+  `;
+}
+
+function renderQuranDisplaySettings() {
+  const isMadinah = quranDisplayPreferences.font === 'madinah';
+  const previewText = isMadinah ? quranMadinahSettingsPreviewText : quranSettingsPreviewText;
+  const preview = isMadinah
+    ? escapeHtml(previewText)
+    : (typeof renderQuranArabic === 'function' ? renderQuranArabic(previewText) : escapeHtml(previewText));
+  const fontLabel = {
+    lpmq: 'Mushaf Indonesia',
+    scheherazade: 'Naskhi Jelas',
+    madinah: 'Mushaf Madinah'
+  }[quranDisplayPreferences.font] || 'Mushaf Indonesia';
+
+  return `
+    <section class="community-sidebar-card settings-account-card settings-quran-card">
+      <div class="settings-quran-heading">
+        <div class="settings-quran-heading-copy">
+          <p class="home-card-label">Tampilan Al-Qur'an</p>
+          <h2 class="community-section-title">Pilih Gaya Mushaf</h2>
+          <p>Pilih bentuk huruf yang nyaman untuk dibaca. Pengaturan ini hanya mengubah tampilan; teks ayat dan harakat tidak diubah.</p>
+        </div>
+        <button class="settings-reset-button" type="button" onclick="resetQuranDisplayPreferences()">Atur Ulang</button>
+      </div>
+
+      <div class="quran-font-options" role="radiogroup" aria-label="Gaya huruf Al-Qur'an">
+        <label class="quran-font-option${quranDisplayPreferences.font === 'lpmq' ? ' is-selected' : ''}">
+          <input type="radio" name="quranFont" value="lpmq" ${quranDisplayPreferences.font === 'lpmq' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
+          <span class="quran-font-option-title">
+            <span>Mushaf Indonesia</span>
+            <span class="quran-font-option-check" aria-hidden="true">✓</span>
+          </span>
+          <span class="quran-font-option-meta">LPMQ Isep Misbah · standar Kemenag</span>
+          <span class="quran-font-option-sample is-lpmq" lang="ar">قَالُوا جَاعِلٌ لِلْمَلَائِكَةِ</span>
+        </label>
+        <label class="quran-font-option${quranDisplayPreferences.font === 'scheherazade' ? ' is-selected' : ''}">
+          <input type="radio" name="quranFont" value="scheherazade" ${quranDisplayPreferences.font === 'scheherazade' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
+          <span class="quran-font-option-title">
+            <span>Naskhi Jelas</span>
+            <span class="quran-font-option-check" aria-hidden="true">✓</span>
+          </span>
+          <span class="quran-font-option-meta">Scheherazade New · bentuk lebih lapang</span>
+          <span class="quran-font-option-sample is-scheherazade" lang="ar">قَالُوا جَاعِلٌ لِلْمَلَائِكَةِ</span>
+        </label>
+        <label class="quran-font-option${quranDisplayPreferences.font === 'madinah' ? ' is-selected' : ''}">
+          <input type="radio" name="quranFont" value="madinah" ${quranDisplayPreferences.font === 'madinah' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
+          <span class="quran-font-option-title">
+            <span>Mushaf Madinah</span>
+            <span class="quran-font-option-check" aria-hidden="true">✓</span>
+          </span>
+          <span class="quran-font-option-meta">KFGQPC Hafs V22 · teks Utsmani khusus</span>
+          <span class="quran-font-option-sample is-madinah" lang="ar">قَالُوٓاْ جَاعِلٞ لِلۡمَلَٰٓئِكَةِ</span>
+        </label>
+      </div>
+
+      <div class="quran-display-controls">
+        <div class="quran-display-control">
+          <span class="quran-display-control-label">Ukuran Huruf</span>
+          <div class="quran-choice-group" role="group" aria-label="Ukuran huruf Al-Qur'an">
+            ${renderQuranPreferenceButton('size', 'small', 'Kecil')}
+            ${renderQuranPreferenceButton('size', 'normal', 'Normal')}
+            ${renderQuranPreferenceButton('size', 'large', 'Besar')}
+          </div>
+        </div>
+        <div class="quran-display-control">
+          <span class="quran-display-control-label">Jarak Baris</span>
+          <div class="quran-choice-group" role="group" aria-label="Jarak baris Al-Qur'an">
+            ${renderQuranPreferenceButton('spacing', 'normal', 'Normal')}
+            ${renderQuranPreferenceButton('spacing', 'relaxed', 'Lebih Lega')}
+          </div>
+        </div>
+      </div>
+
+      <div class="quran-preview" aria-live="polite">
+        <div class="quran-preview-label">
+          <span>Pratinjau Al-Baqarah ayat 30</span>
+          <span>${fontLabel}</span>
+        </div>
+        <p class="ayah-arab" lang="ar">${preview}</p>
+      </div>
+      <p class="quran-display-note">Pilihan disimpan di perangkat ini. Mode Mushaf Madinah memakai pasangan font dan teks Utsmani KFGQPC khusus pada bacaan Al-Qur'an; bacaan Tahlil tetap memakai Mushaf Indonesia.</p>
+    </section>
+  `;
+}
+
 function renderSettingsPage() {
   const panel = document.getElementById('settingsAccountPanel');
   if (!panel) return;
 
   renderSettingsFlash();
   if (!communityState.me) {
-    panel.innerHTML = '<div class="community-empty">Masuk ke akun untuk membuka Settings.</div>';
+    panel.innerHTML = `
+      ${renderQuranDisplaySettings()}
+      <div class="community-empty">Masuk ke akun untuk mengubah pengaturan akun.</div>
+    `;
     return;
   }
 
   panel.innerHTML = `
+    ${renderQuranDisplaySettings()}
+    <section class="community-sidebar-card settings-account-card settings-privacy-card">
+      <p class="home-card-label">Privasi Komunitas</p>
+      <h2 class="community-section-title">Berbagi Statistik Tilawah</h2>
+      <p class="settings-privacy-copy">Jika diaktifkan, hanya teman yang sudah Anda setujui yang dapat melihat jumlah ayat hari ini, minggu ini, dan bulan lalu. Surah serta nomor ayat terakhir tetap privat.</p>
+      <form class="community-form" onsubmit="return submitPrivacySettings(event)">
+        <label class="settings-privacy-toggle">
+          <input type="checkbox" name="shareReadingStats" ${communityState.me.shareReadingStats ? 'checked' : ''}>
+          <span class="settings-privacy-switch" aria-hidden="true"></span>
+          <span>${communityState.me.shareReadingStats ? 'Statistik dibagikan' : 'Statistik privat'}</span>
+        </label>
+        <button class="btn-compact btn-main" type="submit" ${communityState.loading ? 'disabled' : ''}>Simpan Privasi</button>
+      </form>
+    </section>
     <section class="community-sidebar-card settings-account-card">
       <p class="home-card-label">Edit Nama</p>
       <form class="community-form" onsubmit="return submitProfileUpdate(event)">
@@ -1533,6 +1951,29 @@ async function submitProfileUpdate(event) {
   return false;
 }
 
+async function submitPrivacySettings(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const shareReadingStats = formData.get('shareReadingStats') === 'on';
+
+  communityState.loading = true;
+  renderCommunityPage();
+  try {
+    const payload = await apiFetch('/me/privacy', {
+      method: 'PUT',
+      body: { shareReadingStats }
+    });
+    applyAppState(payload);
+    setCommunityMessage(payload.message || 'Pengaturan privasi berhasil disimpan.', 'success');
+  } catch (error) {
+    setCommunityMessage(error.message || 'Pengaturan privasi belum bisa disimpan.', 'danger', true);
+  } finally {
+    communityState.loading = false;
+    renderCommunityPage();
+  }
+  return false;
+}
+
 async function updateMemorialNames(names, successMessage) {
   communityState.loading = true;
   renderCommunityPage();
@@ -1632,7 +2073,7 @@ async function submitAddFriend(event) {
     communityState.communityAction = '';
     communityState.installSuggestionPhone = '';
     applyAppState(payload);
-    setCommunityMessage(payload.message || 'Teman berhasil ditambahkan.', 'success');
+    setCommunityMessage(payload.message || 'Permintaan pertemanan berhasil dikirim.', 'success');
     form.reset();
   } catch (error) {
     if (error.status === 404) {
@@ -1647,6 +2088,23 @@ async function submitAddFriend(event) {
     renderCommunityPage();
   }
 
+  return false;
+}
+
+async function respondFriendRequest(requestId, action) {
+  if (!['accept', 'decline'].includes(action)) return false;
+  communityState.loading = true;
+  renderCommunityPage();
+  try {
+    const payload = await apiFetch(`/friend-requests/${encodeURIComponent(requestId)}/${action}`, { method: 'POST' });
+    applyAppState(payload);
+    setCommunityMessage(payload.message || 'Permintaan pertemanan diperbarui.', 'success');
+  } catch (error) {
+    setCommunityMessage(error.message || 'Permintaan pertemanan belum bisa diperbarui.', 'danger', true);
+  } finally {
+    communityState.loading = false;
+    renderCommunityPage();
+  }
   return false;
 }
 
@@ -1692,6 +2150,11 @@ async function submitAddMember(event) {
   const phone = String(formData.get('phone') || '').trim();
   const groupId = String(formData.get('groupId') || '').trim();
 
+  if (!phone) {
+    setCommunityMessage('Pilih satu kontak yang akan ditambahkan.', 'warning', true);
+    return false;
+  }
+
   communityState.loading = true;
   renderCommunityPage();
 
@@ -1702,6 +2165,8 @@ async function submitAddMember(event) {
     });
     applyAppState(payload);
     communityState.addingMemberGroupId = '';
+    communityState.selectedGroupContactPhone = '';
+    communityState.groupContactPickerOpen = false;
     setCommunityMessage(payload.message || 'Anggota berhasil dimasukkan ke group.', 'success');
     form.reset();
   } catch (error) {
@@ -1711,6 +2176,28 @@ async function submitAddMember(event) {
     renderCommunityPage();
   }
 
+  return false;
+}
+
+async function removeGroupMember(groupId, memberId) {
+  const group = communityState.groups.find((item) => item.id === groupId);
+  if (!group || group.ownerUserId !== communityState.me?.id || memberId === group.ownerUserId) return false;
+
+  communityState.loading = true;
+  renderCommunityPage();
+  try {
+    const payload = await apiFetch(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(memberId)}`, {
+      method: 'DELETE'
+    });
+    applyAppState(payload);
+    communityState.removingGroupMemberId = '';
+    setCommunityMessage(payload.message || 'Anggota berhasil dikeluarkan dari group.', 'success');
+  } catch (error) {
+    setCommunityMessage(error.message || 'Anggota belum bisa dikeluarkan dari group.', 'danger', true);
+  } finally {
+    communityState.loading = false;
+    renderCommunityPage();
+  }
   return false;
 }
 
@@ -1743,10 +2230,12 @@ window.submitPhoneRegister = submitPhoneRegister;
 window.submitForgotPassword = submitForgotPassword;
 window.submitRequiredPasswordChange = submitRequiredPasswordChange;
 window.submitProfileUpdate = submitProfileUpdate;
+window.submitPrivacySettings = submitPrivacySettings;
 window.submitMemorialNames = submitMemorialNames;
 window.updateMemorialNameCounter = updateMemorialNameCounter;
 window.getTahlilMemorialNames = () => [...getMemorialNames()];
 window.submitAddFriend = submitAddFriend;
+window.respondFriendRequest = respondFriendRequest;
 window.submitCreateGroup = submitCreateGroup;
 window.submitAddMember = submitAddMember;
 window.logoutCommunity = logoutCommunity;
@@ -1760,7 +2249,16 @@ window.openGroupDetail = openGroupDetail;
 window.closeGroupDetail = closeGroupDetail;
 window.openAddMemberForm = openAddMemberForm;
 window.closeAddMemberForm = closeAddMemberForm;
+window.toggleGroupContactPicker = toggleGroupContactPicker;
+window.selectGroupContact = selectGroupContact;
+window.requestRemoveGroupMember = requestRemoveGroupMember;
+window.cancelRemoveGroupMember = cancelRemoveGroupMember;
+window.removeGroupMember = removeGroupMember;
 window.togglePrimaryCommunityAction = togglePrimaryCommunityAction;
+window.updateQuranDisplayPreference = updateQuranDisplayPreference;
+window.resetQuranDisplayPreferences = resetQuranDisplayPreferences;
+window.getKfgqpcHafsSurah = getKfgqpcHafsSurah;
+window.stripKfgqpcAyahMarker = stripKfgqpcAyahMarker;
 
 injectCommunityUi();
 patchCoreIqroFunctions();
