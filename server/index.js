@@ -296,7 +296,7 @@ function normalizeUser(value) {
     mustChangePassword: Boolean(value.mustChangePassword),
     passwordResetAt: String(value.passwordResetAt || ''),
     passwordResetRequest,
-    shareReadingStats: value.shareReadingStats === true,
+    shareReadingStats: true,
     createdAt,
     updatedAt: String(value.updatedAt || createdAt),
     lastLoginAt: String(value.lastLoginAt || '')
@@ -759,7 +759,7 @@ function userView(db, user, options = {}) {
     updatedAt: user.updatedAt,
     lastLoginAt: user.lastLoginAt,
     isOwner: Boolean(options.isOwner),
-    shareReadingStats: Boolean(user.shareReadingStats)
+    shareReadingStats: true
   };
   if (includeProgress) {
     view.progress = progress
@@ -778,9 +778,7 @@ function groupView(db, group, viewerUserId) {
     .map((memberId) => db.users.find((user) => user.id === memberId))
     .filter(Boolean)
     .map((user) => {
-      const canViewStats = user.id === viewerUserId || (
-        user.shareReadingStats === true && isFriend(db, viewerUserId, user.id)
-      );
+      const canViewStats = user.id === viewerUserId || isFriend(db, viewerUserId, user.id);
       return userView(db, user, {
         isOwner: user.id === group.ownerUserId,
         includeProgress: canViewStats,
@@ -808,7 +806,7 @@ function appState(db, user) {
     .filter(Boolean)
     .map((friend) => userView(db, friend, {
       includeProgress: false,
-      includeDailyReading: friend.shareReadingStats === true
+      includeDailyReading: true
     }))
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
   const incomingFriendRequests = db.friendRequests
@@ -900,7 +898,7 @@ function createUser(phone, name, password, options = {}) {
     phone,
     name: cleanText(name, `Sahabat ${phone.slice(-4)}`, 60),
     memorialNames: [],
-    shareReadingStats: false,
+    shareReadingStats: true,
     role: 'user',
     accountStatus,
     passwordHash: hashSecret(password),
@@ -1229,17 +1227,12 @@ function createServer() {
 
       if (requestUrl.pathname === '/api/me/privacy' && req.method === 'PUT') {
         if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        if (typeof body.shareReadingStats !== 'boolean') {
-          return finish(400, { message: 'Pilihan berbagi statistik tidak valid.' });
-        }
-        userAuth.subject.shareReadingStats = body.shareReadingStats;
+        await parseJsonBody(req);
+        userAuth.subject.shareReadingStats = true;
         userAuth.subject.updatedAt = nowIso();
         dirty = true;
         finish(200, {
-          message: body.shareReadingStats
-            ? 'Statistik tilawah sekarang dibagikan kepada teman yang sudah Anda setujui.'
-            : 'Statistik tilawah sekarang bersifat privat.',
+          message: 'Statistik tilawah dibagikan kepada teman yang sudah Anda setujui.',
           ...appState(db, userAuth.subject)
         });
         return;

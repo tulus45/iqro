@@ -117,6 +117,7 @@ const communityState = {
   removingGroupMemberId: '',
   installSuggestionPhone: '',
   memorialDraft: null,
+  settingsSection: 'menu',
   authMode: 'login',
   loading: false,
   message: '',
@@ -255,6 +256,7 @@ function clearSessionState(renderNow = true) {
   communityState.removingGroupMemberId = '';
   communityState.installSuggestionPhone = '';
   communityState.memorialDraft = null;
+  communityState.settingsSection = 'menu';
   communityState.loading = false;
   window.syncUserManagementAccess?.();
   if (renderNow) {
@@ -1418,7 +1420,6 @@ function renderQuranDisplaySettings() {
         <div class="settings-quran-heading-copy">
           <p class="home-card-label">Tampilan Al-Qur'an</p>
           <h2 class="community-section-title">Pilih Gaya Mushaf</h2>
-          <p>Pilih bentuk huruf yang nyaman untuk dibaca. Pengaturan ini hanya mengubah tampilan; teks ayat dan harakat tidak diubah.</p>
         </div>
         <button class="settings-reset-button" type="button" onclick="resetQuranDisplayPreferences()">Atur Ulang</button>
       </div>
@@ -1483,63 +1484,141 @@ function renderQuranDisplaySettings() {
   `;
 }
 
+const settingsSections = ['quran', 'profile', 'password', 'memorial'];
+
+function openSettingsSection(section) {
+  if (!settingsSections.includes(section)) return;
+  communityState.settingsSection = section;
+  renderSettingsPage();
+}
+
+function closeSettingsSection() {
+  communityState.settingsSection = 'menu';
+  renderSettingsPage();
+}
+
+function renderSettingsMenu() {
+  const items = [
+    {
+      section: 'quran',
+      kicker: 'Bacaan',
+      title: "Tampilan Al-Qur'an",
+      description: 'Gaya Mushaf, ukuran huruf, dan jarak baris.'
+    },
+    {
+      section: 'profile',
+      kicker: 'Akun',
+      title: 'Nama Tampilan',
+      description: 'Perbarui nama yang terlihat di aplikasi.'
+    },
+    {
+      section: 'password',
+      kicker: 'Keamanan',
+      title: 'Ganti Password',
+      description: 'Perbarui password akun Anda.'
+    },
+    {
+      section: 'memorial',
+      kicker: 'Tahlil',
+      title: 'Nama Almarhum',
+      description: 'Kelola nama yang disertakan dalam bacaan Tahlil.'
+    }
+  ];
+
+  return `
+    <section class="settings-menu-grid" aria-label="Daftar pengaturan">
+      ${items.map((item) => `
+        <button class="settings-menu-item" type="button" onclick="openSettingsSection('${item.section}')">
+          <span class="settings-menu-copy">
+            <span class="home-card-label">${item.kicker}</span>
+            <strong>${item.title}</strong>
+            <small>${item.description}</small>
+          </span>
+          <span class="settings-menu-arrow" aria-hidden="true">›</span>
+        </button>
+      `).join('')}
+    </section>
+  `;
+}
+
+function renderSettingsDetailHeader(title) {
+  return `
+    <div class="settings-detail-header">
+      <button class="settings-detail-back" type="button" onclick="closeSettingsSection()" aria-label="Kembali ke daftar pengaturan">←</button>
+      <div>
+        <p class="home-card-label">Pengaturan</p>
+        <h2>${title}</h2>
+      </div>
+    </div>
+  `;
+}
+
 function renderSettingsPage() {
   const panel = document.getElementById('settingsAccountPanel');
   if (!panel) return;
 
   renderSettingsFlash();
-  if (!communityState.me) {
+  const section = settingsSections.includes(communityState.settingsSection)
+    ? communityState.settingsSection
+    : 'menu';
+
+  if (section === 'menu') {
+    panel.innerHTML = renderSettingsMenu();
+    return;
+  }
+
+  if (section !== 'quran' && !communityState.me) {
     panel.innerHTML = `
-      ${renderQuranDisplaySettings()}
-      <div class="community-empty">Masuk ke akun untuk mengubah pengaturan akun.</div>
+      ${renderSettingsDetailHeader('Pengaturan Akun')}
+      <div class="community-empty settings-detail-empty">Masuk ke akun untuk mengubah pengaturan ini.</div>
+    `;
+    return;
+  }
+
+  if (section === 'quran') {
+    panel.innerHTML = `${renderSettingsDetailHeader("Tampilan Al-Qur'an")}${renderQuranDisplaySettings()}`;
+    return;
+  }
+
+  if (section === 'profile') {
+    panel.innerHTML = `
+      ${renderSettingsDetailHeader('Nama Tampilan')}
+      <section class="community-sidebar-card settings-account-card settings-detail-card">
+        <form class="community-form" onsubmit="return submitProfileUpdate(event)">
+          <label class="community-field">
+            <span>Nama Tampilan</span>
+            <input class="community-input" type="text" name="name" value="${escapeHtml(communityState.me.name)}" required>
+          </label>
+          <button class="btn-compact btn-main" type="submit" ${communityState.loading ? 'disabled' : ''}>Simpan Nama</button>
+        </form>
+      </section>
+    `;
+    return;
+  }
+
+  if (section === 'password') {
+    panel.innerHTML = `
+      ${renderSettingsDetailHeader('Ganti Password')}
+      <section class="community-sidebar-card settings-account-card settings-detail-card">
+        <form class="community-form" onsubmit="return submitPasswordUpdate(event)">
+          <label class="community-field">
+            <span>Password Lama</span>
+            <input class="community-input" type="password" name="currentPassword" placeholder="Password saat ini" required>
+          </label>
+          <label class="community-field">
+            <span>Password Baru</span>
+            <input class="community-input" type="password" name="newPassword" placeholder="Minimal 6 karakter" required>
+          </label>
+          <button class="btn-compact btn-main" type="submit" ${communityState.loading ? 'disabled' : ''}>Perbarui Password</button>
+        </form>
+      </section>
     `;
     return;
   }
 
   panel.innerHTML = `
-    ${renderQuranDisplaySettings()}
-    <section class="community-sidebar-card settings-account-card settings-privacy-card">
-      <p class="home-card-label">Privasi Komunitas</p>
-      <h2 class="community-section-title">Berbagi Statistik Tilawah</h2>
-      <p class="settings-privacy-copy">Jika diaktifkan, hanya teman yang sudah Anda setujui yang dapat melihat jumlah ayat hari ini, minggu ini, dan bulan lalu. Surah serta nomor ayat terakhir tetap privat.</p>
-      <form class="community-form" onsubmit="return submitPrivacySettings(event)">
-        <label class="settings-privacy-toggle">
-          <input type="checkbox" name="shareReadingStats" ${communityState.me.shareReadingStats ? 'checked' : ''}>
-          <span class="settings-privacy-switch" aria-hidden="true"></span>
-          <span>${communityState.me.shareReadingStats ? 'Statistik dibagikan' : 'Statistik privat'}</span>
-        </label>
-        <button class="btn-compact btn-main" type="submit" ${communityState.loading ? 'disabled' : ''}>Simpan Privasi</button>
-      </form>
-    </section>
-    <section class="community-sidebar-card settings-account-card">
-      <p class="home-card-label">Edit Nama</p>
-      <form class="community-form" onsubmit="return submitProfileUpdate(event)">
-        <label class="community-field">
-          <span>Nama Tampilan</span>
-          <input class="community-input" type="text" name="name" value="${escapeHtml(communityState.me.name)}" required>
-        </label>
-        <button class="btn-compact btn-main" type="submit" ${communityState.loading ? 'disabled' : ''}>Simpan Nama</button>
-      </form>
-    </section>
-    <section class="community-sidebar-card settings-account-card">
-      <p class="home-card-label">Ganti Password</p>
-      <form class="community-form" onsubmit="return submitPasswordUpdate(event)">
-        <label class="community-field">
-          <span>Password Lama</span>
-          <input class="community-input" type="password" name="currentPassword" placeholder="Password saat ini" required>
-        </label>
-        <label class="community-field">
-          <span>Password Baru</span>
-          <input class="community-input" type="password" name="newPassword" placeholder="Minimal 6 karakter" required>
-        </label>
-        <button class="btn-compact btn-main" type="submit" ${communityState.loading ? 'disabled' : ''}>Perbarui Password</button>
-      </form>
-    </section>
-    <section class="community-sidebar-card settings-account-card settings-memorial-card">
-      <div class="settings-memorial-intro">
-        <p class="home-card-label">Nama untuk Tahlil</p>
-        <h2 class="community-section-title">Almarhum &amp; Almarhumah</h2>
-      </div>
+    ${renderSettingsDetailHeader('Nama untuk Tahlil')}
+    <section class="community-sidebar-card settings-account-card settings-memorial-card settings-detail-card">
       <form class="settings-memorial-form" onsubmit="return submitMemorialNames(event)">
         <label class="community-field">
           <span>Daftar Nama <small>(satu nama per baris)</small></span>
@@ -1668,7 +1747,7 @@ function injectCommunityUi() {
             <p class="section-kicker">Akun</p>
             <h1 class="main-title">
               <span class="title-logo">IQ</span>
-              Settings
+              Pengaturan
             </h1>
           </div>
         </div>
@@ -1782,6 +1861,7 @@ function openCommunity() {
 }
 
 function openSettings() {
+  communityState.settingsSection = 'menu';
   setActivePage('settings', 'settings');
   renderSettingsPage();
 }
@@ -1948,29 +2028,6 @@ async function submitProfileUpdate(event) {
     renderCommunityPage();
   }
 
-  return false;
-}
-
-async function submitPrivacySettings(event) {
-  event.preventDefault();
-  const formData = new FormData(event.currentTarget);
-  const shareReadingStats = formData.get('shareReadingStats') === 'on';
-
-  communityState.loading = true;
-  renderCommunityPage();
-  try {
-    const payload = await apiFetch('/me/privacy', {
-      method: 'PUT',
-      body: { shareReadingStats }
-    });
-    applyAppState(payload);
-    setCommunityMessage(payload.message || 'Pengaturan privasi berhasil disimpan.', 'success');
-  } catch (error) {
-    setCommunityMessage(error.message || 'Pengaturan privasi belum bisa disimpan.', 'danger', true);
-  } finally {
-    communityState.loading = false;
-    renderCommunityPage();
-  }
   return false;
 }
 
@@ -2230,7 +2287,8 @@ window.submitPhoneRegister = submitPhoneRegister;
 window.submitForgotPassword = submitForgotPassword;
 window.submitRequiredPasswordChange = submitRequiredPasswordChange;
 window.submitProfileUpdate = submitProfileUpdate;
-window.submitPrivacySettings = submitPrivacySettings;
+window.openSettingsSection = openSettingsSection;
+window.closeSettingsSection = closeSettingsSection;
 window.submitMemorialNames = submitMemorialNames;
 window.updateMemorialNameCounter = updateMemorialNameCounter;
 window.getTahlilMemorialNames = () => [...getMemorialNames()];
