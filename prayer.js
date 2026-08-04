@@ -127,17 +127,17 @@ function renderQiblaCompass() {
   if (bearingValue) bearingValue.textContent = `${Math.round(bearing)}°`;
   if (bearingCopy) {
     bearingCopy.textContent = prayerState.locationMode === 'auto' && prayerState.coordinates
-      ? 'dari utara · lokasi perangkat'
+      ? 'Berdasarkan lokasi Anda saat ini'
       : `dari utara · pusat ${prayerCityLabel()}`;
   }
   if (status) status.textContent = isAligned ? 'Arah kiblat sudah sejajar.' : qiblaState.status;
   if (alignment) alignment.textContent = isAligned ? 'Sudah sejajar' : 'Arah kiblat';
   if (button) {
-    button.textContent = qiblaState.active ? 'Perbarui arah' : 'Gunakan sensor arah';
+    button.textContent = qiblaState.active ? 'Perbarui arah' : 'Aktifkan Kompas';
     button.classList.toggle('is-active', qiblaState.active);
     button.setAttribute('aria-label', qiblaState.active
       ? 'Perbarui pembacaan sensor arah kiblat'
-      : 'Gunakan sensor arah perangkat untuk kompas kiblat');
+      : 'Aktifkan kompas perangkat untuk menentukan arah kiblat');
   }
   if (face) {
     face.classList.toggle('is-aligned', isAligned);
@@ -745,14 +745,6 @@ function renderPrayerPage() {
   renderPrayerNext();
 }
 
-function mountPrayerDateRail() {
-  const intro = document.querySelector('.prayer-intro');
-  const dateRail = document.querySelector('.prayer-date-rail');
-  if (intro && dateRail && dateRail.parentElement !== intro) {
-    intro.appendChild(dateRail);
-  }
-}
-
 function readCachedPrayerSchedule(date) {
   if (prayerState.locationMode === 'auto') return null;
   try {
@@ -864,5 +856,4 @@ window.changePrayerCity = changePrayerCity;
 window.activateQiblaCompass = activateQiblaCompass;
 window.togglePrayerCityMenu = togglePrayerCityMenu;
 buildPrayerCityMenu();
-mountPrayerDateRail();
 renderPrayerPage();

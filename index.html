@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260803-16">
-    <link rel="stylesheet" href="mobile.css?v=20260803-16">
+    <link rel="stylesheet" href="style.css?v=20260804-3">
+    <link rel="stylesheet" href="mobile.css?v=20260804-1">
 </head>
 <body>
 <div class="site-shell">
@@ -42,7 +42,7 @@
                             <span class="title-logo">IQ</span>
                             Ringkasan Tilawah
                         </h1>
-                        <p class="hero-copy">Setiap ayat adalah langkah mendekat pada-Nya. Kami menjaga batas bacaan Anda agar langkah mulia ini tak pernah terputus.</p>
+                        <p class="hero-copy">Setiap ayat membawamu lebih dekat kepada-Nya. Kami menyimpan jejak tilawahmu agar kamu bisa melanjutkannya kapan saja.</p>
                     </div>
                     <div class="home-calligraphy" aria-label="Al-Quran Karim">
                         <img class="home-calligraphy-image" src="quran.png" alt="Al-Quran Karim">
@@ -51,7 +51,7 @@
 
                 <div class="home-overview-grid">
                     <article class="home-card home-progress-card">
-                        <p class="home-card-label">Pencapaian Baca Al-Qur'an</p>
+                        <p class="home-card-label">Progres Tilawah</p>
                         <div class="home-progress-value">
                             <strong id="homeProgressPercent">0%</strong>
                             <span id="homeProgressReadAyat">0 dari 6.236 ayat</span>
@@ -62,7 +62,7 @@
                     </article>
 
                     <article id="homeDailyCard" class="home-card home-daily-card">
-                        <p class="home-card-label">Perbandingan Ayat</p>
+                        <p class="home-card-label">Aktivitas Tilawah</p>
                         <div class="home-reading-comparisons" aria-label="Perbandingan bacaan per periode">
                             <div id="homeDayComparison" class="home-comparison-row">
                                 <span class="home-comparison-period"><strong>Hari</strong><small>lalu <b id="homeDayPrevious">0</b></small></span>
@@ -169,72 +169,82 @@
                 <div class="prayer-hero">
                     <div class="prayer-intro">
                         <p class="section-kicker">Jadwal Salat</p>
-                        <h1 class="prayer-title">Waktu untuk kembali.</h1>
+                        <h1 class="prayer-title">Jadwal salat hari ini.</h1>
                         <p class="prayer-lead">Satu hari bergerak cepat. Lima waktu menjaganya tetap terarah.</p>
-                        <div id="prayerCityControl" class="prayer-location-control">
-                            <span class="prayer-location-mark" aria-hidden="true"></span>
-                            <button id="prayerCityTrigger" class="prayer-location-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="prayerCityMenu" onclick="togglePrayerCityMenu(event)">
-                                <span class="prayer-location-copy">
-                                    <small id="prayerLocationModeLabel">Lokasi</small>
-                                    <strong id="prayerCityDisplay">Jakarta</strong>
-                                </span>
-                                <span class="prayer-location-chevron" aria-hidden="true"></span>
-                            </button>
-                            <select id="prayerCitySelect" class="prayer-city-native" tabindex="-1" aria-hidden="true" onchange="changePrayerCity(this.value)">
-                                <optgroup label="Waktu Indonesia Barat">
-                                    <option value="jakarta">Jakarta</option>
-                                    <option value="bandung">Bandung</option>
-                                    <option value="semarang">Semarang</option>
-                                    <option value="yogyakarta">Yogyakarta</option>
-                                    <option value="surabaya">Surabaya</option>
-                                    <option value="medan">Medan</option>
-                                    <option value="palembang">Palembang</option>
-                                </optgroup>
-                                <optgroup label="Waktu Indonesia Tengah">
-                                    <option value="denpasar">Denpasar</option>
-                                    <option value="banjarmasin">Banjarmasin</option>
-                                    <option value="balikpapan">Balikpapan</option>
-                                    <option value="makassar">Makassar</option>
-                                    <option value="manado">Manado</option>
-                                </optgroup>
-                                <optgroup label="Waktu Indonesia Timur">
-                                    <option value="jayapura">Jayapura</option>
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div id="prayerCityMenu" class="prayer-city-menu" role="listbox" aria-label="Pilih lokasi jadwal salat" hidden></div>
                     </div>
 
-                    <article class="prayer-next-card" aria-live="polite">
-                        <div class="prayer-next-topline">
-                            <span>Salat berikutnya</span>
-                            <span id="prayerTimezoneLabel">WIB</span>
-                        </div>
-                        <div class="prayer-next-main">
-                            <div>
-                                <p id="prayerNextName">Menyiapkan</p>
-                                <strong id="prayerNextTime">--:--</strong>
+                    <div class="prayer-overview">
+                        <article class="prayer-next-card" aria-live="polite">
+                            <div class="prayer-next-topline">
+                                <span>Salat berikutnya</span>
+                                <span id="prayerTimezoneLabel">WIB</span>
                             </div>
-                            <span id="prayerNextIndex" class="prayer-next-index" aria-hidden="true">—</span>
-                        </div>
-                        <p id="prayerCountdown" class="prayer-countdown">Mengambil jadwal hari ini</p>
-                        <div class="prayer-countdown-track" aria-hidden="true">
-                            <span id="prayerCountdownProgress"></span>
-                        </div>
-                    </article>
-                </div>
+                            <div class="prayer-next-main">
+                                <div>
+                                    <p id="prayerNextName">Menyiapkan</p>
+                                    <strong id="prayerNextTime">--:--</strong>
+                                </div>
+                                <span id="prayerNextIndex" class="prayer-next-index" aria-hidden="true">—</span>
+                            </div>
+                            <p id="prayerCountdown" class="prayer-countdown">Mengambil jadwal hari ini</p>
+                            <div class="prayer-countdown-track" aria-hidden="true">
+                                <span id="prayerCountdownProgress"></span>
+                            </div>
+                        </article>
 
-                <div class="prayer-date-rail">
-                    <div>
-                        <span class="prayer-date-label">Hari ini</span>
-                        <strong id="prayerGregorianDate">—</strong>
+                        <aside class="prayer-side-panel" aria-label="Informasi lokasi dan tanggal">
+                            <div id="prayerCityControl" class="prayer-location-control">
+                                <span class="prayer-location-mark" aria-hidden="true"></span>
+                                <button id="prayerCityTrigger" class="prayer-location-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="prayerCityMenu" onclick="togglePrayerCityMenu(event)">
+                                    <span class="prayer-location-copy">
+                                        <small id="prayerLocationModeLabel">Lokasi</small>
+                                        <strong id="prayerCityDisplay">Jakarta</strong>
+                                    </span>
+                                    <span class="prayer-location-chevron" aria-hidden="true"></span>
+                                </button>
+                                <select id="prayerCitySelect" class="prayer-city-native" tabindex="-1" aria-hidden="true" onchange="changePrayerCity(this.value)">
+                                    <optgroup label="Waktu Indonesia Barat">
+                                        <option value="jakarta">Jakarta</option>
+                                        <option value="bandung">Bandung</option>
+                                        <option value="semarang">Semarang</option>
+                                        <option value="yogyakarta">Yogyakarta</option>
+                                        <option value="surabaya">Surabaya</option>
+                                        <option value="medan">Medan</option>
+                                        <option value="palembang">Palembang</option>
+                                    </optgroup>
+                                    <optgroup label="Waktu Indonesia Tengah">
+                                        <option value="denpasar">Denpasar</option>
+                                        <option value="banjarmasin">Banjarmasin</option>
+                                        <option value="balikpapan">Balikpapan</option>
+                                        <option value="makassar">Makassar</option>
+                                        <option value="manado">Manado</option>
+                                    </optgroup>
+                                    <optgroup label="Waktu Indonesia Timur">
+                                        <option value="jayapura">Jayapura</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div id="prayerCityMenu" class="prayer-city-menu" role="listbox" aria-label="Pilih lokasi jadwal salat" hidden></div>
+
+                            <div class="prayer-date-rail">
+                                <div class="prayer-date-item">
+                                    <span class="prayer-date-icon prayer-date-icon-sun" aria-hidden="true"></span>
+                                    <span class="prayer-date-copy">
+                                        <span class="prayer-date-label">Hari ini</span>
+                                        <strong id="prayerGregorianDate">—</strong>
+                                    </span>
+                                </div>
+                                <div class="prayer-date-item">
+                                    <span class="prayer-date-icon prayer-date-icon-moon" aria-hidden="true"></span>
+                                    <span class="prayer-date-copy">
+                                        <span class="prayer-date-label">Kalender Hijriah</span>
+                                        <strong id="prayerHijriDate">—</strong>
+                                    </span>
+                                </div>
+                                <span id="prayerLocationBadge" class="prayer-location-badge" hidden>Jakarta</span>
+                            </div>
+                        </aside>
                     </div>
-                    <span class="prayer-date-divider" aria-hidden="true"></span>
-                    <div>
-                        <span class="prayer-date-label">Kalender Hijriah</span>
-                        <strong id="prayerHijriDate">—</strong>
-                    </div>
-                    <span id="prayerLocationBadge" class="prayer-location-badge">Jakarta</span>
                 </div>
 
                 <div id="prayerStatus" class="prayer-status" hidden></div>
@@ -248,7 +258,7 @@
                             <strong id="qiblaBearingValue">—°</strong>
                             <span id="qiblaBearingCopy">Menghitung arah dari Jakarta</span>
                         </div>
-                        <button id="qiblaCompassButton" class="qibla-compass-button" type="button" onclick="activateQiblaCompass()">Gunakan sensor arah</button>
+                        <button id="qiblaCompassButton" class="qibla-compass-button" type="button" onclick="activateQiblaCompass()">Aktifkan Kompas</button>
                         <p id="qiblaCompassStatus" class="qibla-compass-status">Arah perkiraan berdasarkan pusat kota yang dipilih.</p>
                     </div>
 
@@ -262,7 +272,14 @@
                             <span id="qiblaPointer" class="qibla-pointer" aria-hidden="true">
                                 <span></span>
                             </span>
-                            <span class="qibla-compass-center" aria-hidden="true"></span>
+                            <span class="qibla-compass-center" aria-hidden="true">
+                                <svg class="qibla-kaaba-icon" viewBox="0 0 32 32" focusable="false">
+                                    <path d="M6.5 9.5h19v17h-19z"></path>
+                                    <path class="qibla-kaaba-band" d="M6.5 13h19v4h-19z"></path>
+                                    <path class="qibla-kaaba-door" d="M14 19h5v7.5h-5z"></path>
+                                    <path class="qibla-kaaba-detail" d="M9 11.2h2.4m2.6 0h4m2.6 0H23"></path>
+                                </svg>
+                            </span>
                         </div>
                         <span id="qiblaAlignmentLabel" class="qibla-alignment-label">Arah kiblat</span>
                     </div>
@@ -1210,6 +1227,9 @@
             </div>
         </div>`;
         
+        // LPMQ-based styles collide on the older Allahumma mark sequence
+        // (shadda + dagger alif). Keep this normalization local to Tahlil.
+        html = html.replaceAll('اَللّٰهُمَّ', 'اللَّهُمَّ');
         html = html.replaceAll('<strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong>', memorialNamesTarget);
         const mushafContent = document.getElementById('mushafContent');
         mushafContent.innerHTML = html;
@@ -1283,7 +1303,7 @@
                 html += `
                 <div class="ayah-block" id="block-${v.nomorAyat}">
                     <div class="ayah-arab quran-reading-text">
-                        ${arabicHtml} <span class="ayah-end${markerClass}" ${saveAttr}><span class="ayah-number">${_0xAr(v.nomorAyat)}</span></span>
+                        ${arabicHtml} <span class="ayah-end${markerClass}" ${saveAttr}><span class="ayah-number${v.nomorAyat >= 100 ? ' is-three-digit' : ''}">${_0xAr(v.nomorAyat)}</span></span>
                     </div>
                     <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
                         ${v.teksLatin}
@@ -1384,7 +1404,7 @@
 </script>
 <script src="mobile-runtime.js?v=20260801-1"></script>
 <script src="community.js?v=20260803-10"></script>
-<script src="prayer.js?v=20260803-1"></script>
+<script src="prayer.js?v=20260804-2"></script>
 <script src="admin.js?v=20260801-1"></script>
 </body>
 </html>

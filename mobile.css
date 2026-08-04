@@ -1249,3 +1249,139 @@ body.mobile-menu-open {
         padding-left: var(--app-safe-left);
     }
 }
+
+@media (max-width: 720px) {
+    .page-prayer .prayer-hero {
+        gap: 7px;
+    }
+
+    .page-prayer .prayer-overview {
+        display: grid;
+        grid-template-columns: minmax(0, 1.42fr) minmax(112px, 0.78fr);
+        gap: 7px;
+        align-items: stretch;
+    }
+
+    .page-prayer .prayer-overview .prayer-next-card {
+        width: 100%;
+        min-width: 0;
+        min-height: 0;
+    }
+
+    .page-prayer .prayer-side-panel {
+        gap: 5px;
+        min-width: 0;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-control {
+        gap: 5px;
+        min-width: 0;
+        min-height: 42px;
+        margin: 0;
+        padding: 5px 6px;
+        border-radius: 11px;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-mark {
+        flex-basis: 22px;
+        width: 22px;
+        height: 22px;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-mark::before {
+        inset: 6px;
+        border-width: 2px;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-mark::after {
+        top: 9px;
+        left: 9px;
+        width: 3px;
+        height: 3px;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-copy small {
+        font-size: 0.43rem;
+        letter-spacing: 0.04em;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-copy strong {
+        font-size: 0.58rem;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-location-chevron {
+        flex-basis: 6px;
+        width: 6px;
+        height: 6px;
+        margin-right: 1px;
+        border-width: 0 1.5px 1.5px 0;
+    }
+
+    .page-prayer .prayer-side-panel .prayer-date-rail {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 5px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    .page-prayer .prayer-date-item {
+        gap: 5px;
+        min-height: 38px;
+        padding: 5px 6px;
+        border-radius: 10px;
+    }
+
+    .page-prayer .prayer-date-icon {
+        flex-basis: 20px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .page-prayer .prayer-date-icon-sun::before {
+        inset: 6px;
+        border-width: 1.5px;
+    }
+
+    .page-prayer .prayer-date-icon-moon::before {
+        inset: 5px 5px 5px 4px;
+    }
+
+    .page-prayer .prayer-date-icon-moon::after {
+        top: 3px;
+        left: 8px;
+        width: 10px;
+        height: 10px;
+    }
+
+    .page-prayer .prayer-date-copy {
+        gap: 1px;
+    }
+
+    .page-prayer .prayer-date-label {
+        font-size: 0.42rem;
+        letter-spacing: 0.04em;
+    }
+
+    .page-prayer .prayer-date-copy strong {
+        display: -webkit-box;
+        overflow: hidden;
+        font-size: 0.52rem;
+        line-height: 1.18;
+        white-space: normal;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .page-prayer .qibla-compass-center {
+        width: 22px;
+        height: 22px;
+        border-width: 2px;
+    }
+
+    .page-prayer .qibla-kaaba-icon {
+        width: 15px;
+        height: 15px;
+    }
+}
