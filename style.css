@@ -2905,8 +2905,8 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     z-index: 1;
     display: grid;
     place-items: center;
-    width: 1.12em;
-    height: 1.12em;
+    width: 1.7em;
+    height: 1.7em;
     color: #14532d;
     border: 1px solid rgba(22, 128, 63, 0.24);
     border-radius: 50%;
@@ -2919,10 +2919,18 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 }
 
 .ayah-number.is-three-digit {
-    width: 1.58em;
-    height: 1.12em;
     font-variant-numeric: tabular-nums;
-    border-radius: 999px;
+}
+
+#mushafPage.is-tahlil .tahlil-allahumma {
+    display: inline-block;
+    font-family: 'Iqro Quran Naskhi', 'Amiri', serif;
+    font-size: 1em;
+    font-weight: 400;
+    font-feature-settings: "mark" 1, "mkmk" 1, "rlig" 1, "calt" 1, "liga" 1;
+    line-height: inherit;
+    white-space: nowrap;
+    unicode-bidi: isolate;
 }
 
 .ayah-end.is-progress-marker {

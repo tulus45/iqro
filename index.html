@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260804-3">
+    <link rel="stylesheet" href="style.css?v=20260804-4">
     <link rel="stylesheet" href="mobile.css?v=20260804-1">
 </head>
 <body>
@@ -1227,9 +1227,9 @@
             </div>
         </div>`;
         
-        // LPMQ-based styles collide on the older Allahumma mark sequence
-        // (shadda + dagger alif). Keep this normalization local to Tahlil.
-        html = html.replaceAll('اَللّٰهُمَّ', 'اللَّهُمَّ');
+        // Keep Allahumma in a font-safe cluster because LPMQ collides on its
+        // shadda and mim marks. This replacement remains local to Tahlil.
+        html = html.replaceAll('اَللّٰهُمَّ', '<span class="tahlil-allahumma">اللَّهُمَّ</span>');
         html = html.replaceAll('<strong style="color:var(--gmeet);">[... Sebutkan Nama-nama Arwah ...]</strong>', memorialNamesTarget);
         const mushafContent = document.getElementById('mushafContent');
         mushafContent.innerHTML = html;
