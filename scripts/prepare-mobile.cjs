@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, '..');
 const webDir = path.join(root, 'www');
 const assets = [
   'index.html',
+  'quran-offline.js',
   'style.css',
   'mobile.css',
   'community.js',

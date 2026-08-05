@@ -117,6 +117,7 @@ const communityState = {
   removingGroupMemberId: '',
   installSuggestionPhone: '',
   memorialDraft: null,
+  offlineDeleteConfirm: false,
   settingsSection: 'menu',
   authMode: 'login',
   loading: false,
@@ -1484,7 +1485,154 @@ function renderQuranDisplaySettings() {
   `;
 }
 
-const settingsSections = ['quran', 'profile', 'password', 'memorial'];
+function formatOfflineQuranBytes(value) {
+  const bytes = Math.max(0, Number(value) || 0);
+  if (!bytes) return '-';
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+}
+
+function formatOfflineQuranDate(value) {
+  const date = new Date(value || '');
+  if (Number.isNaN(date.getTime())) return '-';
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(date);
+}
+
+function getOfflineQuranState() {
+  return window.IqroOfflineQuran?.getState?.() || {
+    initialized: false,
+    ready: false,
+    downloading: false,
+    completedSurahs: 0,
+    totalSurahs: 114,
+    error: '',
+    metadata: null
+  };
+}
+
+function renderOfflineQuranSettings() {
+  const offlineState = getOfflineQuranState();
+  const total = Math.max(114, Number(offlineState.totalSurahs) || 114);
+  const completed = Math.max(0, Math.min(total, Number(offlineState.completedSurahs) || 0));
+  const progress = Math.round((completed / total) * 100);
+  const isReady = offlineState.ready;
+  const isDownloading = offlineState.downloading;
+  const metadata = offlineState.metadata || {};
+  const statusLabel = isDownloading
+    ? (isReady ? 'Memperbarui data' : 'Sedang mengunduh')
+    : isReady ? 'Siap offline' : 'Belum diunduh';
+  const title = isDownloading
+    ? `Menyimpan ${completed} dari ${total} surah`
+    : isReady ? 'Al-Qur&#39;an tersedia tanpa internet' : 'Simpan Al-Qur&#39;an di perangkat';
+  const description = isReady
+    ? 'Teks Arab, Latin, dan terjemahan Indonesia telah tersimpan dan akan dipakai lebih dahulu saat membaca.'
+    : 'Unduh seluruh bacaan sekali agar menu Al-Qur&#39;an tetap dapat digunakan saat tidak ada koneksi internet.';
+  const errorHtml = offlineState.error
+    ? `<div class='offline-quran-message is-danger' role='alert'>${escapeHtml(offlineState.error)}</div>`
+    : '';
+  const progressHtml = isDownloading
+    ? `
+      <div class='offline-quran-progress' role='progressbar' aria-valuemin='0' aria-valuemax='100' aria-valuenow='${progress}'>
+        <span style='width: ${progress}%'></span>
+      </div>
+      <p class='offline-quran-progress-copy'>${progress}% selesai. Jangan tutup aplikasi sampai validasi selesai.</p>
+    `
+    : '';
+  const deleteConfirmation = communityState.offlineDeleteConfirm && isReady
+    ? `
+      <div class='offline-quran-confirm' role='alert'>
+        <p>Hapus data offline dari perangkat? Anda dapat mengunduhnya kembali kapan saja.</p>
+        <div>
+          <button class='btn-compact community-button-secondary' type='button' onclick='cancelRemoveOfflineQuranData()'>Batal</button>
+          <button class='btn-compact offline-quran-delete-confirm' type='button' onclick='removeOfflineQuranData()'>Hapus Data</button>
+        </div>
+      </div>
+    `
+    : '';
+
+  return `
+    <section class='community-sidebar-card settings-account-card settings-detail-card offline-quran-card'>
+      <div class='offline-quran-heading'>
+        <span class='offline-quran-icon' aria-hidden='true'>
+          <svg viewBox='0 0 24 24'><path d='M6 4.8c2.2 0 4.2.7 6 2.1 1.8-1.4 3.8-2.1 6-2.1v13.4c-2.2 0-4.2.7-6 2.1-1.8-1.4-3.8-2.1-6-2.1V4.8z'/><path d='M12 7v13.1'/></svg>
+        </span>
+        <div>
+          <span class='offline-quran-status${isReady ? ' is-ready' : ''}${isDownloading ? ' is-downloading' : ''}'>${statusLabel}</span>
+          <h2>${title}</h2>
+          <p>${description}</p>
+        </div>
+      </div>
+
+      ${progressHtml}
+      ${errorHtml}
+
+      <div class='offline-quran-stats'>
+        <div><small>Surah</small><strong>${isReady ? metadata.surahCount || 114 : 114}</strong></div>
+        <div><small>Ayat</small><strong>${isReady ? Number(metadata.ayahCount || 6236).toLocaleString('id-ID') : '6.236'}</strong></div>
+        <div><small>Ukuran</small><strong>${isReady ? formatOfflineQuranBytes(metadata.bytes) : 'Dihitung setelah unduh'}</strong></div>
+        <div><small>Diperbarui</small><strong>${isReady ? formatOfflineQuranDate(metadata.downloadedAt) : '-'}</strong></div>
+      </div>
+
+      <p class='offline-quran-integrity'>
+        Data baru diaktifkan setelah 114 surah dan 6.236 ayat lolos pemeriksaan integritas. Audio murottal tidak termasuk.
+      </p>
+
+      <div class='offline-quran-actions'>
+        <button class='btn-compact btn-main' type='button' onclick='downloadOfflineQuranData()' ${isDownloading ? 'disabled' : ''}>
+          ${isDownloading ? 'Mengunduh...' : isReady ? 'Perbarui Data' : 'Unduh Semua Data'}
+        </button>
+        ${isReady && !isDownloading
+          ? `<button class='btn-compact offline-quran-delete' type='button' onclick='requestRemoveOfflineQuranData()'>Hapus Data Offline</button>`
+          : ''}
+      </div>
+
+      ${deleteConfirmation}
+    </section>
+  `;
+}
+
+async function downloadOfflineQuranData() {
+  const offlineApi = window.IqroOfflineQuran;
+  if (!offlineApi || getOfflineQuranState().downloading) return false;
+  communityState.offlineDeleteConfirm = false;
+  renderSettingsPage();
+  try {
+    await offlineApi.download();
+  } catch (error) {
+    // Pesan kegagalan disimpan dan ditampilkan oleh modul offline.
+  }
+  renderSettingsPage();
+  return false;
+}
+
+function requestRemoveOfflineQuranData() {
+  communityState.offlineDeleteConfirm = true;
+  renderSettingsPage();
+}
+
+function cancelRemoveOfflineQuranData() {
+  communityState.offlineDeleteConfirm = false;
+  renderSettingsPage();
+}
+
+async function removeOfflineQuranData() {
+  const offlineApi = window.IqroOfflineQuran;
+  if (!offlineApi) return false;
+  communityState.offlineDeleteConfirm = false;
+  try {
+    await offlineApi.remove();
+  } catch (error) {
+    // Status penyimpanan tetap dirender ulang untuk menampilkan kondisi terbaru.
+  }
+  renderSettingsPage();
+  return false;
+}
+
+const settingsSections = ['quran', 'offline', 'profile', 'password', 'memorial'];
 
 function openSettingsSection(section) {
   if (!settingsSections.includes(section)) return;
@@ -1504,6 +1652,14 @@ function renderSettingsMenu() {
       kicker: 'Bacaan',
       title: "Tampilan Al-Qur'an",
       description: 'Gaya Mushaf, ukuran huruf, dan jarak baris.'
+    },
+    {
+      section: 'offline',
+      kicker: 'Penyimpanan',
+      title: 'Al-Qur&#39;an Offline',
+      description: window.IqroOfflineQuran?.getState?.().ready
+        ? '114 surah siap dibaca tanpa internet.'
+        : 'Simpan seluruh teks, Latin, dan terjemahan di perangkat.'
     },
     {
       section: 'profile',
@@ -1567,7 +1723,7 @@ function renderSettingsPage() {
     return;
   }
 
-  if (section !== 'quran' && !communityState.me) {
+  if (!['quran', 'offline'].includes(section) && !communityState.me) {
     panel.innerHTML = `
       ${renderSettingsDetailHeader('Pengaturan Akun')}
       <div class="community-empty settings-detail-empty">Masuk ke akun untuk mengubah pengaturan ini.</div>
@@ -1577,6 +1733,11 @@ function renderSettingsPage() {
 
   if (section === 'quran') {
     panel.innerHTML = `${renderSettingsDetailHeader("Tampilan Al-Qur'an")}${renderQuranDisplaySettings()}`;
+    return;
+  }
+
+  if (section === 'offline') {
+    panel.innerHTML = `${renderSettingsDetailHeader('Al-Qur&#39;an Offline')}${renderOfflineQuranSettings()}`;
     return;
   }
 
@@ -2315,8 +2476,16 @@ window.removeGroupMember = removeGroupMember;
 window.togglePrimaryCommunityAction = togglePrimaryCommunityAction;
 window.updateQuranDisplayPreference = updateQuranDisplayPreference;
 window.resetQuranDisplayPreferences = resetQuranDisplayPreferences;
+window.downloadOfflineQuranData = downloadOfflineQuranData;
+window.requestRemoveOfflineQuranData = requestRemoveOfflineQuranData;
+window.cancelRemoveOfflineQuranData = cancelRemoveOfflineQuranData;
+window.removeOfflineQuranData = removeOfflineQuranData;
 window.getKfgqpcHafsSurah = getKfgqpcHafsSurah;
 window.stripKfgqpcAyahMarker = stripKfgqpcAyahMarker;
+
+window.addEventListener('iqro:quran-offline-status', () => {
+  if (communityState.settingsSection === 'offline') renderSettingsPage();
+});
 
 injectCommunityUi();
 patchCoreIqroFunctions();

@@ -3755,6 +3755,208 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     height: auto;
 }
 
+.offline-quran-card {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.12), transparent 34%),
+        linear-gradient(145deg, #ffffff, rgba(240, 253, 244, 0.72));
+}
+
+.offline-quran-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.offline-quran-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgba(22, 163, 74, 0.18);
+    border-radius: 16px;
+    background: rgba(220, 252, 231, 0.78);
+    color: #15803d;
+    box-shadow: 0 10px 24px rgba(22, 101, 52, 0.09);
+}
+
+.offline-quran-icon svg {
+    width: 28px;
+    height: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+}
+
+.offline-quran-heading > div {
+    display: grid;
+    gap: 7px;
+}
+
+.offline-quran-heading h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-family: 'Noto Serif', serif;
+    font-size: clamp(1.28rem, 2.2vw, 1.72rem);
+}
+
+.offline-quran-heading p {
+    max-width: 760px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    line-height: 1.6;
+}
+
+.offline-quran-status {
+    justify-self: start;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.offline-quran-status.is-ready {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.offline-quran-status.is-downloading {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.offline-quran-progress {
+    height: 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(22, 163, 74, 0.12);
+}
+
+.offline-quran-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #22c55e, #15803d);
+    transition: width 0.2s ease;
+}
+
+.offline-quran-progress-copy {
+    margin: -9px 0 0;
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.offline-quran-message {
+    padding: 11px 13px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.offline-quran-message.is-danger {
+    border: 1px solid #fecaca;
+    background: #fff7f7;
+    color: #991b1b;
+}
+
+.offline-quran-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.offline-quran-stats > div {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 13px 14px;
+    border: 1px solid rgba(22, 101, 52, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.offline-quran-stats small {
+    color: var(--text-muted);
+    font-size: 0.68rem;
+}
+
+.offline-quran-stats strong {
+    overflow-wrap: anywhere;
+    color: #14532d;
+    font-family: 'Noto Serif', serif;
+    font-size: 0.96rem;
+}
+
+.offline-quran-integrity {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px dashed rgba(22, 163, 74, 0.22);
+    border-radius: 13px;
+    background: rgba(240, 253, 244, 0.7);
+    color: #3f6350;
+    font-size: 0.75rem;
+    line-height: 1.55;
+}
+
+.offline-quran-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.offline-quran-actions .btn-compact {
+    min-width: 168px;
+}
+
+.offline-quran-delete,
+.offline-quran-delete-confirm {
+    min-height: 42px;
+    padding: 10px 16px;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fff7f7;
+    color: #b91c1c;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.offline-quran-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 13px 14px;
+    border: 1px solid #fecaca;
+    border-radius: 14px;
+    background: #fff7f7;
+}
+
+.offline-quran-confirm p {
+    margin: 0;
+    color: #7f1d1d;
+    font-size: 0.76rem;
+    line-height: 1.5;
+}
+
+.offline-quran-confirm > div {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+}
+
 .settings-quran-heading {
     display: flex;
     align-items: flex-start;
@@ -5299,6 +5501,44 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 
     .settings-quran-heading {
         display: grid;
+    }
+
+    .offline-quran-heading {
+        gap: 12px;
+    }
+
+    .offline-quran-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+    }
+
+    .offline-quran-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .offline-quran-stats > div {
+        padding: 10px 11px;
+    }
+
+    .offline-quran-actions,
+    .offline-quran-confirm {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .offline-quran-actions .btn-compact,
+    .offline-quran-actions .offline-quran-delete {
+        width: 100%;
+    }
+
+    .offline-quran-confirm > div {
+        width: 100%;
+    }
+
+    .offline-quran-confirm > div > * {
+        flex: 1;
     }
 
     .settings-reset-button {
