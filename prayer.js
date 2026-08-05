@@ -280,7 +280,7 @@ function syncPrayerCityControl() {
   if (modeLabel) {
     modeLabel.textContent = prayerState.locating
       ? 'Mendeteksi GPS'
-      : usingAuto ? 'Lokasi otomatis' : 'Kota acuan';
+      : usingAuto ? 'Lokasi' : 'Kota acuan';
   }
   if (display) {
     display.textContent = prayerState.locating

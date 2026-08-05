@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260804-4">
-    <link rel="stylesheet" href="mobile.css?v=20260804-1">
+    <link rel="stylesheet" href="style.css?v=20260805-1">
+    <link rel="stylesheet" href="mobile.css?v=20260805-1">
 </head>
 <body>
 <div class="site-shell">
@@ -320,7 +320,17 @@
                 </select>
             </div>
         </div>
-        
+
+        <div id="mushafResumeLoading" class="mushaf-resume-loading" role="status" aria-live="polite" hidden>
+            <div class="mushaf-resume-loading-card">
+                <span class="mushaf-resume-spinner" aria-hidden="true"></span>
+                <span>
+                    <strong>Menyiapkan tilawah...</strong>
+                    <small>Mengarahkan ke ayat berikutnya</small>
+                </span>
+            </div>
+        </div>
+
         <div id="mushafContent"></div>
     </div>
 </div>
@@ -1097,10 +1107,12 @@
         }
 
         if (hasSavedProgress) {
+            const resumeTarget = getResumeTilawahTarget();
+            const resumeSurahName = surahList[resumeTarget.surah - 1] || `Surah ${resumeTarget.surah}`;
             lastReadSurah.textContent = summary.nama;
             lastReadAyat.textContent = `Ayat ${summary.ayat} dari ${summary.currentAyatCount} ayat`;
             lastReadButton.textContent = 'Lanjutkan Tilawah';
-            lastReadButton.setAttribute('aria-label', `Lanjutkan tilawah ${summary.nama} ayat ${summary.ayat}`);
+            lastReadButton.setAttribute('aria-label', `Lanjutkan tilawah ke ${resumeSurahName} ayat ${resumeTarget.ayat}`);
         } else {
             lastReadSurah.textContent = 'Belum Ada Riwayat';
             lastReadAyat.textContent = 'Awali tilawah dari Al-Fatihah';
@@ -1121,19 +1133,50 @@
         progressBar.style.width = `${Math.max(0, Math.min(100, summary.percent))}%`;
     }
 
+    function getResumeTilawahTarget() {
+        const savedSurah = Math.max(1, Math.min(114, Number(_0xData.surah) || 1));
+        const savedTotalAyat = getAyatCountForSurah(savedSurah);
+        const savedAyat = Math.max(1, Math.min(savedTotalAyat, Number(_0xData.ayat) || 1));
+
+        if (!hasSavedProgress) {
+            return { surah: 1, ayat: 1 };
+        }
+
+        if (savedAyat < savedTotalAyat) {
+            return { surah: savedSurah, ayat: savedAyat + 1 };
+        }
+
+        if (savedSurah < 114) {
+            return { surah: savedSurah + 1, ayat: 1 };
+        }
+
+        return { surah: savedSurah, ayat: savedAyat };
+    }
+
+    function setMushafResumeLoading(isLoading) {
+        const overlay = document.getElementById('mushafResumeLoading');
+        const content = document.getElementById('mushafContent');
+        const page = document.getElementById('mushafPage');
+        if (overlay) overlay.hidden = !isLoading;
+        if (content) content.setAttribute('aria-busy', String(isLoading));
+        page?.classList.toggle('is-resume-loading', isLoading);
+    }
+
+    function waitForMushafLayout() {
+        return new Promise((resolve) => {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+        });
+    }
+
     function resumeLastRead() {
         setMushafProgressTracking(true);
         setMushafVariant('surah');
         document.getElementById('mushafControls').style.display = 'flex';
-        const savedSurah = Math.max(1, Math.min(114, Number(_0xData.surah) || 1));
-        const savedTotalAyat = getAyatCountForSurah(savedSurah);
-        const savedAyat = Math.max(1, Math.min(savedTotalAyat, Number(_0xData.ayat) || 1));
-        const shouldOpenNextSurah = hasSavedProgress && savedSurah < 114 && savedAyat >= savedTotalAyat;
-        const resumeSurah = shouldOpenNextSurah ? savedSurah + 1 : savedSurah;
-        const resumeAyat = shouldOpenNextSurah ? 1 : savedAyat;
-        setMushafRange(resumeSurah);
+        const target = getResumeTilawahTarget();
+        setMushafRange(target.surah);
+        setMushafResumeLoading(true);
         openMushaf('home');
-        loadSurah(resumeSurah, resumeAyat, false);
+        void loadSurah(target.surah, target.ayat, false, null, null, { revealAtTarget: true });
     }
 
     function toggleLatin() {
@@ -1250,9 +1293,11 @@
         _0xSync();
     }
 
-    async function loadSurah(n, targetAyat = null, hideRangeControls = false, rangeStart = null, rangeEnd = null) {
+    async function loadSurah(n, targetAyat = null, hideRangeControls = false, rangeStart = null, rangeEnd = null, options = {}) {
         setMushafVariant('surah');
         const qC = document.getElementById('mushafContent');
+        const revealAtTarget = options.revealAtTarget === true && Number(targetAyat) > 0;
+        if (revealAtTarget) setMushafResumeLoading(true);
         qC.innerHTML = "<div class='status-message'>Memuat Mushaf...</div>";
         try {
             const r = await fetch(`https://equran.id/api/v2/surat/${n}`);
@@ -1336,17 +1381,35 @@
             qC.innerHTML = html;
             normalizeRenderedText(qC);
 
-            if(targetAyat && targetAyat >= startAyat && targetAyat <= endAyat) {
-                setTimeout(() => {
+            if (targetAyat && targetAyat >= startAyat && targetAyat <= endAyat) {
+                if (revealAtTarget) {
+                    if (document.fonts?.ready) {
+                        await document.fonts.ready.catch(() => {});
+                    }
+                    await waitForMushafLayout();
                     const e = document.getElementById(`block-${targetAyat}`);
-                    if(e) { e.scrollIntoView({ behavior:'smooth', block:'center' }); e.classList.add('highlight'); }
-                }, 800);
+                    if (e) {
+                        e.scrollIntoView({ behavior: 'auto', block: 'center' });
+                        e.classList.add('highlight');
+                    }
+                    await waitForMushafLayout();
+                } else {
+                    window.setTimeout(() => {
+                        const e = document.getElementById(`block-${targetAyat}`);
+                        if (e) {
+                            e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            e.classList.add('highlight');
+                        }
+                    }, 800);
+                }
             }
+            if (revealAtTarget) setMushafResumeLoading(false);
         } catch (e) {
             const message = String(e?.message || '').startsWith('kfgqpc-')
                 ? 'Data Mushaf Madinah tidak dapat dimuat. Silakan coba lagi atau pilih gaya Mushaf Indonesia.'
                 : 'Gagal memuat API Mushaf. Periksa koneksi lalu coba lagi.';
             qC.innerHTML = `<div class='status-message'>${message}</div>`;
+            if (revealAtTarget) setMushafResumeLoading(false);
         }
     }
 
@@ -1404,7 +1467,7 @@
 </script>
 <script src="mobile-runtime.js?v=20260801-1"></script>
 <script src="community.js?v=20260803-10"></script>
-<script src="prayer.js?v=20260804-2"></script>
+<script src="prayer.js?v=20260805-1"></script>
 <script src="admin.js?v=20260801-1"></script>
 </body>
 </html>
