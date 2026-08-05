@@ -1,4 +1,5 @@
 const iqroSessionStorageKey = 'iqro_session_token';
+const iqroAppStateCacheKey = 'iqro_cached_app_state_v1';
 const iqroPlayStoreUrl = 'https://play.google.com/store/apps/details?id=com.example.iqro';
 const quranDisplayStorageKey = 'iqro_quran_display_preferences';
 const quranDisplayDefaults = Object.freeze({
@@ -120,6 +121,7 @@ const communityState = {
   offlineDeleteConfirm: false,
   settingsSection: 'menu',
   authMode: 'login',
+  offlineSession: false,
   loading: false,
   message: '',
   tone: 'info',
@@ -242,6 +244,7 @@ function storeSessionToken(token) {
 
 function clearSessionState(renderNow = true) {
   storeSessionToken('');
+  window.localStorage.removeItem(iqroAppStateCacheKey);
   communityState.me = null;
   selectProgressAccount('');
   communityState.friends = [];
@@ -258,6 +261,7 @@ function clearSessionState(renderNow = true) {
   communityState.installSuggestionPhone = '';
   communityState.memorialDraft = null;
   communityState.settingsSection = 'menu';
+  communityState.offlineSession = false;
   communityState.loading = false;
   window.syncUserManagementAccess?.();
   if (renderNow) {
@@ -298,7 +302,8 @@ async function apiFetch(path, options = {}) {
       throw error;
     }
 
-    const networkError = new Error('Server komunitas belum bisa dijangkau. Pastikan API aktif di port 4720.');
+    const networkError = new Error('Koneksi internet atau server belum tersedia.');
+    networkError.isNetworkError = true;
     throw networkError;
   }
 }
@@ -343,7 +348,33 @@ function payloadRequiresPasswordChange(payload) {
   return payload?.requiresPasswordChange === true || payload?.user?.mustChangePassword === true;
 }
 
-function applyAppState(payload) {
+function readCachedAppState() {
+  try {
+    const cached = JSON.parse(window.localStorage.getItem(iqroAppStateCacheKey) || 'null');
+    if (!cached?.user?.id) return null;
+    return cached;
+  } catch (error) {
+    return null;
+  }
+}
+
+function cacheCurrentAppState() {
+  if (!communityState.me?.id) return;
+  try {
+    window.localStorage.setItem(iqroAppStateCacheKey, JSON.stringify({
+      user: communityState.me,
+      friends: communityState.friends,
+      incomingFriendRequests: communityState.incomingFriendRequests,
+      outgoingFriendRequests: communityState.outgoingFriendRequests,
+      groups: communityState.groups,
+      cachedAt: new Date().toISOString()
+    }));
+  } catch (error) {
+    // Kegagalan cache tidak boleh mengganggu sesi online.
+  }
+}
+
+function applyAppState(payload, options = {}) {
   const nextUser = payload?.user ? { ...payload.user } : null;
   if (nextUser) {
     nextUser.mustChangePassword = payloadRequiresPasswordChange(payload);
@@ -354,6 +385,8 @@ function applyAppState(payload) {
   communityState.incomingFriendRequests = Array.isArray(payload?.incomingFriendRequests) ? payload.incomingFriendRequests : [];
   communityState.outgoingFriendRequests = Array.isArray(payload?.outgoingFriendRequests) ? payload.outgoingFriendRequests : [];
   communityState.groups = Array.isArray(payload?.groups) ? payload.groups : [];
+  communityState.offlineSession = options.offline === true;
+  if (nextUser && options.persist !== false) cacheCurrentAppState();
   window.syncUserManagementAccess?.();
   renderHomeCommunityBoard();
   renderCommunityPage();
@@ -399,11 +432,13 @@ async function reconcileProgressAfterAuth() {
 
 function getSyncChipLabel() {
   if (communityState.loading) return 'Menyambungkan akun';
+  if (communityState.offlineSession) return 'Mode offline';
   if (communityState.token && communityState.me) return 'Sinkron ke akun';
   return 'Masih lokal';
 }
 
 function getSyncChipTone() {
+  if (communityState.offlineSession) return 'is-warning';
   if (communityState.token && communityState.me) return 'is-success';
   if (communityState.loading) return 'is-warning';
   return '';
@@ -1990,6 +2025,11 @@ async function restoreCommunitySession() {
     return;
   }
 
+  const cachedState = readCachedAppState();
+  if (cachedState) {
+    applyAppState(cachedState, { persist: false, offline: true });
+  }
+
   communityState.loading = true;
   renderHomeCommunityBoard();
   renderCommunityPage();
@@ -2002,8 +2042,11 @@ async function restoreCommunitySession() {
     if (error.status === 401) {
       clearSessionState(false);
       setCommunityMessage('Sesi login sudah berakhir. Silakan masuk lagi dengan nomor HP dan password.', 'warning', true);
+    } else if (communityState.me) {
+      communityState.offlineSession = true;
+      setCommunityMessage('Mode offline aktif. Bacaan dan progress lokal tetap dapat digunakan.', 'warning');
     } else {
-      setCommunityMessage(error.message || 'Akun belum bisa dipulihkan sekarang.', 'warning', true);
+      setCommunityMessage('Sambungkan internet sekali untuk memulihkan sesi akun di perangkat ini.', 'warning', true);
     }
   } finally {
     communityState.loading = false;

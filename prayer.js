@@ -1,6 +1,7 @@
 const prayerPreferenceStorageKey = 'iqro_prayer_city';
 const prayerLocationModeStorageKey = 'iqro_prayer_location_mode';
 const prayerCacheStoragePrefix = 'iqro_prayer_schedule';
+const prayerLatestCacheStorageKey = `${prayerCacheStoragePrefix}:latest`;
 const prayerPrimaryRows = [
   { key: 'Fajr', label: 'Subuh', note: 'Fajar' },
   { key: 'Dhuhr', label: 'Zuhur', note: 'Tengah hari' },
@@ -51,6 +52,7 @@ const prayerState = {
   loading: false,
   error: '',
   notice: '',
+  cachedFallback: false,
   requestId: 0,
   timer: null
 };
@@ -518,6 +520,7 @@ function requestPrayerDeviceLocation() {
   prayerState.loading = false;
   prayerState.error = '';
   prayerState.notice = '';
+  prayerState.cachedFallback = false;
   window.localStorage.setItem(prayerLocationModeStorageKey, 'auto');
   renderPrayerPage();
 
@@ -745,10 +748,16 @@ function renderPrayerPage() {
   renderPrayerNext();
 }
 
+function prayerCacheLocationKey() {
+  if (prayerState.locationMode === 'auto' && prayerState.coordinates) {
+    return `gps:${prayerState.coordinates.latitude.toFixed(1)}:${prayerState.coordinates.longitude.toFixed(1)}`;
+  }
+  return prayerState.city;
+}
+
 function readCachedPrayerSchedule(date) {
-  if (prayerState.locationMode === 'auto') return null;
   try {
-    const raw = window.localStorage.getItem(`${prayerCacheStoragePrefix}:${prayerState.city}:${date}`);
+    const raw = window.localStorage.getItem(`${prayerCacheStoragePrefix}:${prayerCacheLocationKey()}:${date}`);
     const parsed = raw ? JSON.parse(raw) : null;
     return parsed?.timings ? parsed : null;
   } catch (error) {
@@ -756,11 +765,42 @@ function readCachedPrayerSchedule(date) {
   }
 }
 
-function writeCachedPrayerSchedule(date, payload) {
-  if (prayerState.locationMode === 'auto') return;
+function readLatestCachedPrayerSchedule() {
   try {
-    window.localStorage.setItem(`${prayerCacheStoragePrefix}:${prayerState.city}:${date}`, JSON.stringify(payload));
+    const raw = window.localStorage.getItem(prayerLatestCacheStorageKey);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed?.payload?.timings ? parsed : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeCachedPrayerSchedule(date, payload) {
+  try {
+    const locationKey = prayerCacheLocationKey();
+    window.localStorage.setItem(`${prayerCacheStoragePrefix}:${locationKey}:${date}`, JSON.stringify(payload));
+    window.localStorage.setItem(prayerLatestCacheStorageKey, JSON.stringify({
+      payload,
+      date,
+      locationKey,
+      savedAt: new Date().toISOString()
+    }));
   } catch (error) {}
+}
+
+function getCachedPrayerFallback(date) {
+  const exact = readCachedPrayerSchedule(date);
+  if (exact) return { payload: exact, exact: true, date };
+  const latest = readLatestCachedPrayerSchedule();
+  return latest ? { ...latest, exact: false } : null;
+}
+
+function cachedPrayerNotice(cache) {
+  const offlineLabel = navigator.onLine === false ? 'Mode offline.' : 'Koneksi jadwal sedang terputus.';
+  if (cache.exact) return `${offlineLabel} Menampilkan jadwal yang tersimpan untuk hari ini.`;
+  const cachedDate = formatPrayerGregorianDate(cache.payload?.date?.gregorian || cache.date);
+  const cachedLocation = cache.payload?.location?.label || 'lokasi terakhir';
+  return `${offlineLabel} Menampilkan jadwal terakhir yang tersimpan: ${cachedDate}, ${cachedLocation}.`;
 }
 
 async function loadPrayerSchedule(force = false) {
@@ -770,7 +810,18 @@ async function loadPrayerSchedule(force = false) {
   const targetLocationKey = usingAuto ? 'gps' : prayerState.city;
   const timezone = prayerActiveTimezone();
   const date = prayerDateKey(timezone);
-  if (!force && prayerState.data?.date?.gregorian === date && prayerState.data?.location?.key === targetLocationKey) {
+  if (!force && !prayerState.cachedFallback && prayerState.data?.date?.gregorian === date && prayerState.data?.location?.key === targetLocationKey) {
+    renderPrayerPage();
+    return;
+  }
+
+  const cachedFallback = getCachedPrayerFallback(date);
+  if (navigator.onLine === false && cachedFallback) {
+    prayerState.data = cachedFallback.payload;
+    prayerState.cachedFallback = true;
+    prayerState.error = '';
+    prayerState.notice = cachedPrayerNotice(cachedFallback);
+    prayerState.loading = false;
     renderPrayerPage();
     return;
   }
@@ -793,14 +844,17 @@ async function loadPrayerSchedule(force = false) {
     const payload = await apiFetch(`/prayer-times?${params.toString()}`);
     if (requestId !== prayerState.requestId) return;
     prayerState.data = payload;
+    prayerState.cachedFallback = false;
     writeCachedPrayerSchedule(date, payload);
   } catch (error) {
     if (requestId !== prayerState.requestId) return;
-    const cached = readCachedPrayerSchedule(date);
+    const cached = cachedFallback || getCachedPrayerFallback(date);
     if (cached) {
-      prayerState.data = cached;
-      prayerState.notice = 'Koneksi jadwal sedang terputus. Menampilkan jadwal yang tersimpan untuk hari ini.';
+      prayerState.data = cached.payload;
+      prayerState.cachedFallback = true;
+      prayerState.notice = cachedPrayerNotice(cached);
     } else {
+      prayerState.cachedFallback = false;
       prayerState.error = error.message || 'Jadwal salat belum dapat dimuat.';
     }
   } finally {
@@ -821,6 +875,7 @@ function changePrayerCity(city) {
   prayerState.data = null;
   prayerState.error = '';
   prayerState.notice = '';
+  prayerState.cachedFallback = false;
   prayerState.locationNotice = '';
   window.localStorage.setItem(prayerPreferenceStorageKey, city);
   window.localStorage.setItem(prayerLocationModeStorageKey, 'city');
@@ -842,7 +897,7 @@ function openPrayerSchedule() {
       if (!prayerState.data) return;
       const timezone = prayerActiveTimezone();
       const currentDate = prayerDateKey(timezone);
-      if (currentDate !== prayerState.data.date?.gregorian) {
+      if (!prayerState.cachedFallback && currentDate !== prayerState.data.date?.gregorian) {
         void loadPrayerSchedule(true);
         return;
       }
@@ -855,5 +910,10 @@ window.openPrayerSchedule = openPrayerSchedule;
 window.changePrayerCity = changePrayerCity;
 window.activateQiblaCompass = activateQiblaCompass;
 window.togglePrayerCityMenu = togglePrayerCityMenu;
+window.addEventListener('online', () => {
+  if (prayerState.cachedFallback && document.getElementById('prayerPage')?.classList.contains('is-active')) {
+    void loadPrayerSchedule(true);
+  }
+});
 buildPrayerCityMenu();
 renderPrayerPage();
