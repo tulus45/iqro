@@ -79,6 +79,30 @@ body.mobile-menu-open {
         display: none;
     }
 
+    body:has(#homePage.is-active) .site-footer {
+        position: fixed;
+        right: 0;
+        bottom: calc(88px + var(--app-safe-bottom));
+        left: 0;
+        z-index: 18;
+        display: flex;
+        width: auto;
+        margin: 0;
+        padding: 0 16px;
+        border: 0;
+        gap: 2px;
+        pointer-events: none;
+    }
+
+    body:has(#homePage.is-active) .site-footer p {
+        font-size: 0.62rem;
+        line-height: 1.35;
+    }
+
+    body:has(#homePage.is-active) .site-footer .site-footer-version {
+        font-size: 0.66rem;
+    }
+
     .dashboard-card,
     .catalog-shell,
     .mushaf-container,
