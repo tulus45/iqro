@@ -8,4 +8,5 @@ www/
 android/.gradle/
 android/.idea/
 android/local.properties
+android/signing/
 output/
