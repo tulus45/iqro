@@ -1530,7 +1530,7 @@ function renderOfflineQuranSettings() {
     : isReady ? 'Al-Qur&#39;an tersedia tanpa internet' : 'Simpan Al-Qur&#39;an di perangkat';
   const description = isReady
     ? 'Teks Arab, Latin, dan terjemahan Indonesia telah tersimpan dan akan dipakai lebih dahulu saat membaca.'
-    : 'Unduh seluruh bacaan sekali agar menu Al-Qur&#39;an tetap dapat digunakan saat tidak ada koneksi internet.';
+    : 'Unduh seluruh bacaan agar menu Al-Qur&#39;an tetap dapat digunakan saat tidak ada koneksi internet.';
   const errorHtml = offlineState.error
     ? `<div class='offline-quran-message is-danger' role='alert'>${escapeHtml(offlineState.error)}</div>`
     : '';
@@ -1576,10 +1576,6 @@ function renderOfflineQuranSettings() {
         <div><small>Ukuran</small><strong>${isReady ? formatOfflineQuranBytes(metadata.bytes) : 'Dihitung setelah unduh'}</strong></div>
         <div><small>Diperbarui</small><strong>${isReady ? formatOfflineQuranDate(metadata.downloadedAt) : '-'}</strong></div>
       </div>
-
-      <p class='offline-quran-integrity'>
-        Data baru diaktifkan setelah 114 surah dan 6.236 ayat lolos pemeriksaan integritas. Audio murottal tidak termasuk.
-      </p>
 
       <div class='offline-quran-actions'>
         <button class='btn-compact btn-main' type='button' onclick='downloadOfflineQuranData()' ${isDownloading ? 'disabled' : ''}>
