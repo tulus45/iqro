@@ -2565,6 +2565,62 @@ a {
     padding: 8px 16px;
 }
 
+.home-reading-tip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 10px 14px;
+    border: 1px solid rgba(202, 138, 4, 0.15);
+    border-radius: 14px;
+    color: #46564c;
+    background: linear-gradient(100deg, rgba(254, 252, 232, 0.88), rgba(240, 253, 244, 0.78));
+}
+
+.home-reading-tip-icon {
+    flex: 0 0 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+    color: #a16207;
+    background: #fef3c7;
+}
+
+.home-reading-tip-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.home-reading-tip p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 8px;
+    min-width: 0;
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+.home-reading-tip strong {
+    color: #7c5808;
+    font-size: 0.69rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.home-reading-tip span:last-child {
+    color: #5e6d64;
+}
+
 .home-secondary-btn {
     color: var(--text-main);
     border: 1px solid rgba(17, 24, 39, 0.08);
