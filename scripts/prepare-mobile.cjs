@@ -11,6 +11,7 @@ const assets = [
   'mobile.css',
   'community.js',
   'prayer.js',
+  'calendar.js',
   'admin.js',
   'favicon.svg',
   'quran.png',

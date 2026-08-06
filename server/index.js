@@ -363,10 +363,16 @@ function normalizeGroup(value) {
     ? [...new Set(value.memberIds.map((item) => String(item || '').trim()).filter(Boolean))]
     : [];
   if (!memberIds.includes(ownerUserId)) memberIds.unshift(ownerUserId);
+  const adminUserIds = [...new Set([
+    ownerUserId,
+    ...(Array.isArray(value.adminUserIds) ? value.adminUserIds : [])
+  ].map((item) => String(item || '').trim()).filter(Boolean))]
+    .filter((userId) => memberIds.includes(userId));
   return {
     id: String(value.id || `grp_${crypto.randomUUID()}`),
     name: cleanText(value.name, 'Group Keluarga', 80),
     ownerUserId,
+    adminUserIds,
     memberIds,
     createdAt: String(value.createdAt || nowIso())
   };
@@ -773,19 +779,23 @@ function userView(db, user, options = {}) {
   return view;
 }
 
+function isGroupAdmin(group, userId) {
+  return group.ownerUserId === userId || (Array.isArray(group.adminUserIds) && group.adminUserIds.includes(userId));
+}
+
 function groupView(db, group, viewerUserId) {
   const members = (Array.isArray(group.memberIds) ? group.memberIds : [])
     .map((memberId) => db.users.find((user) => user.id === memberId))
     .filter(Boolean)
     .map((user) => {
-      const canViewStats = user.id === viewerUserId || isFriend(db, viewerUserId, user.id);
       return userView(db, user, {
         isOwner: user.id === group.ownerUserId,
-        includeProgress: canViewStats,
+        includeProgress: true,
         progressSummaryOnly: true,
-        includeDailyReading: canViewStats
+        includeDailyReading: true
       });
     })
+    .map((member) => ({ ...member, isAdmin: isGroupAdmin(group, member.id) }))
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
   const ready = members.filter((member) => member.progress?.summary?.percent != null);
   const averagePercent = ready.length ? Number((ready.reduce((sum, member) => sum + member.progress.summary.percent, 0) / ready.length).toFixed(2)) : null;
@@ -793,6 +803,7 @@ function groupView(db, group, viewerUserId) {
     id: group.id,
     name: cleanText(group.name, 'Group Keluarga', 80),
     ownerUserId: group.ownerUserId,
+    adminUserIds: Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId],
     memberCount: members.length,
     averagePercent,
     createdAt: group.createdAt,
@@ -805,7 +816,8 @@ function appState(db, user) {
     .map((friendUserId) => db.users.find((item) => item.id === friendUserId))
     .filter(Boolean)
     .map((friend) => userView(db, friend, {
-      includeProgress: false,
+      includeProgress: true,
+      progressSummaryOnly: true,
       includeDailyReading: true
     }))
     .sort((left, right) => left.name.localeCompare(right.name, 'id-ID'));
@@ -1385,9 +1397,48 @@ function createServer() {
           return finish(400, { message: 'Semua anggota group harus berasal dari daftar teman Anda.' });
         }
         const memberIds = [userAuth.subject.id, ...selectedMemberIds];
-        db.groups.push({ id: `grp_${crypto.randomUUID()}`, name, ownerUserId: userAuth.subject.id, memberIds, createdAt: nowIso() });
+        db.groups.push({
+          id: `grp_${crypto.randomUUID()}`,
+          name,
+          ownerUserId: userAuth.subject.id,
+          adminUserIds: [userAuth.subject.id],
+          memberIds,
+          createdAt: nowIso()
+        });
         dirty = true;
         finish(200, { message: `Group ${name} berhasil dibuat.`, ...appState(db, userAuth.subject) });
+        return;
+      }
+
+      const deleteGroupMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)$/);
+      if (deleteGroupMatch && req.method === 'DELETE') {
+        if (!needUser(userAuth, finish)) return;
+        const groupId = decodeURIComponent(deleteGroupMatch[1]);
+        const group = db.groups.find((item) => item.id === groupId);
+        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya pemilik group yang dapat menghapus group.' });
+        db.groups = db.groups.filter((item) => item.id !== groupId);
+        dirty = true;
+        finish(200, { message: `Group ${group.name} berhasil dihapus.`, ...appState(db, userAuth.subject) });
+        return;
+      }
+
+      const promoteAdminMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/admins\/([^/]+)$/);
+      if (promoteAdminMatch && req.method === 'POST') {
+        if (!needUser(userAuth, finish)) return;
+        const groupId = decodeURIComponent(promoteAdminMatch[1]);
+        const memberId = decodeURIComponent(promoteAdminMatch[2]);
+        const group = db.groups.find((item) => item.id === groupId);
+        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya pemilik group yang dapat menjadikan anggota sebagai admin.' });
+        if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
+        const member = db.users.find((item) => item.id === memberId);
+        if (!Array.isArray(group.adminUserIds)) group.adminUserIds = [group.ownerUserId];
+        if (!group.adminUserIds.includes(memberId)) {
+          group.adminUserIds.push(memberId);
+          dirty = true;
+        }
+        finish(200, { message: `${member?.name || 'Anggota'} sekarang menjadi admin group ${group.name}.`, ...appState(db, userAuth.subject) });
         return;
       }
 
@@ -1396,7 +1447,7 @@ function createServer() {
         if (!needUser(userAuth, finish)) return;
         const group = db.groups.find((item) => item.id === addMemberMatch[1]);
         if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya admin group yang dapat menambahkan anggota.' });
+        if (!isGroupAdmin(group, userAuth.subject.id)) return finish(403, { message: 'Hanya admin group yang dapat menambahkan anggota.' });
         const body = await parseJsonBody(req);
         const phone = normalizePhone(body.phone);
         if (!phone) return finish(400, { message: 'Nomor HP anggota belum valid.' });
@@ -1418,11 +1469,17 @@ function createServer() {
         const memberId = decodeURIComponent(removeMemberMatch[2]);
         const group = db.groups.find((item) => item.id === groupId);
         if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya admin group yang dapat menghapus anggota.' });
+        if (!isGroupAdmin(group, userAuth.subject.id)) return finish(403, { message: 'Hanya admin group yang dapat menghapus anggota.' });
         if (memberId === group.ownerUserId) return finish(400, { message: 'Admin group tidak dapat dihapus dari group.' });
         if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
+        const targetIsAdmin = isGroupAdmin(group, memberId);
+        if (userAuth.subject.id !== group.ownerUserId && targetIsAdmin) {
+          return finish(403, { message: 'Admin hanya dapat mengeluarkan anggota biasa.' });
+        }
         const member = db.users.find((item) => item.id === memberId);
         group.memberIds = group.memberIds.filter((item) => item !== memberId);
+        group.adminUserIds = (Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId])
+          .filter((item) => item !== memberId);
         dirty = true;
         finish(200, {
           message: `${member?.name || 'Anggota'} berhasil dikeluarkan dari group ${group.name}.`,
@@ -1515,13 +1572,21 @@ function createServer() {
         let removedGroupCount = 0;
         db.groups = db.groups.flatMap((group) => {
           const nextMemberIds = group.memberIds.filter((memberId) => memberId !== user.id);
-          if (group.ownerUserId !== user.id) return [{ ...group, memberIds: nextMemberIds }];
+          const nextAdminUserIds = (Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId])
+            .filter((memberId) => memberId !== user.id && nextMemberIds.includes(memberId));
+          if (group.ownerUserId !== user.id) return [{ ...group, memberIds: nextMemberIds, adminUserIds: nextAdminUserIds }];
           if (!nextMemberIds.length) {
             removedGroupCount += 1;
             return [];
           }
           transferredGroupCount += 1;
-          return [{ ...group, ownerUserId: nextMemberIds[0], memberIds: nextMemberIds }];
+          const nextOwnerUserId = nextAdminUserIds[0] || nextMemberIds[0];
+          return [{
+            ...group,
+            ownerUserId: nextOwnerUserId,
+            adminUserIds: [...new Set([nextOwnerUserId, ...nextAdminUserIds])],
+            memberIds: nextMemberIds
+          }];
         });
         db.users = db.users.filter((item) => item.id !== user.id);
         dirty = true;

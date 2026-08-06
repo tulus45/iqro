@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260805-3">
-    <link rel="stylesheet" href="mobile.css?v=20260805-5">
+    <link rel="stylesheet" href="style.css?v=20260806-11">
+    <link rel="stylesheet" href="mobile.css?v=20260806-7">
 </head>
 <body>
 <div class="site-shell">
@@ -63,19 +63,19 @@
 
                     <article id="homeDailyCard" class="home-card home-daily-card">
                         <p class="home-card-label">Aktivitas Tilawah</p>
-                        <div class="home-reading-comparisons" aria-label="Perbandingan bacaan per periode">
+                        <div class="home-reading-comparisons" aria-label="Aktivitas bacaan per periode">
                             <div id="homeDayComparison" class="home-comparison-row">
-                                <span class="home-comparison-period"><strong>Hari</strong><small>lalu <b id="homeDayPrevious">0</b></small></span>
+                                <span class="home-comparison-period"><strong>Hari ini</strong><small>Kemarin <b id="homeDayPrevious">0</b></small></span>
                                 <strong id="homeDayCurrent" class="home-comparison-current">0</strong>
                                 <span id="homeDayTrend" class="home-comparison-trend">—</span>
                             </div>
                             <div id="homeWeekComparison" class="home-comparison-row">
-                                <span class="home-comparison-period"><strong>Minggu</strong><small>lalu <b id="homeWeekPrevious">0</b></small></span>
+                                <span class="home-comparison-period"><strong>Minggu ini</strong><small>Minggu lalu <b id="homeWeekPrevious">0</b></small></span>
                                 <strong id="homeWeekCurrent" class="home-comparison-current">0</strong>
                                 <span id="homeWeekTrend" class="home-comparison-trend">—</span>
                             </div>
                             <div id="homeMonthComparison" class="home-comparison-row">
-                                <span class="home-comparison-period"><strong>Bulan</strong><small>lalu <b id="homeMonthPrevious">0</b></small></span>
+                                <span class="home-comparison-period"><strong>Bulan ini</strong><small>Bulan lalu <b id="homeMonthPrevious">0</b></small></span>
                                 <strong id="homeMonthCurrent" class="home-comparison-current">0</strong>
                                 <span id="homeMonthTrend" class="home-comparison-trend">—</span>
                             </div>
@@ -227,20 +227,20 @@
                             <div id="prayerCityMenu" class="prayer-city-menu" role="listbox" aria-label="Pilih lokasi jadwal salat" hidden></div>
 
                             <div class="prayer-date-rail">
-                                <div class="prayer-date-item">
+                                <button class="prayer-date-item prayer-calendar-trigger" type="button" onclick="openDualCalendar('gregorian')" aria-label="Buka kalender Masehi dan Hijriah">
                                     <span class="prayer-date-icon prayer-date-icon-sun" aria-hidden="true"></span>
                                     <span class="prayer-date-copy">
                                         <span class="prayer-date-label">Hari ini</span>
                                         <strong id="prayerGregorianDate">—</strong>
                                     </span>
-                                </div>
-                                <div class="prayer-date-item">
+                                </button>
+                                <button class="prayer-date-item prayer-calendar-trigger" type="button" onclick="openDualCalendar('hijri')" aria-label="Buka kalender Hijriah dan Masehi">
                                     <span class="prayer-date-icon prayer-date-icon-moon" aria-hidden="true"></span>
                                     <span class="prayer-date-copy">
                                         <span class="prayer-date-label">Kalender Hijriah</span>
                                         <strong id="prayerHijriDate">—</strong>
                                     </span>
-                                </div>
+                                </button>
                                 <span id="prayerLocationBadge" class="prayer-location-badge" hidden>Jakarta</span>
                             </div>
                         </aside>
@@ -289,6 +289,52 @@
                     <span>Metode Kementerian Agama RI · dihitung melalui AlAdhan</span>
                     <a href="https://aladhan.com/calculation-methods" target="_blank" rel="noopener noreferrer">Sumber jadwal</a>
                 </div>
+            </div>
+        </section>
+
+        <section id="calendarPage" class="page page-calendar" aria-label="Kalender Masehi dan Hijriah">
+            <div class="calendar-shell">
+                <header class="calendar-header">
+                    <button class="calendar-back-button" type="button" onclick="openPrayerSchedule()" aria-label="Kembali ke jadwal salat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+                    <div class="calendar-heading">
+                        <p class="section-kicker">Kalender</p>
+                        <h1>Kalender Masehi &amp; Hijriah</h1>
+                        <p>Dua penanggalan dalam satu tampilan.</p>
+                    </div>
+                    <button class="calendar-today-button" type="button" onclick="goToCalendarToday()">Hari ini</button>
+                </header>
+
+                <div class="calendar-toolbar">
+                    <div class="calendar-primary-toggle" role="group" aria-label="Pilih kalender utama">
+                        <button id="calendarGregorianToggle" class="is-active" type="button" onclick="setCalendarPrimary('gregorian')"><span>Masehi</span><small>Syamsiah</small></button>
+                        <button id="calendarHijriToggle" type="button" onclick="setCalendarPrimary('hijri')"><span>Hijriah</span><small>Qamariah</small></button>
+                    </div>
+                    <div class="calendar-month-navigation">
+                        <button type="button" onclick="changeCalendarMonth(-1)" aria-label="Bulan sebelumnya"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+                        <div><strong id="calendarMonthTitle">-</strong><span id="calendarMonthSubtitle">-</span></div>
+                        <button type="button" onclick="changeCalendarMonth(1)" aria-label="Bulan berikutnya"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+                    </div>
+                </div>
+
+                <div class="dual-calendar-panel">
+                    <div class="calendar-weekdays" aria-hidden="true"><span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
+                    <div id="dualCalendarGrid" class="dual-calendar-grid" role="grid" aria-label="Tanggal Masehi dan Hijriah"></div>
+                </div>
+
+                <footer class="calendar-footer-panel">
+                    <div class="calendar-holiday-note">
+                        <div class="calendar-holiday-heading">
+                            <span>Hari Besar</span>
+                            <small id="calendarHolidayMonthLabel">Bulan yang sedang ditampilkan</small>
+                        </div>
+                        <div id="calendarHolidayList" class="calendar-holiday-list" aria-live="polite"></div>
+                    </div>
+                    <div class="calendar-hijri-correction">
+                        <span>Koreksi Hijriah</span>
+                        <div role="group" aria-label="Koreksi tanggal Hijriah"><button type="button" data-calendar-offset="-1" onclick="setHijriCalendarOffset(-1)">-1</button><button type="button" data-calendar-offset="0" onclick="setHijriCalendarOffset(0)">0</button><button type="button" data-calendar-offset="1" onclick="setHijriCalendarOffset(1)">+1</button></div>
+                        <small>Tanggal Hijriah dapat berbeda satu hari mengikuti rukyat setempat.</small>
+                    </div>
+                </footer>
             </div>
         </section>
 
@@ -378,6 +424,9 @@
             <button class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openCommunity()">
                 <span class="mobile-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span><strong>Komunitas</strong><small>Sahabat tilawah</small></span>
             </button>
+            <button class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openDualCalendar()">
+                <span class="mobile-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span><span><strong>Kalender</strong><small>Masehi &amp; Hijriah</small></span>
+            </button>
             <button class="mobile-menu-action" type="button" onclick="closeMobileMenu(); openSettings()">
                 <span class="mobile-menu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.94 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 0 0 8.97 4.6 1.7 1.7 0 0 0 10 3.08V3h4v.08A1.7 1.7 0 0 0 15.06 4.6a1.7 1.7 0 0 0 1.88-.34L17 4.2 19.83 7l-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15z"/></svg></span><span><strong>Pengaturan</strong><small>Akun dan preferensi</small></span>
             </button>
@@ -401,6 +450,7 @@
         home: document.getElementById('homePage'),
         catalog: document.getElementById('catalogPage'),
         prayer: document.getElementById('prayerPage'),
+        calendar: document.getElementById('calendarPage'),
         mushaf: document.getElementById('mushafPage')
     };
     let returnView = 'home';
@@ -534,7 +584,7 @@
         { arab: "اَلْفَاتِحَةُ", latin: "Al-Fâtiḫah...", indo: "(Membaca Surah Al-Fatihah sebagai penutup zikir dan pengantar doa Tahlil)." }
     ];
 
-    const mobileMoreNavKeys = new Set(['tahlil', 'community', 'settings', 'manage-users']);
+    const mobileMoreNavKeys = new Set(['tahlil', 'community', 'calendar', 'settings', 'manage-users']);
     let currentNavKey = 'home';
 
     function setActiveNav(navKey) {
@@ -1483,8 +1533,9 @@
 </script>
 <script src="mobile-runtime.js?v=20260801-1"></script>
 <script src="quran-offline.js?v=20260805-1"></script>
-<script src="community.js?v=20260805-3"></script>
+<script src="community.js?v=20260806-8"></script>
 <script src="prayer.js?v=20260805-2"></script>
+<script src="calendar.js?v=20260806-3"></script>
 <script src="admin.js?v=20260801-1"></script>
 </body>
 </html>

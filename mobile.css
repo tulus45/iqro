@@ -1494,3 +1494,221 @@ body.mobile-menu-open {
         height: 15px;
     }
 }
+
+@media (max-width: 720px) {
+    .page-calendar {
+        padding: 0 0 116px;
+    }
+
+    .calendar-shell {
+        border-radius: 25px;
+        box-shadow: 0 18px 38px rgba(15, 23, 42, 0.07);
+    }
+
+    .calendar-header {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+        gap: 9px;
+        padding: 14px 13px 12px;
+    }
+
+    .calendar-back-button {
+        width: 36px;
+        height: 36px;
+    }
+
+    .calendar-back-button svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .calendar-heading .section-kicker {
+        font-size: 0.57rem;
+    }
+
+    .calendar-heading h1 {
+        font-size: clamp(1.05rem, 4.7vw, 1.35rem);
+        white-space: nowrap;
+    }
+
+    .calendar-heading > p:last-child {
+        display: none;
+    }
+
+    .calendar-today-button {
+        min-height: 34px;
+        padding: 0 10px;
+        border-radius: 11px;
+        font-size: 0.68rem;
+    }
+
+    .calendar-toolbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 11px 13px;
+    }
+
+    .calendar-primary-toggle {
+        border-radius: 13px;
+    }
+
+    .calendar-primary-toggle button {
+        min-height: 38px;
+        padding: 4px 8px;
+        border-radius: 9px;
+    }
+
+    .calendar-primary-toggle button span {
+        font-size: 0.72rem;
+    }
+
+    .calendar-primary-toggle button small {
+        font-size: 0.55rem;
+    }
+
+    .calendar-month-navigation {
+        grid-template-columns: 36px minmax(0, 1fr) 36px;
+        gap: 8px;
+    }
+
+    .calendar-month-navigation > button {
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
+    }
+
+    .calendar-month-navigation strong {
+        font-size: 0.9rem;
+    }
+
+    .calendar-month-navigation span {
+        font-size: 0.6rem;
+    }
+
+    .dual-calendar-panel {
+        margin: 0 9px;
+        padding: 6px;
+        border-radius: 18px;
+    }
+
+    .calendar-weekdays,
+    .dual-calendar-grid {
+        gap: 3px;
+    }
+
+    .calendar-weekdays {
+        margin-bottom: 3px;
+    }
+
+    .calendar-weekdays span {
+        padding: 5px 0;
+        font-size: 0.52rem;
+        letter-spacing: 0.04em;
+    }
+
+    .dual-calendar-day {
+        gap: 3px;
+        min-height: 48px;
+        padding: 5px 2px;
+        border-radius: 10px;
+    }
+
+    .calendar-gregorian-number,
+    .dual-calendar-day.is-hijri-primary .calendar-hijri-number {
+        font-size: 0.88rem;
+    }
+
+    .calendar-hijri-number,
+    .dual-calendar-day.is-hijri-primary .calendar-gregorian-number {
+        font-size: 0.56rem;
+    }
+
+    .calendar-footer-panel {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin: 11px 9px 13px;
+        padding: 12px 13px;
+        border-radius: 16px;
+    }
+
+    .calendar-holiday-note {
+        gap: 7px;
+    }
+
+    .calendar-holiday-heading small {
+        max-width: 58%;
+        font-size: 0.54rem;
+    }
+
+    .calendar-holiday-item {
+        grid-template-columns: 52px minmax(0, 1fr) auto;
+        gap: 7px;
+        padding: 7px;
+        border-radius: 10px;
+    }
+
+    .calendar-holiday-date strong,
+    .calendar-holiday-event strong {
+        font-size: 0.64rem;
+    }
+
+    .calendar-holiday-date small,
+    .calendar-holiday-event small,
+    .calendar-hijri-correction small {
+        font-size: 0.5rem;
+    }
+
+    .calendar-holiday-badge {
+        align-self: center;
+        padding: 4px 6px;
+        font-size: 0.46rem;
+    }
+
+    .calendar-holiday-empty {
+        padding: 10px;
+        font-size: 0.58rem;
+    }
+
+    .calendar-hijri-correction {
+        grid-template-columns: minmax(0, 1fr) auto;
+        justify-content: stretch;
+    }
+
+    .calendar-hijri-correction > div {
+        grid-template-columns: repeat(3, 32px);
+    }
+
+    .calendar-hijri-correction button {
+        min-height: 27px;
+        font-size: 0.65rem;
+    }
+
+    .calendar-hijri-correction small {
+        text-align: left;
+    }
+
+    .page-prayer .prayer-calendar-trigger {
+        width: 100%;
+        font: inherit;
+        text-align: left;
+    }
+}
+
+@media (max-width: 380px) {
+    .calendar-heading h1 {
+        font-size: 0.98rem;
+    }
+
+    .calendar-header {
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        padding-inline: 9px;
+    }
+
+    .calendar-back-button {
+        width: 32px;
+        height: 32px;
+    }
+
+    .dual-calendar-day {
+        min-height: 44px;
+    }
+}

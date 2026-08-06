@@ -116,6 +116,8 @@ const communityState = {
   selectedGroupContactPhone: '',
   groupContactPickerOpen: false,
   removingGroupMemberId: '',
+  groupMemberMenuId: '',
+  deletingGroupId: '',
   installSuggestionPhone: '',
   memorialDraft: null,
   offlineDeleteConfirm: false,
@@ -258,6 +260,8 @@ function clearSessionState(renderNow = true) {
   communityState.selectedGroupContactPhone = '';
   communityState.groupContactPickerOpen = false;
   communityState.removingGroupMemberId = '';
+  communityState.groupMemberMenuId = '';
+  communityState.deletingGroupId = '';
   communityState.installSuggestionPhone = '';
   communityState.memorialDraft = null;
   communityState.settingsSection = 'menu';
@@ -870,6 +874,8 @@ function setCommunityTab(tab) {
   communityState.selectedGroupContactPhone = '';
   communityState.groupContactPickerOpen = false;
   communityState.removingGroupMemberId = '';
+  communityState.groupMemberMenuId = '';
+  communityState.deletingGroupId = '';
   communityState.installSuggestionPhone = '';
   renderCommunityPage();
 }
@@ -1112,36 +1118,62 @@ function renderFriendRequestPanels() {
   `;
 }
 
+function renderCommunityPeriodStat(label, comparison) {
+  const currentValue = Math.max(0, Number(comparison?.current) || 0);
+  const previousValue = Math.max(0, Number(comparison?.previous) || 0);
+  const difference = currentValue - previousValue;
+  const trendClass = difference > 0 ? 'is-up' : (difference < 0 ? 'is-down' : 'is-even');
+  const trendText = difference > 0
+    ? `&uarr;${formatNumberId(difference)}`
+    : (difference < 0 ? `&darr;${formatNumberId(Math.abs(difference))}` : '0');
+  const trendDescription = difference > 0
+    ? `${formatNumberId(difference)} ayat lebih banyak dari periode sebelumnya`
+    : (difference < 0
+      ? `${formatNumberId(Math.abs(difference))} ayat lebih sedikit dari periode sebelumnya`
+      : 'Sama dengan periode sebelumnya');
+  return `
+    <span class='community-period-stat' aria-label='${label} ${formatNumberId(currentValue)} ayat. ${trendDescription}.'>
+      <span class='community-period-label'>${label}</span>
+      <strong>${formatNumberId(currentValue)}</strong>
+      <span class='community-period-trend ${trendClass}' title='${trendDescription}'>${trendText}</span>
+    </span>
+  `;
+}
+
 function renderContactDirectory() {
   const requestPanels = renderFriendRequestPanels();
   if (!communityState.friends.length) {
     return `${requestPanels}<div class=community-empty>Belum ada teman yang disetujui. Kirim permintaan menggunakan nomor HP teman.</div>`;
   }
 
+  const readingRank = (friend) => [
+    Number(friend.dailyReading?.comparisons?.day?.current ?? friend.dailyReading?.totals?.today ?? 0),
+    Number(friend.dailyReading?.comparisons?.week?.current ?? friend.dailyReading?.totals?.week ?? 0),
+    Number(friend.dailyReading?.comparisons?.month?.current ?? friend.dailyReading?.totals?.currentMonth ?? 0)
+  ];
   const sortedFriends = [...communityState.friends].sort((left, right) => {
-    const weeklyDifference = Number(right.dailyReading?.totals?.week || 0) - Number(left.dailyReading?.totals?.week || 0);
-    if (weeklyDifference) return weeklyDifference;
+    const leftRank = readingRank(left);
+    const rightRank = readingRank(right);
+    for (let index = 0; index < leftRank.length; index += 1) {
+      const difference = rightRank[index] - leftRank[index];
+      if (difference) return difference;
+    }
     return String(left.name || '').localeCompare(String(right.name || ''), 'id-ID');
   });
-  const activeTodayCount = sortedFriends.filter((friend) => Number(friend.dailyReading?.ayatCount || 0) > 0).length;
-  const sharingCount = sortedFriends.filter((friend) => friend.dailyReading?.totals).length;
 
   return `
     ${requestPanels}
-    <section class='community-activity-summary' aria-label='Ringkasan aktivitas tilawah hari ini'>
-      <div>
-        <p>Aktivitas Tilawah Hari Ini</p>
-        <strong>${sharingCount ? `${activeTodayCount} dari ${sharingCount} sahabat yang berbagi sudah tilawah` : 'Belum ada sahabat yang membagikan statistik'}</strong>
-      </div>
-      <span>${activeTodayCount}/${sharingCount}</span>
-    </section>
     <div class='community-contact-list community-activity-list'>
       ${sortedFriends.map((friend) => {
         const totals = friend.dailyReading?.totals;
-        const ayatToday = Math.max(0, Number(totals?.today || 0));
-        const ayatWeek = Math.max(0, Number(totals?.week || 0));
-        const ayatPreviousMonth = Math.max(0, Number(totals?.previousMonth || 0));
+        const comparisons = friend.dailyReading?.comparisons;
+        const dayComparison = comparisons?.day || { current: totals?.today || 0, previous: 0 };
+        const weekComparison = comparisons?.week || { current: totals?.week || 0, previous: 0 };
+        const monthComparison = comparisons?.month || { current: totals?.currentMonth || 0, previous: 0 };
+        const ayatToday = Math.max(0, Number(dayComparison.current) || 0);
         const hasReadToday = ayatToday > 0;
+        const progressPercent = Math.max(0, Math.min(100, Number(friend.progress?.summary?.percent) || 0));
+        const progressLabel = formatPercentSafe(progressPercent);
         return `
         <article class='community-contact-row community-activity-row${hasReadToday ? ' is-active-today' : ''}'>
           <span class='community-avatar'>${escapeHtml(getCommunityInitial(friend.name))}</span>
@@ -1154,11 +1186,15 @@ function renderContactDirectory() {
               <span>${escapeHtml(friend.phoneDisplay)}</span>
             </div>
           </div>
+          <div class='community-khatam-progress' aria-label='Progres khatam ${escapeHtml(friend.name)} ${escapeHtml(progressLabel)}'>
+            <span><small>Progres khatam</small><strong>${escapeHtml(progressLabel)}</strong></span>
+            <span class='community-khatam-track' aria-hidden='true'><i style='width: ${progressPercent}%'></i></span>
+          </div>
           ${totals ? `
             <div class='community-period-stats' aria-label='Statistik tilawah ${escapeHtml(friend.name)}'>
-              <span><strong>${ayatToday}</strong><small>Hari ini</small></span>
-              <span><strong>${ayatWeek}</strong><small>Minggu ini</small></span>
-              <span><strong>${ayatPreviousMonth}</strong><small>Bulan lalu</small></span>
+              ${renderCommunityPeriodStat('Hari ini', dayComparison)}
+              ${renderCommunityPeriodStat('Minggu ini', weekComparison)}
+              ${renderCommunityPeriodStat('Bulan ini', monthComparison)}
             </div>
           ` : `<div class='community-private-stat'><strong>Privat</strong><span>Belum dibagikan</span></div>`}
         </article>
@@ -1197,11 +1233,25 @@ function renderGroupDirectory() {
   `;
 }
 
+function getGroupAdminUserIds(group) {
+  return new Set([
+    group?.ownerUserId,
+    ...(Array.isArray(group?.adminUserIds) ? group.adminUserIds : [])
+  ].filter(Boolean));
+}
+
+function isCurrentUserGroupAdmin(group) {
+  return getGroupAdminUserIds(group).has(communityState.me?.id);
+}
+
 function renderGroupDetail(group) {
   const memberIds = new Set(group.members.map((member) => member.id));
   const availableFriends = communityState.friends.filter((friend) => !memberIds.has(friend.id));
   const isAddingMember = communityState.addingMemberGroupId === group.id;
-  const isGroupAdmin = group.ownerUserId === communityState.me?.id;
+  const adminUserIds = getGroupAdminUserIds(group);
+  const isGroupOwner = group.ownerUserId === communityState.me?.id;
+  const isGroupAdmin = adminUserIds.has(communityState.me?.id);
+  const isDeletingGroup = communityState.deletingGroupId === group.id;
   const selectedFriend = availableFriends.find((friend) => friend.phone === communityState.selectedGroupContactPhone);
   return `
     <section class='community-group-detail'>
@@ -1211,6 +1261,13 @@ function renderGroupDetail(group) {
           <p class='section-kicker'>Detail Group</p>
           <h2>${escapeHtml(group.name)}</h2>
         </div>
+        ${isGroupOwner ? (isDeletingGroup ? `
+          <div class='community-group-delete-confirm'>
+            <span>Hapus group?</span>
+            <button class='btn-compact community-button-secondary' type='button' onclick='cancelDeleteGroup()'>Batal</button>
+            <button class='btn-compact community-danger-button' type='button' onclick='deleteGroup("${escapeHtml(group.id)}")' ${communityState.loading ? 'disabled' : ''}>Hapus</button>
+          </div>
+        ` : `<button class='btn-compact community-group-delete-button' type='button' onclick='requestDeleteGroup("${escapeHtml(group.id)}")'>Hapus group</button>`) : ''}
       </header>
       <div class='community-group-summary'>
         <span><strong>${group.memberCount}</strong> anggota</span>
@@ -1251,29 +1308,65 @@ function renderGroupDetail(group) {
       ` : ''}
       <div class='community-member-list community-group-member-list'>
         ${group.members.map((member) => {
-          const ayatToday = Math.max(0, Number(member.dailyReading?.ayatCount || 0));
+          const totals = member.dailyReading?.totals;
+          const comparisons = member.dailyReading?.comparisons;
+          const dayComparison = comparisons?.day || { current: totals?.today || 0, previous: 0 };
+          const weekComparison = comparisons?.week || { current: totals?.week || 0, previous: 0 };
+          const monthComparison = comparisons?.month || { current: totals?.currentMonth || 0, previous: 0 };
+          const ayatToday = Math.max(0, Number(dayComparison.current) || 0);
+          const progressPercent = Math.max(0, Math.min(100, Number(member.progress?.summary?.percent) || 0));
+          const progressLabel = formatPercentSafe(progressPercent);
+          const memberIsOwner = member.id === group.ownerUserId;
+          const memberIsAdmin = adminUserIds.has(member.id);
+          const canPromoteMember = isGroupOwner && !memberIsAdmin;
+          const canRemoveMember = isGroupAdmin && !memberIsOwner && (isGroupOwner || !memberIsAdmin);
+          const canManageMember = canPromoteMember || canRemoveMember;
+          const isMenuOpen = communityState.groupMemberMenuId === member.id;
           const isRemoving = communityState.removingGroupMemberId === member.id;
           return `
-            <div class='community-member-row'>
+            <article class='community-contact-row community-activity-row community-group-activity-row${ayatToday > 0 ? ' is-active-today' : ''}${isMenuOpen ? ' is-menu-open' : ''}'>
               <span class='community-avatar'>${escapeHtml(getCommunityInitial(member.name))}</span>
-              <div>
-                <strong>${escapeHtml(member.name)}${member.isOwner ? ' · Admin' : ''}</strong>
-                <p>${escapeHtml(member.phoneDisplay)} · ${escapeHtml(getProgressCaption(member.progress))}</p>
-              </div>
-              <div class='community-member-controls'>
-                <div class='community-daily-stat${ayatToday > 0 ? ' is-active' : ''}'>
-                  <strong>${ayatToday}</strong>
-                  <span>ayat hari ini</span>
+              <div class='community-contact-body'>
+                <div class='community-contact-heading'>
+                  <h3>${escapeHtml(member.name)}</h3>
+                  ${memberIsOwner ? `<span class='community-role-badge is-owner'>Pemilik</span>` : (memberIsAdmin ? `<span class='community-role-badge'>Admin</span>` : '')}
                 </div>
-                ${isGroupAdmin && !member.isOwner ? (isRemoving ? `
-                  <div class='community-member-remove-confirm'>
-                    <span>Yakin?</span>
-                    <button class='community-member-icon-button is-cancel' type='button' onclick='cancelRemoveGroupMember()' aria-label='Batalkan mengeluarkan ${escapeHtml(member.name)}' title='Batal'>${renderCancelIcon()}</button>
-                    <button class='community-member-icon-button is-confirm' type='button' onclick='removeGroupMember("${escapeHtml(group.id)}", "${escapeHtml(member.id)}")' aria-label='Keluarkan ${escapeHtml(member.name)} dari group' title='Keluarkan anggota' ${communityState.loading ? 'disabled' : ''}>${renderRemoveMemberIcon()}</button>
-                  </div>
-                ` : `<button class='community-member-icon-button' type='button' onclick='requestRemoveGroupMember("${escapeHtml(member.id)}")' aria-label='Keluarkan ${escapeHtml(member.name)} dari group' title='Keluarkan anggota'>${renderRemoveMemberIcon()}</button>`) : ''}
+                <div class='community-contact-meta'>
+                  ${ayatToday > 0 ? `<span class='community-reading-status is-active'>Sudah tilawah</span>` : ''}
+                  <span>${escapeHtml(member.phoneDisplay)}</span>
+                </div>
               </div>
-            </div>
+              <div class='community-khatam-progress' aria-label='Progres khatam ${escapeHtml(member.name)} ${escapeHtml(progressLabel)}'>
+                <span><small>Progres khatam</small><strong>${escapeHtml(progressLabel)}</strong></span>
+                <span class='community-khatam-track' aria-hidden='true'><i style='width: ${progressPercent}%'></i></span>
+              </div>
+              ${totals ? `
+                <div class='community-period-stats' aria-label='Statistik tilawah ${escapeHtml(member.name)}'>
+                  ${renderCommunityPeriodStat('Hari ini', dayComparison)}
+                  ${renderCommunityPeriodStat('Minggu ini', weekComparison)}
+                  ${renderCommunityPeriodStat('Bulan ini', monthComparison)}
+                </div>
+              ` : `<div class='community-private-stat'><strong>Belum ada data</strong><span>Aktivitas belum tersimpan</span></div>`}
+              ${canManageMember ? `
+                <div class='community-member-menu'>
+                  <button class='community-member-menu-trigger' type='button' onclick='toggleGroupMemberMenu("${escapeHtml(member.id)}")' aria-label='Menu anggota ${escapeHtml(member.name)}' aria-expanded='${isMenuOpen}'>&#8942;</button>
+                  ${isMenuOpen ? `
+                    <div class='community-member-menu-panel'>
+                      ${isRemoving ? `
+                        <p>Keluarkan ${escapeHtml(member.name)}?</p>
+                        <div class='community-member-menu-confirm'>
+                          <button type='button' onclick='cancelRemoveGroupMember()'>Batal</button>
+                          <button class='is-danger' type='button' onclick='removeGroupMember("${escapeHtml(group.id)}", "${escapeHtml(member.id)}")' ${communityState.loading ? 'disabled' : ''}>Keluarkan</button>
+                        </div>
+                      ` : `
+                        ${canPromoteMember ? `<button type='button' onclick='promoteGroupMember("${escapeHtml(group.id)}", "${escapeHtml(member.id)}")'>Jadikan admin</button>` : ''}
+                        ${canRemoveMember ? `<button class='is-danger' type='button' onclick='requestRemoveGroupMember("${escapeHtml(member.id)}")'>Keluarkan dari group</button>` : ''}
+                      `}
+                    </div>
+                  ` : ''}
+                </div>
+              ` : `<span class='community-member-menu-spacer' aria-hidden='true'></span>`}
+            </article>
           `;
         }).join('')}
       </div>
@@ -1288,6 +1381,8 @@ function openGroupDetail(groupId) {
   communityState.selectedGroupContactPhone = '';
   communityState.groupContactPickerOpen = false;
   communityState.removingGroupMemberId = '';
+  communityState.groupMemberMenuId = '';
+  communityState.deletingGroupId = '';
   communityState.communityAction = '';
   renderCommunityPage();
 }
@@ -1298,13 +1393,15 @@ function closeGroupDetail() {
   communityState.selectedGroupContactPhone = '';
   communityState.groupContactPickerOpen = false;
   communityState.removingGroupMemberId = '';
+  communityState.groupMemberMenuId = '';
+  communityState.deletingGroupId = '';
   renderCommunityPage();
 }
 
 function openAddMemberForm(groupId) {
   if (communityState.selectedGroupId !== groupId) return;
   const group = communityState.groups.find((item) => item.id === groupId);
-  if (!group || group.ownerUserId !== communityState.me?.id) return;
+  if (!group || !isCurrentUserGroupAdmin(group)) return;
   communityState.addingMemberGroupId = groupId;
   communityState.selectedGroupContactPhone = '';
   communityState.groupContactPickerOpen = false;
@@ -1327,7 +1424,7 @@ function toggleGroupContactPicker() {
 
 function selectGroupContact(phone) {
   const selectedGroup = communityState.groups.find((group) => group.id === communityState.selectedGroupId);
-  if (!selectedGroup || selectedGroup.ownerUserId !== communityState.me?.id) return;
+  if (!selectedGroup || !isCurrentUserGroupAdmin(selectedGroup)) return;
   const memberIds = new Set(selectedGroup.members.map((member) => member.id));
   const friend = communityState.friends.find((item) => item.phone === phone && !memberIds.has(item.id));
   if (!friend) return;
@@ -1338,14 +1435,39 @@ function selectGroupContact(phone) {
 
 function requestRemoveGroupMember(memberId) {
   const selectedGroup = communityState.groups.find((group) => group.id === communityState.selectedGroupId);
-  if (!selectedGroup || selectedGroup.ownerUserId !== communityState.me?.id || memberId === selectedGroup.ownerUserId) return;
+  if (!selectedGroup || !isCurrentUserGroupAdmin(selectedGroup) || memberId === selectedGroup.ownerUserId) return;
+  const adminUserIds = getGroupAdminUserIds(selectedGroup);
+  const isGroupOwner = selectedGroup.ownerUserId === communityState.me?.id;
+  if (!isGroupOwner && adminUserIds.has(memberId)) return;
   communityState.removingGroupMemberId = memberId;
+  communityState.groupMemberMenuId = memberId;
   communityState.groupContactPickerOpen = false;
   renderCommunityPage();
 }
 
 function cancelRemoveGroupMember() {
   communityState.removingGroupMemberId = '';
+  renderCommunityPage();
+}
+
+function toggleGroupMemberMenu(memberId) {
+  communityState.groupMemberMenuId = communityState.groupMemberMenuId === memberId ? '' : memberId;
+  communityState.removingGroupMemberId = '';
+  communityState.groupContactPickerOpen = false;
+  renderCommunityPage();
+}
+
+function requestDeleteGroup(groupId) {
+  const group = communityState.groups.find((item) => item.id === groupId);
+  if (!group || group.ownerUserId !== communityState.me?.id) return;
+  communityState.deletingGroupId = groupId;
+  communityState.groupMemberMenuId = '';
+  communityState.removingGroupMemberId = '';
+  renderCommunityPage();
+}
+
+function cancelDeleteGroup() {
+  communityState.deletingGroupId = '';
   renderCommunityPage();
 }
 
@@ -1362,7 +1484,7 @@ function renderCommunityDirectory() {
     ? null
     : communityState.groups.find((group) => group.id === communityState.selectedGroupId);
   const selectedGroupMemberIds = new Set(selectedGroup?.members.map((member) => member.id) || []);
-  const isSelectedGroupAdmin = selectedGroup?.ownerUserId === communityState.me.id;
+  const isSelectedGroupAdmin = selectedGroup ? isCurrentUserGroupAdmin(selectedGroup) : false;
   const canAddGroupMember = selectedGroup && isSelectedGroupAdmin
     ? communityState.friends.some((friend) => !selectedGroupMemberIds.has(friend.id))
     : false;
@@ -2438,7 +2560,10 @@ async function submitAddMember(event) {
 
 async function removeGroupMember(groupId, memberId) {
   const group = communityState.groups.find((item) => item.id === groupId);
-  if (!group || group.ownerUserId !== communityState.me?.id || memberId === group.ownerUserId) return false;
+  if (!group || !isCurrentUserGroupAdmin(group) || memberId === group.ownerUserId) return false;
+  const adminUserIds = getGroupAdminUserIds(group);
+  const isGroupOwner = group.ownerUserId === communityState.me?.id;
+  if (!isGroupOwner && adminUserIds.has(memberId)) return false;
 
   communityState.loading = true;
   renderCommunityPage();
@@ -2448,9 +2573,55 @@ async function removeGroupMember(groupId, memberId) {
     });
     applyAppState(payload);
     communityState.removingGroupMemberId = '';
+    communityState.groupMemberMenuId = '';
     setCommunityMessage(payload.message || 'Anggota berhasil dikeluarkan dari group.', 'success');
   } catch (error) {
     setCommunityMessage(error.message || 'Anggota belum bisa dikeluarkan dari group.', 'danger', true);
+  } finally {
+    communityState.loading = false;
+    renderCommunityPage();
+  }
+  return false;
+}
+
+async function promoteGroupMember(groupId, memberId) {
+  const group = communityState.groups.find((item) => item.id === groupId);
+  if (!group || group.ownerUserId !== communityState.me?.id || !group.members.some((member) => member.id === memberId)) return false;
+
+  communityState.loading = true;
+  renderCommunityPage();
+  try {
+    const payload = await apiFetch(`/groups/${encodeURIComponent(groupId)}/admins/${encodeURIComponent(memberId)}`, {
+      method: 'POST'
+    });
+    applyAppState(payload);
+    communityState.groupMemberMenuId = '';
+    communityState.removingGroupMemberId = '';
+    setCommunityMessage(payload.message || 'Anggota berhasil dijadikan admin group.', 'success');
+  } catch (error) {
+    setCommunityMessage(error.message || 'Anggota belum bisa dijadikan admin group.', 'danger', true);
+  } finally {
+    communityState.loading = false;
+    renderCommunityPage();
+  }
+  return false;
+}
+
+async function deleteGroup(groupId) {
+  const group = communityState.groups.find((item) => item.id === groupId);
+  if (!group || group.ownerUserId !== communityState.me?.id) return false;
+
+  communityState.loading = true;
+  renderCommunityPage();
+  try {
+    const payload = await apiFetch(`/groups/${encodeURIComponent(groupId)}`, { method: 'DELETE' });
+    communityState.selectedGroupId = '';
+    communityState.deletingGroupId = '';
+    communityState.groupMemberMenuId = '';
+    applyAppState(payload);
+    setCommunityMessage(payload.message || 'Group berhasil dihapus.', 'success');
+  } catch (error) {
+    setCommunityMessage(error.message || 'Group belum bisa dihapus.', 'danger', true);
   } finally {
     communityState.loading = false;
     renderCommunityPage();
