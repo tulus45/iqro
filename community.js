@@ -1182,7 +1182,6 @@ function renderContactDirectory() {
               <h3>${escapeHtml(friend.name)}</h3>
             </div>
             <div class='community-contact-meta'>
-              ${hasReadToday ? "<span class='community-reading-status is-active'>Sudah tilawah</span>" : ''}
               <span>${escapeHtml(friend.phoneDisplay)}</span>
             </div>
           </div>
@@ -1334,7 +1333,6 @@ function renderGroupDetail(group) {
                   ${memberIsOwner ? `<span class='community-role-badge is-owner'>Pemilik</span>` : (memberIsAdmin ? `<span class='community-role-badge'>Admin</span>` : '')}
                 </div>
                 <div class='community-contact-meta'>
-                  ${ayatToday > 0 ? `<span class='community-reading-status is-active'>Sudah tilawah</span>` : ''}
                   <span>${escapeHtml(member.phoneDisplay)}</span>
                 </div>
               </div>

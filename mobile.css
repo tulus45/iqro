@@ -1714,6 +1714,80 @@ body.mobile-menu-open {
 }
 
 @media (max-width: 720px) {
+    .community-request-panel.is-outgoing {
+        padding: 7px 9px;
+        border-radius: 12px;
+    }
+
+    .community-request-panel.is-outgoing .community-request-heading {
+        margin-bottom: 2px;
+    }
+
+    .community-request-panel.is-outgoing .community-request-row {
+        grid-template-columns: 27px minmax(0, 1fr) auto;
+        gap: 6px;
+        padding-top: 5px;
+    }
+
+    .community-request-panel.is-outgoing .community-request-row .community-avatar {
+        width: 25px;
+        height: 25px;
+        font-size: 0.56rem;
+    }
+
+    .community-request-panel.is-outgoing .community-request-status {
+        padding: 3px 6px;
+        font-size: 0.52rem;
+    }
+
+    .community-activity-list .community-activity-row {
+        grid-template-columns: 28px minmax(0, 1fr) minmax(68px, 82px);
+        gap: 5px 6px;
+        min-height: 0;
+        padding: 6px 7px;
+        border-radius: 11px;
+    }
+
+    .community-activity-list .community-activity-row > .community-avatar,
+    .community-activity-list .community-activity-row.is-active-today > .community-avatar {
+        width: 28px;
+        height: 28px;
+        border: 1px solid rgba(22, 163, 74, 0.12);
+        color: #18713d;
+        font-size: 0.63rem;
+        background: #e9f8ee;
+        box-shadow: none;
+    }
+
+    .community-activity-list .community-contact-body {
+        overflow: hidden;
+    }
+
+    .community-activity-list .community-contact-heading {
+        min-width: 0;
+    }
+
+    .community-activity-list .community-contact-heading h3 {
+        min-width: 0;
+        font-size: 0.72rem;
+    }
+
+    .community-activity-list .community-contact-meta {
+        margin-top: 1px;
+        font-size: 0.52rem;
+    }
+
+    .community-activity-list .community-khatam-progress {
+        grid-column: 3;
+        gap: 3px;
+    }
+
+    .community-activity-list .community-period-stats,
+    .community-activity-list .community-private-stat {
+        grid-column: 2 / -1;
+        border-radius: 9px;
+    }
+
     .community-group-detail {
         gap: 10px;
         padding: 4px 0 8px;

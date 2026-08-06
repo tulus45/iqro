@@ -5191,8 +5191,57 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 }
 
 .community-request-panel.is-outgoing {
+    padding: 9px 11px;
     border-color: rgba(17, 24, 39, 0.08);
+    border-radius: 14px;
     background: #fafafa;
+}
+
+.community-request-panel.is-outgoing .community-request-heading {
+    margin-bottom: 3px;
+}
+
+.community-request-panel.is-outgoing .community-request-heading .section-kicker {
+    font-size: 0.58rem;
+    letter-spacing: 0.09em;
+}
+
+.community-request-panel.is-outgoing .community-request-heading h3 {
+    margin-top: 1px;
+    font-size: 0.76rem;
+}
+
+.community-request-panel.is-outgoing .community-request-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 6px 0 2px;
+}
+
+.community-request-panel.is-outgoing .community-request-row .community-avatar {
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(22, 163, 74, 0.12);
+    color: #18713d;
+    font-size: 0.63rem;
+    background: #e9f8ee;
+    box-shadow: none;
+}
+
+.community-request-panel.is-outgoing .community-request-copy {
+    gap: 1px;
+}
+
+.community-request-panel.is-outgoing .community-request-copy strong {
+    font-size: 0.74rem;
+}
+
+.community-request-panel.is-outgoing .community-request-copy span {
+    font-size: 0.61rem;
+}
+
+.community-request-panel.is-outgoing .community-request-status {
+    padding: 4px 7px;
+    font-size: 0.58rem;
 }
 
 .community-request-heading {
@@ -5340,13 +5389,18 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 }
 
 .community-activity-row.is-active-today .community-avatar {
-    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.18);
+    border-color: rgba(22, 163, 74, 0.22);
+    box-shadow: none;
 }
 
 .community-activity-row > .community-avatar {
     width: 32px;
     height: 32px;
+    border: 1px solid rgba(22, 163, 74, 0.12);
+    color: #18713d;
     font-size: 0.74rem;
+    background: #e9f8ee;
+    box-shadow: none;
 }
 
 .community-activity-row .community-contact-heading h3 {
