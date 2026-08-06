@@ -1267,7 +1267,9 @@ function renderGroupDetail(group) {
             <button class='btn-compact community-button-secondary' type='button' onclick='cancelDeleteGroup()'>Batal</button>
             <button class='btn-compact community-danger-button' type='button' onclick='deleteGroup("${escapeHtml(group.id)}")' ${communityState.loading ? 'disabled' : ''}>Hapus</button>
           </div>
-        ` : `<button class='btn-compact community-group-delete-button' type='button' onclick='requestDeleteGroup("${escapeHtml(group.id)}")'>Hapus group</button>`) : ''}
+        ` : `<button class='btn-compact community-group-delete-button' type='button' onclick='requestDeleteGroup("${escapeHtml(group.id)}")' aria-label='Hapus group ${escapeHtml(group.name)}' title='Hapus group'>
+          <svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5'/></svg>
+        </button>`) : ''}
       </header>
       <div class='community-group-summary'>
         <span><strong>${group.memberCount}</strong> anggota</span>

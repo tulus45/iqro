@@ -2627,22 +2627,34 @@ a {
 }
 
 .mushaf-resume-loading {
-    position: absolute;
-    z-index: 20;
+    position: fixed;
+    z-index: 10000;
     inset: 0;
     display: grid;
-    place-items: start center;
-    min-height: min(76vh, 720px);
-    padding: clamp(150px, 24vh, 240px) 24px 40px;
-    border-radius: inherit;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+    border-radius: 0;
     background:
         radial-gradient(circle at 50% 36%, rgba(187, 247, 208, 0.34), transparent 28%),
-        rgba(249, 252, 250, 0.98);
-    backdrop-filter: blur(8px);
+        #f9fcfa;
+    overscroll-behavior: none;
+    touch-action: none;
 }
 
 .mushaf-resume-loading[hidden] {
     display: none;
+}
+
+#mushafPage.is-resume-loading .mushaf-header,
+#mushafPage.is-resume-loading .mushaf-controls,
+#mushafPage.is-resume-loading #mushafContent {
+    visibility: hidden;
+}
+
+#mushafPage.is-resume-loading .mushaf-resume-loading {
+    visibility: visible;
 }
 
 .mushaf-resume-loading-card {
@@ -5728,6 +5740,24 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     color: #b91c1c;
     border: 1px solid rgba(220, 38, 38, 0.18);
     background: #fff7f7;
+}
+
+.community-group-delete-button {
+    flex: 0 0 34px;
+    width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 10px;
+}
+
+.community-group-delete-button svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .community-group-delete-button:hover,

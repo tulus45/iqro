@@ -1712,3 +1712,184 @@ body.mobile-menu-open {
         min-height: 44px;
     }
 }
+
+@media (max-width: 720px) {
+    .community-group-detail {
+        gap: 10px;
+        padding: 4px 0 8px;
+    }
+
+    .community-group-detail-head {
+        grid-template-columns: 34px minmax(0, 1fr) 30px;
+        align-items: start;
+        gap: 8px;
+    }
+
+    .community-group-back {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+    }
+
+    .community-group-detail-head h2 {
+        margin-top: 2px;
+        font-size: 1.05rem;
+        line-height: 1.15;
+    }
+
+    .community-group-detail-head .section-kicker {
+        font-size: 0.56rem;
+    }
+
+    .community-group-delete-button {
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: end;
+        width: 30px;
+        min-height: 30px;
+        padding: 0;
+        border-radius: 9px;
+    }
+
+    .community-group-delete-button svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    .community-group-delete-confirm {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+        padding: 7px 8px;
+        border: 1px solid rgba(220, 38, 38, 0.12);
+        border-radius: 11px;
+        background: #fff8f8;
+    }
+
+    .community-group-delete-confirm .btn-compact {
+        flex: 0 0 auto;
+        min-height: 30px;
+        padding: 5px 9px;
+        font-size: 0.62rem;
+    }
+
+    .community-group-summary {
+        gap: 6px;
+    }
+
+    .community-group-summary > span {
+        padding: 6px 8px;
+        border-radius: 9px;
+        font-size: 0.66rem;
+    }
+
+    .community-group-member-list {
+        gap: 6px;
+    }
+
+    .community-group-activity-row {
+        grid-template-columns: 28px minmax(0, 1fr) minmax(68px, 82px) 27px;
+        gap: 5px 6px;
+        min-height: 0;
+        padding: 6px 7px;
+        border-radius: 11px;
+    }
+
+    .community-group-activity-row > .community-avatar,
+    .community-group-member-list .community-avatar,
+    .community-group-activity-row.is-active-today .community-avatar {
+        width: 28px;
+        height: 28px;
+        border: 1px solid rgba(22, 163, 74, 0.12);
+        color: #18713d;
+        font-size: 0.63rem;
+        background: #e9f8ee;
+        box-shadow: none;
+    }
+
+    .community-group-activity-row .community-contact-body {
+        overflow: hidden;
+    }
+
+    .community-group-activity-row .community-contact-heading {
+        justify-content: flex-start;
+        gap: 5px;
+        min-width: 0;
+    }
+
+    .community-group-activity-row .community-contact-heading h3 {
+        flex: 0 1 auto;
+        min-width: 0;
+        font-size: 0.72rem;
+    }
+
+    .community-group-activity-row .community-contact-meta {
+        gap: 3px;
+        margin-top: 1px;
+        font-size: 0.52rem;
+    }
+
+    .community-group-activity-row .community-reading-status {
+        padding: 1px 4px;
+        font-size: 0.47rem;
+    }
+
+    .community-group-activity-row .community-role-badge {
+        padding: 2px 5px;
+        font-size: 0.44rem;
+    }
+
+    .community-group-activity-row .community-khatam-progress {
+        grid-column: 3;
+        gap: 3px;
+    }
+
+    .community-group-activity-row .community-khatam-progress small {
+        font-size: 0.44rem;
+    }
+
+    .community-group-activity-row .community-khatam-progress strong {
+        font-size: 0.57rem;
+    }
+
+    .community-group-activity-row .community-khatam-track {
+        height: 3px;
+    }
+
+    .community-group-activity-row .community-period-stats,
+    .community-group-activity-row .community-private-stat {
+        grid-column: 2 / -1;
+        border-radius: 9px;
+    }
+
+    .community-group-activity-row .community-period-stat {
+        min-height: 34px;
+        padding: 3px 5px;
+    }
+
+    .community-group-activity-row .community-period-label {
+        font-size: 0.46rem;
+    }
+
+    .community-group-activity-row .community-period-stats strong {
+        font-size: 0.68rem;
+    }
+
+    .community-group-activity-row .community-period-previous,
+    .community-group-activity-row .community-period-trend {
+        font-size: 0.43rem;
+    }
+
+    .community-group-activity-row .community-member-menu,
+    .community-group-activity-row .community-member-menu-spacer {
+        grid-column: 4;
+        grid-row: 1;
+        width: 27px;
+    }
+
+    .community-group-activity-row .community-member-menu-trigger {
+        width: 27px;
+        height: 27px;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+}
