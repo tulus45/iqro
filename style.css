@@ -282,6 +282,7 @@
 
 .calendar-hijri-number {
     color: #6c7d73;
+    font-family: 'Iqro Quran', 'Amiri', serif;
     font-size: 0.72rem;
     font-weight: 700;
 }
@@ -297,7 +298,7 @@
 .dual-calendar-day.is-hijri-primary .calendar-hijri-number {
     order: 1;
     color: inherit;
-    font-family: 'Noto Serif', serif;
+    font-family: 'Iqro Quran', 'Amiri', serif;
     font-size: 1.15rem;
     font-weight: 800;
 }

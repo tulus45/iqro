@@ -8,6 +8,7 @@
     'Jumadilawal', 'Jumadilakhir', 'Rajab', 'Syakban',
     'Ramadan', 'Syawal', 'Zulkaidah', 'Zulhijah'
   ];
+  const arabicIndicDigits = ['\u0660', '\u0661', '\u0662', '\u0663', '\u0664', '\u0665', '\u0666', '\u0667', '\u0668', '\u0669'];
   const gregorianObservances = {
     '01-01': 'Tahun Baru Masehi',
     '04-21': 'Hari Kartini',
@@ -48,6 +49,10 @@
 
   function shiftDate(date, amount) {
     return localNoon(date.getFullYear(), date.getMonth(), date.getDate() + amount);
+  }
+
+  function toArabicIndicNumber(value) {
+    return String(value).replace(/\d/g, (digit) => arabicIndicDigits[Number(digit)]);
   }
 
   function dateKey(date) {
@@ -131,7 +136,7 @@
 
   function formatHijri(date, includeDay) {
     const parts = hijriParts(date);
-    return `${includeDay ? `${parts.day} ` : ''}${parts.monthName} ${parts.year} H`;
+    return `${includeDay ? `${toArabicIndicNumber(parts.day)} ` : ''}${parts.monthName} ${toArabicIndicNumber(parts.year)} H`;
   }
 
   function sameDate(first, second) {
@@ -192,7 +197,7 @@
       item.type = 'button';
       item.className = 'calendar-holiday-item';
       item.innerHTML = `
-        <span class="calendar-holiday-date"><strong>${shortGregorianFormatter.format(note.date)}</strong><small>${hijriParts(note.date).day} ${hijriParts(note.date).monthName}</small></span>
+        <span class="calendar-holiday-date"><strong>${shortGregorianFormatter.format(note.date)}</strong><small>${toArabicIndicNumber(hijriParts(note.date).day)} ${hijriParts(note.date).monthName}</small></span>
         <span class="calendar-holiday-event"><strong>${note.events.map((event) => event.name).join(' / ')}</strong><small>${relativeDayLabel(note.date)}</small></span>
         <span class="calendar-holiday-badge">${[...new Set(note.events.map((event) => event.calendar))].join(' & ')}</span>
       `;
@@ -208,8 +213,8 @@
   function hijriMonthRange(firstDate, lastDate) {
     const first = hijriParts(firstDate);
     const last = hijriParts(lastDate);
-    const firstLabel = `${first.monthName} ${first.year} H`;
-    const lastLabel = `${last.monthName} ${last.year} H`;
+    const firstLabel = `${first.monthName} ${toArabicIndicNumber(first.year)} H`;
+    const lastLabel = `${last.monthName} ${toArabicIndicNumber(last.year)} H`;
     return firstLabel === lastLabel ? firstLabel : `${firstLabel} - ${lastLabel}`;
   }
 
@@ -288,7 +293,7 @@
       button.classList.toggle('is-today', sameDate(date, today));
       button.classList.toggle('is-selected', sameDate(date, calendarState.selectedDate));
       button.classList.toggle('is-hijri-primary', calendarState.primary === 'hijri');
-      button.innerHTML = `<span class="calendar-gregorian-number">${date.getDate()}</span><span class="calendar-hijri-number">${hijri.day}</span>`;
+      button.innerHTML = `<span class="calendar-gregorian-number">${date.getDate()}</span><span class="calendar-hijri-number">${toArabicIndicNumber(hijri.day)}</span>`;
       button.addEventListener('click', () => {
         calendarState.selectedDate = date;
         if (isOutside) {
