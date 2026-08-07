@@ -72,20 +72,20 @@
     selectedDate: today
   };
 
-  let hijriFormatter = null;
-  try {
-    hijriFormatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura-nu-latn', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
-  } catch (_) {
+  function createHijriFormatter(locale) {
     try {
-      hijriFormatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-nu-latn', {
+      const formatter = new Intl.DateTimeFormat(locale, {
         day: 'numeric', month: 'long', year: 'numeric'
       });
+      const calendar = String(formatter.resolvedOptions?.().calendar || '').toLocaleLowerCase('en-US');
+      return calendar.startsWith('islamic') ? formatter : null;
     } catch (_) {
-      hijriFormatter = null;
+      return null;
     }
   }
+
+  const hijriFormatter = createHijriFormatter('id-ID-u-ca-islamic-umalqura-nu-latn')
+    || createHijriFormatter('id-ID-u-ca-islamic-nu-latn');
 
   function civilHijri(date) {
     let year = date.getFullYear();
@@ -124,7 +124,7 @@
         if (Number.isFinite(day) && Number.isFinite(year)) {
           const monthName = values.month || '';
           const month = hijriMonthNames.findIndex((name) => name.toLocaleLowerCase('id-ID') === monthName.toLocaleLowerCase('id-ID')) + 1;
-          return { day, month: month || null, monthName, year };
+          if (month > 0) return { day, month, monthName: hijriMonthNames[month - 1], year };
         }
       } catch (_) {
         // Continue with the deterministic offline fallback.
