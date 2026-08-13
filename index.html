@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260806-15">
+    <link rel="stylesheet" href="style.css?v=20260813-1">
     <link rel="stylesheet" href="mobile.css?v=20260806-10">
 </head>
 <body>
@@ -392,7 +392,7 @@
     </main>
 
     <footer class="site-footer" aria-label="Informasi versi aplikasi">
-        <p class="site-footer-version">Iqro versi 1.7.6</p>
+        <p class="site-footer-version">Iqro versi 1.7.7</p>
         <p>© 2026 The Alus. All rights reserved</p>
     </footer>
 </div>
@@ -952,6 +952,28 @@
             .replace(/([\u06D6-\u06DB])\s*(?=\S)/g, '$1 ');
     }
 
+    // Scheherazade New can stack both marks over the alef in a vocalized
+    // lam-alif. Keep the Unicode text intact and isolate only that cluster
+    // so its mark-positioning features can be adjusted without affecting
+    // other Arabic shaping.
+    const quranMarkedLamAlifPattern = /(\u0644\u0652[\u0622\u0623\u0625\u0627\u0671][\u064B-\u065F\u0670\u06D6-\u06ED]+)/gu;
+
+    function renderQuranTextSegment(value) {
+        const source = String(value ?? '');
+        let html = '';
+        let cursor = 0;
+        let match;
+        quranMarkedLamAlifPattern.lastIndex = 0;
+
+        while ((match = quranMarkedLamAlifPattern.exec(source)) !== null) {
+            html += escapeHtml(source.slice(cursor, match.index));
+            html += `<span class="quran-marked-lam-alif">${escapeHtml(match[0])}</span>`;
+            cursor = quranMarkedLamAlifPattern.lastIndex;
+        }
+
+        return html + escapeHtml(source.slice(cursor));
+    }
+
     function renderQuranArabic(value) {
         const normalized = normalizeQuranWaqfSpacing(value);
         const waqfPattern = /(\S+)([\u06D6-\u06DB])/gu;
@@ -960,12 +982,12 @@
         let match;
 
         while ((match = waqfPattern.exec(normalized)) !== null) {
-            html += escapeHtml(normalized.slice(cursor, match.index));
-            html += `<span class="quran-waqf-cluster">${escapeHtml(match[1])}<span class="quran-waqf-mark">&nbsp;${escapeHtml(match[2])}</span></span>`;
+            html += renderQuranTextSegment(normalized.slice(cursor, match.index));
+            html += `<span class="quran-waqf-cluster">${renderQuranTextSegment(match[1])}<span class="quran-waqf-mark">&nbsp;${escapeHtml(match[2])}</span></span>`;
             cursor = waqfPattern.lastIndex;
         }
 
-        return html + escapeHtml(normalized.slice(cursor));
+        return html + renderQuranTextSegment(normalized.slice(cursor));
     }
 
     function formatRevelation(value) {

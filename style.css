@@ -3433,6 +3433,10 @@ html[data-quran-font="scheherazade"] {
     --quran-font-family: 'Iqro Quran Naskhi';
 }
 
+html[data-quran-font="scheherazade"] .quran-marked-lam-alif {
+    font-feature-settings: "mark" 0, "mkmk" 0, "rlig" 1, "calt" 1, "liga" 1;
+}
+
 html[data-quran-font="madinah"] {
     --quran-font-family: 'Iqro Quran';
 }
