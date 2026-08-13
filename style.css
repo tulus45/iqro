@@ -2209,6 +2209,15 @@ a {
     text-transform: uppercase;
     background: linear-gradient(145deg, #22c55e, #15803d);
     box-shadow: 0 12px 28px rgba(22, 163, 74, 0.18);
+    overflow: hidden;
+}
+
+.brand-mark img,
+.title-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .title-logo {
@@ -3434,7 +3443,11 @@ html[data-quran-font="scheherazade"] {
 }
 
 html[data-quran-font="scheherazade"] .quran-marked-lam-alif {
-    font-feature-settings: "mark" 0, "mkmk" 0, "rlig" 1, "calt" 1, "liga" 1;
+    /* Scheherazade's lam-alif anchors collapse these two marks in Android
+       WebView. Use the Quran-specific LPMQ glyph only for this cluster. */
+    font-family: 'Iqro Quran', 'Iqro Quran Naskhi', 'Amiri', serif;
+    font-feature-settings: "mark" 1, "mkmk" 1, "rlig" 1, "calt" 1, "liga" 1;
+    font-synthesis: none;
 }
 
 html[data-quran-font="madinah"] {

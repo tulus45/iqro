@@ -15,6 +15,7 @@ const assets = [
   'admin.js',
   'favicon.svg',
   'quran.png',
+  'assets/app-logo.png',
   'mobile-runtime.js',
   'assets/fonts/LPMQ-Isep-Misbah-1.00.otf',
   'assets/fonts/LPMQ-Isep-Misbah.SOURCE.md',

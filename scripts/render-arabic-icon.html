@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 1254px;
+            height: 1254px;
+            margin: 0;
+            overflow: hidden;
+            background: #004a2d;
+        }
+
+        html.foreground,
+        html.foreground body {
+            background: transparent;
+        }
+
+        .icon {
+            position: relative;
+            width: 1254px;
+            height: 1254px;
+            background: url("../assets/app-icon-mosque-base.png") center / 100% 100% no-repeat;
+        }
+
+        html.foreground .icon {
+            background-image: url("../assets/app-icon-mosque-foreground-base.png");
+        }
+
+        .wordmark-frame {
+            position: absolute;
+            top: 315px;
+            left: 307px;
+            width: 640px;
+            height: 330px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        .wordmark {
+            direction: rtl;
+            unicode-bidi: isolate;
+            white-space: nowrap;
+            font-family: Arial, sans-serif;
+            font-size: 260px;
+            font-weight: 400;
+            line-height: 1;
+            color: transparent;
+            background: linear-gradient(180deg, #fff4b9 4%, #f7ce69 48%, #d3941f 96%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            -webkit-text-stroke: 5px #7a4a08;
+            paint-order: stroke fill;
+            filter:
+                drop-shadow(0 11px 3px rgba(20, 10, 2, 0.62))
+                drop-shadow(0 -1px 0 rgba(255, 247, 205, 0.7));
+        }
+    </style>
+</head>
+<body>
+    <main class="icon" aria-label="Ikon aplikasi Iqro">
+        <div class="wordmark-frame">
+            <span class="wordmark">&#x0627;&#x0642;&#x0631;&#x0623;</span>
+        </div>
+    </main>
+    <script>
+        if (new URLSearchParams(window.location.search).has("foreground")) {
+            document.documentElement.classList.add("foreground");
+        }
+    </script>
+</body>
+</html>
