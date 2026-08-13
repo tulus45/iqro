@@ -2006,7 +2006,7 @@ function injectCommunityUi() {
           <div>
             <p class="section-kicker">Komunitas</p>
             <h1 class="main-title">
-              <span class="title-logo"><img src="assets/app-logo.png" alt="" aria-hidden="true"></span>
+              <span class="title-logo"><img src="assets/app-logo.png?v=20260813-2" alt="" aria-hidden="true"></span>
               Ashabut Tilawah
             </h1>
           </div>
@@ -2060,7 +2060,7 @@ function injectCommunityUi() {
           <div>
             <p class="section-kicker">Akun</p>
             <h1 class="main-title">
-              <span class="title-logo"><img src="assets/app-logo.png" alt="" aria-hidden="true"></span>
+              <span class="title-logo"><img src="assets/app-logo.png?v=20260813-2" alt="" aria-hidden="true"></span>
               Pengaturan
             </h1>
           </div>

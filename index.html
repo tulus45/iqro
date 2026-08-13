@@ -6,7 +6,7 @@
     <meta name="description" content="Iqro Morning Pray menghadirkan mushaf pilihan dan bacaan tahlil dalam satu halaman modern.">
     <meta name="robots" content="noindex, noarchive, nosnippet">
     <title>Iqro Morning Pray | Jejak Tilawah</title>
-    <link rel="icon" type="image/png" href="assets/app-logo.png?v=20260813-1">
+    <link rel="icon" type="image/png" href="assets/app-logo.png?v=20260813-2">
     <meta name="theme-color" content="#16a34a">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
 <div class="site-shell">
     <header class="site-header">
         <button class="brand" type="button" onclick="showHome()">
-            <span class="brand-mark"><img src="assets/app-logo.png" alt="" aria-hidden="true"></span>
+            <span class="brand-mark"><img src="assets/app-logo.png?v=20260813-2" alt="" aria-hidden="true"></span>
             <span class="brand-copy">
                 <strong>Iqro</strong>
                 <span>Jejak Tilawah</span>
@@ -39,7 +39,7 @@
                     <div>
                         <p class="section-kicker">Home</p>
                         <h1 class="main-title">
-                            <span class="title-logo"><img src="assets/app-logo.png" alt="" aria-hidden="true"></span>
+                            <span class="title-logo"><img src="assets/app-logo.png?v=20260813-2" alt="" aria-hidden="true"></span>
                             Ringkasan Tilawah
                         </h1>
                         <p class="hero-copy">Setiap ayat membawamu lebih dekat kepada-Nya. Kami menyimpan jejak tilawahmu agar kamu bisa melanjutkannya kapan saja.</p>
@@ -392,7 +392,7 @@
     </main>
 
     <footer class="site-footer" aria-label="Informasi versi aplikasi">
-        <p class="site-footer-version">Iqro versi 1.7.8</p>
+        <p class="site-footer-version">Iqro versi 1.7.9</p>
         <p>© 2026 The Alus. All rights reserved</p>
     </footer>
 </div>
@@ -952,11 +952,16 @@
             .replace(/([\u06D6-\u06DB])\s*(?=\S)/g, '$1 ');
     }
 
-    // Scheherazade New can stack both marks over the alef in a vocalized
-    // lam-alif. Keep the Unicode text intact and isolate only that cluster
-    // so its mark-positioning features can be adjusted without affecting
-    // other Arabic shaping.
-    const quranMarkedLamAlifPattern = /(\u0644\u0652[\u0622\u0623\u0625\u0627\u0671][\u064B-\u065F\u0670\u06D6-\u06ED]+)/gu;
+    // Scheherazade New can attach lam's marks to the alef in a vocalized
+    // lam-alif. Keep the Unicode text intact and isolate every marked form
+    // (for example لِأٓ and لَّآ), not only the lam+sukun form, so Naskhi
+    // Jelas can use the Quran font's more reliable mark anchors.
+    const quranCombiningMarks = '[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]';
+    const quranMarkedLamAlifCluster = `\\u0644${quranCombiningMarks}+[\\u0622\\u0623\\u0625\\u0627\\u0671]${quranCombiningMarks}*`;
+    const quranMarkedLamAlifPattern = new RegExp(
+        `(\\S*${quranMarkedLamAlifCluster}\\S*)`,
+        'gu'
+    );
 
     function renderQuranTextSegment(value) {
         const source = String(value ?? '');
@@ -1579,7 +1584,7 @@
 </script>
 <script src="mobile-runtime.js?v=20260801-1"></script>
 <script src="quran-offline.js?v=20260805-1"></script>
-<script src="community.js?v=20260813-1"></script>
+<script src="community.js?v=20260813-2"></script>
 <script src="prayer.js?v=20260805-2"></script>
 <script src="calendar.js?v=20260807-2"></script>
 <script src="admin.js?v=20260801-1"></script>

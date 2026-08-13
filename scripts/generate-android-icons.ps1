@@ -10,7 +10,7 @@ $sourcePath = (Resolve-Path -LiteralPath $Source).Path
 $foregroundPath = (Resolve-Path -LiteralPath $Foreground).Path
 $resPath = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\android\app\src\main\res')).Path
 $webLogoPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\assets\app-logo.png'))
-$emerald = [System.Drawing.ColorTranslator]::FromHtml('#004A2D')
+$emerald = [System.Drawing.ColorTranslator]::FromHtml('#166534')
 $densities = [ordered]@{
     'ldpi' = @{ launcher = 36; adaptive = 81 }
     'mdpi' = @{ launcher = 48; adaptive = 108 }
