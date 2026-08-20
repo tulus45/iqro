@@ -1084,6 +1084,7 @@
 
 .prayer-time-card {
     position: relative;
+    --prayer-sketch-opacity: 0.24;
     min-height: 226px;
     padding: 20px;
     overflow: hidden;
@@ -1093,15 +1094,58 @@
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
+.prayer-time-card[data-prayer-key="Fajr"] {
+    --prayer-sketch: url('assets/prayer/prayer-subuh-sketch.jpg');
+}
+
+.prayer-time-card[data-prayer-key="Dhuhr"] {
+    --prayer-sketch: url('assets/prayer/prayer-zuhur-sketch.jpg');
+}
+
+.prayer-time-card[data-prayer-key="Asr"] {
+    --prayer-sketch: url('assets/prayer/prayer-asar-sketch.jpg');
+}
+
+.prayer-time-card[data-prayer-key="Maghrib"] {
+    --prayer-sketch: url('assets/prayer/prayer-maghrib-sketch.jpg');
+    --prayer-sketch-opacity: 0.2;
+}
+
+.prayer-time-card[data-prayer-key="Isha"] {
+    --prayer-sketch: url('assets/prayer/prayer-isya-sketch.jpg');
+    --prayer-sketch-opacity: 0.16;
+}
+
+.prayer-time-card[data-prayer-key]::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.04)), var(--prayer-sketch);
+    background-position: center;
+    background-size: cover;
+    opacity: var(--prayer-sketch-opacity);
+    filter: saturate(0.82) contrast(0.92);
+    pointer-events: none;
+}
+
+.prayer-time-card[data-prayer-key] > * {
+    position: relative;
+    z-index: 2;
+}
+
 .prayer-time-card::after {
     content: "";
     position: absolute;
+    z-index: 1;
     right: -28px;
     bottom: -42px;
     width: 94px;
     height: 94px;
     border: 1px solid rgba(22, 163, 74, 0.08);
     border-radius: 50%;
+    pointer-events: none;
 }
 
 .prayer-time-card.is-next {
@@ -3477,21 +3521,6 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     color: var(--accent-soft);
     font-style: italic;
     line-height: 1.8;
-}
-
-.quran-ayah-ending {
-    display: inline-flex;
-    align-items: center;
-    direction: rtl;
-    unicode-bidi: isolate;
-    white-space: nowrap;
-    vertical-align: middle;
-}
-
-.quran-final-word {
-    display: inline;
-    direction: rtl;
-    unicode-bidi: isolate;
 }
 
 .ayah-end {

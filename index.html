@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260820-1">
+    <link rel="stylesheet" href="style.css?v=20260820-3">
     <link rel="stylesheet" href="mobile.css?v=20260820-1">
 </head>
 <body>
@@ -392,7 +392,7 @@
     </main>
 
     <footer class="site-footer" aria-label="Informasi versi aplikasi">
-        <p class="site-footer-version">Iqro versi 1.7.10</p>
+        <p class="site-footer-version">Iqro versi 1.7.11</p>
         <p>© 2026 The Alus. All rights reserved</p>
     </footer>
 </div>
@@ -997,15 +997,12 @@
 
     function renderQuranAyahLine(value, markerHtml, renderText = renderQuranArabic) {
         const source = String(value ?? '').trim();
-        const finalWordMatch = source.match(/^(.*\s)(\S+)$/us);
-
-        if (!finalWordMatch) {
-            return `<span class="quran-ayah-ending"><span class="quran-final-word">${renderText(source)}</span>${markerHtml}</span>`;
-        }
-
-        const prefix = finalWordMatch[1].trimEnd();
-        const finalWord = finalWordMatch[2];
-        return `${renderText(prefix)} <span class="quran-ayah-ending"><span class="quran-final-word">${renderText(finalWord)}</span>${markerHtml}</span>`;
+        // Keep the Quran text in one uninterrupted inline flow. Splitting the
+        // final word into an inline-flex cluster makes Android WebView repeat
+        // the word immediately before that cluster at particular line wraps.
+        // U+2060 only prevents a break before the marker; it never changes the
+        // source text or separates Arabic letters and harakat.
+        return `${renderText(source)}&#x2060;${markerHtml}`;
     }
 
     function formatRevelation(value) {
