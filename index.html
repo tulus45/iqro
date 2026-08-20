@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260813-3">
-    <link rel="stylesheet" href="mobile.css?v=20260806-10">
+    <link rel="stylesheet" href="style.css?v=20260820-1">
+    <link rel="stylesheet" href="mobile.css?v=20260820-1">
 </head>
 <body>
 <div class="site-shell">
@@ -392,7 +392,7 @@
     </main>
 
     <footer class="site-footer" aria-label="Informasi versi aplikasi">
-        <p class="site-footer-version">Iqro versi 1.7.9</p>
+        <p class="site-footer-version">Iqro versi 1.7.10</p>
         <p>© 2026 The Alus. All rights reserved</p>
     </footer>
 </div>
@@ -995,6 +995,19 @@
         return html + renderQuranTextSegment(normalized.slice(cursor));
     }
 
+    function renderQuranAyahLine(value, markerHtml, renderText = renderQuranArabic) {
+        const source = String(value ?? '').trim();
+        const finalWordMatch = source.match(/^(.*\s)(\S+)$/us);
+
+        if (!finalWordMatch) {
+            return `<span class="quran-ayah-ending"><span class="quran-final-word">${renderText(source)}</span>${markerHtml}</span>`;
+        }
+
+        const prefix = finalWordMatch[1].trimEnd();
+        const finalWord = finalWordMatch[2];
+        return `${renderText(prefix)} <span class="quran-ayah-ending"><span class="quran-final-word">${renderText(finalWord)}</span>${markerHtml}</span>`;
+    }
+
     function formatRevelation(value) {
         const normalized = String(value || '').trim().toLowerCase();
         if (!normalized) return '';
@@ -1335,10 +1348,12 @@
                     .replace('............', memorialNamesTarget)
                     .replace(' (Sebutkan nama-nama arwah yang dituju)', '');
             }
+            const tahlilMarkerHtml = `<span class="ayah-end tahlil-ayah-end"><span class="ayah-number">${_0xAr(index + 1)}</span></span>`;
+            const renderedArabLine = renderQuranAyahLine(renderedArab, tahlilMarkerHtml, (text) => text);
             html += `
             <div class="ayah-block">
                 <div class="ayah-arab" style="cursor:default;">
-                    ${renderedArab} <span class="ayah-end tahlil-ayah-end"><span class="ayah-number">${_0xAr(index + 1)}</span></span>
+                    ${renderedArabLine}
                 </div>
                 <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
                     ${renderedLatin}
@@ -1458,14 +1473,20 @@
                 const saveAttr = mushafProgressTrackingEnabled
                     ? `data-surah="${n}" data-ayat="${v.nomorAyat}" data-surah-name="${encodeURIComponent(String(d.namaLatin || ''))}" data-total-ayat="${d.jumlahAyat}" onclick="markLastReadFromElement(this)" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault(); markLastReadFromElement(this);}" role="button" tabindex="0" aria-label="Tandai ayat ${v.nomorAyat} sebagai terakhir dibaca"`
                     : 'aria-disabled="true"';
-                const arabicHtml = useMadinahText
-                    ? escapeHtml(window.stripKfgqpcAyahMarker(madinahAyahs[v.nomorAyat - 1]))
-                    : renderQuranArabic(v.teksArab);
+                const markerHtml = `<span class="ayah-end${markerClass}" ${saveAttr}><span class="ayah-number${v.nomorAyat >= 100 ? ' is-three-digit' : ''}">${_0xAr(v.nomorAyat)}</span></span>`;
+                const arabicText = useMadinahText
+                    ? window.stripKfgqpcAyahMarker(madinahAyahs[v.nomorAyat - 1])
+                    : v.teksArab;
+                const arabicHtml = renderQuranAyahLine(
+                    arabicText,
+                    markerHtml,
+                    useMadinahText ? escapeHtml : renderQuranArabic
+                );
                 
                 html += `
                 <div class="ayah-block" id="block-${v.nomorAyat}">
                     <div class="ayah-arab quran-reading-text">
-                        ${arabicHtml} <span class="ayah-end${markerClass}" ${saveAttr}><span class="ayah-number${v.nomorAyat >= 100 ? ' is-three-digit' : ''}">${_0xAr(v.nomorAyat)}</span></span>
+                        ${arabicHtml}
                     </div>
                     <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
                         ${v.teksLatin}

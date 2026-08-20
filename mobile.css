@@ -574,10 +574,10 @@ body.mobile-menu-open {
     }
 
     .page-prayer .qibla-panel {
-        grid-template-columns: minmax(0, 1fr) 82px;
-        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) clamp(104px, 30vw, 116px);
+        gap: 10px;
         min-height: 0;
-        padding: 10px 12px;
+        padding: 11px 14px;
         border-radius: 16px;
     }
 
@@ -621,43 +621,43 @@ body.mobile-menu-open {
 
     .page-prayer .qibla-compass-wrap {
         grid-row: auto;
-        gap: 3px;
+        gap: 5px;
     }
 
     .page-prayer .qibla-compass-face {
-        width: 72px;
-        box-shadow: inset 0 0 0 6px rgba(255, 255, 255, 0.75), 0 10px 22px rgba(15, 78, 44, 0.1);
+        width: clamp(96px, 27vw, 108px);
+        box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.75), 0 13px 28px rgba(15, 78, 44, 0.12);
     }
 
     .page-prayer .qibla-compass-face.is-aligned {
-        box-shadow: inset 0 0 0 6px rgba(255, 255, 255, 0.75), 0 0 0 4px rgba(34, 197, 94, 0.1), 0 10px 22px rgba(15, 78, 44, 0.12);
+        box-shadow: inset 0 0 0 8px rgba(255, 255, 255, 0.75), 0 0 0 5px rgba(34, 197, 94, 0.1), 0 13px 28px rgba(15, 78, 44, 0.14);
     }
 
     .page-prayer .qibla-cardinal {
-        width: 13px;
-        height: 13px;
-        font-size: 0.42rem;
+        width: 16px;
+        height: 16px;
+        font-size: 0.5rem;
     }
 
-    .page-prayer .qibla-cardinal.is-north { top: 4px; }
-    .page-prayer .qibla-cardinal.is-east { right: 4px; }
-    .page-prayer .qibla-cardinal.is-south { bottom: 4px; }
-    .page-prayer .qibla-cardinal.is-west { left: 4px; }
+    .page-prayer .qibla-cardinal.is-north { top: 6px; }
+    .page-prayer .qibla-cardinal.is-east { right: 6px; }
+    .page-prayer .qibla-cardinal.is-south { bottom: 6px; }
+    .page-prayer .qibla-cardinal.is-west { left: 6px; }
 
     .page-prayer .qibla-compass-ring {
-        inset: 16px;
+        inset: 23px;
     }
 
     .page-prayer .qibla-pointer {
-        width: 4px;
-        height: 24px;
+        width: 5px;
+        height: 35px;
     }
 
     .page-prayer .qibla-pointer > span::before {
-        top: -6px;
-        border-right-width: 5px;
-        border-bottom-width: 9px;
-        border-left-width: 5px;
+        top: -8px;
+        border-right-width: 6px;
+        border-bottom-width: 12px;
+        border-left-width: 6px;
     }
 
     .page-prayer .qibla-compass-center {
@@ -667,8 +667,8 @@ body.mobile-menu-open {
     }
 
     .page-prayer .qibla-alignment-label {
-        padding: 3px 6px;
-        font-size: 0.47rem;
+        padding: 4px 8px;
+        font-size: 0.54rem;
     }
 
     .page-prayer .prayer-source-note {
@@ -1515,14 +1515,14 @@ body.mobile-menu-open {
     }
 
     .page-prayer .qibla-compass-center {
-        width: 22px;
-        height: 22px;
-        border-width: 2px;
+        width: 29px;
+        height: 29px;
+        border-width: 3px;
     }
 
     .page-prayer .qibla-kaaba-icon {
-        width: 15px;
-        height: 15px;
+        width: 20px;
+        height: 20px;
     }
 }
 

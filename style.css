@@ -3479,6 +3479,21 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     line-height: 1.8;
 }
 
+.quran-ayah-ending {
+    display: inline-flex;
+    align-items: center;
+    direction: rtl;
+    unicode-bidi: isolate;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.quran-final-word {
+    display: inline;
+    direction: rtl;
+    unicode-bidi: isolate;
+}
+
 .ayah-end {
     position: relative;
     isolation: isolate;
