@@ -31,7 +31,9 @@ const assets = [
   'assets/fonts/KFGQPC-Hafs.EULA.md',
   'assets/fonts/KFGQPC-Hafs.SOURCE.md',
   'assets/quran/kfgqpc-hafs-v2.0.json',
-  'assets/quran/KFGQPC-Hafs.SOURCE.md'
+  'assets/quran/KFGQPC-Hafs.SOURCE.md',
+  'assets/quran/uthmani-tajweed-v4.json',
+  'assets/quran/TAJWEED.SOURCE.md'
 ];
 
 fs.rmSync(webDir, { recursive: true, force: true });

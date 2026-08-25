@@ -5,17 +5,41 @@ const quranDisplayStorageKey = 'iqro_quran_display_preferences';
 const quranDisplayDefaults = Object.freeze({
   font: 'lpmq',
   size: 'normal',
-  spacing: 'normal'
+  spacing: 'normal',
+  tajweed: 'off'
 });
 const quranDisplayAllowedValues = Object.freeze({
   font: ['lpmq', 'scheherazade', 'madinah'],
   size: ['small', 'normal', 'large'],
-  spacing: ['normal', 'relaxed']
+  spacing: ['normal', 'relaxed'],
+  tajweed: ['off', 'on']
 });
 const quranSettingsPreviewText = 'وَاِذْ قَالَ رَبُّكَ لِلْمَلٰۤىِٕكَةِ اِنِّيْ جَاعِلٌ فِى الْاَرْضِ خَلِيْفَةً ۗ قَالُوْٓا اَتَجْعَلُ فِيْهَا مَنْ يُّفْسِدُ فِيْهَا وَيَسْفِكُ الدِّمَاۤءَۚ وَنَحْنُ نُسَبِّحُ بِحَمْدِكَ وَنُقَدِّسُ لَكَ ۗ قَالَ اِنِّيْٓ اَعْلَمُ مَا لَا تَعْلَمُوْنَ';
 const quranMadinahSettingsPreviewText = 'وَإِذۡ قَالَ رَبُّكَ لِلۡمَلَٰٓئِكَةِ إِنِّي جَاعِلٞ فِي ٱلۡأَرۡضِ خَلِيفَةٗۖ قَالُوٓاْ أَتَجۡعَلُ فِيهَا مَن يُفۡسِدُ فِيهَا وَيَسۡفِكُ ٱلدِّمَآءَ وَنَحۡنُ نُسَبِّحُ بِحَمۡدِكَ وَنُقَدِّسُ لَكَۖ قَالَ إِنِّيٓ أَعۡلَمُ مَا لَا تَعۡلَمُونَ';
 const kfgqpcHafsAssetUrl = 'assets/quran/kfgqpc-hafs-v2.0.json';
+const quranTajweedAssetUrl = 'assets/quran/uthmani-tajweed-v4.json?v=20260825-1';
+const quranTajweedAllowedRules = new Set([
+  'ghunnah',
+  'ham_wasl',
+  'idgham_ghunnah',
+  'idgham_mutajanisayn',
+  'idgham_mutaqaribayn',
+  'idgham_shafawi',
+  'idgham_wo_ghunnah',
+  'ikhafa',
+  'ikhafa_shafawi',
+  'iqlab',
+  'laam_shamsiyah',
+  'madda_necessary',
+  'madda_normal',
+  'madda_obligatory',
+  'madda_permissible',
+  'qalaqah',
+  'slnt'
+]);
 let kfgqpcHafsDataPromise = null;
+let quranTajweedDataPromise = null;
+const sanitizedTajweedSurahs = new Map();
 
 function stripKfgqpcAyahMarker(value) {
   return String(value || '').replace(/[\u00A0 ]*[\uFC00-\uFD1D]$/u, '');
@@ -54,6 +78,89 @@ async function getKfgqpcHafsSurah(surahNumber) {
   return surah;
 }
 
+function escapeTajweedText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+}
+
+function sanitizeQuranTajweedMarkup(value) {
+  const template = document.createElement('template');
+  template.innerHTML = String(value || '');
+
+  function serializeNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return escapeTajweedText(node.nodeValue || '');
+    if (node.nodeType !== Node.ELEMENT_NODE || node.tagName !== 'SPAN') {
+      throw new Error('tajweed-markup-invalid');
+    }
+
+    const ruleClass = [...node.classList].find((name) => name.startsWith('tajweed-')) || '';
+    const rule = ruleClass.slice('tajweed-'.length);
+    if (
+      node.classList.length !== 2
+      || !node.classList.contains('tajweed')
+      || !quranTajweedAllowedRules.has(rule)
+    ) {
+      throw new Error('tajweed-rule-invalid');
+    }
+
+    const content = [...node.childNodes].map(serializeNode).join('');
+    return `<span class="tajweed tajweed-${rule}">${content}</span>`;
+  }
+
+  return [...template.content.childNodes].map(serializeNode).join('');
+}
+
+async function loadQuranTajweedData() {
+  if (!quranTajweedDataPromise) {
+    quranTajweedDataPromise = fetch(quranTajweedAssetUrl)
+      .then((response) => {
+        if (!response.ok) throw new Error('tajweed-data-unavailable');
+        return response.json();
+      })
+      .then((payload) => {
+        const metadataRules = Array.isArray(payload?.metadata?.rules) ? payload.metadata.rules : [];
+        if (
+          payload?.metadata?.ayahCount !== 6236
+          || payload?.metadata?.surahCount !== 114
+          || !Array.isArray(payload?.surahs)
+          || payload.surahs.length !== 114
+          || metadataRules.some((rule) => !quranTajweedAllowedRules.has(rule))
+        ) {
+          throw new Error('tajweed-data-invalid');
+        }
+        return payload;
+      })
+      .catch((error) => {
+        quranTajweedDataPromise = null;
+        sanitizedTajweedSurahs.clear();
+        throw error;
+      });
+  }
+  return quranTajweedDataPromise;
+}
+
+async function getQuranTajweedSurah(surahNumber) {
+  const safeNumber = Number(surahNumber);
+  if (!Number.isInteger(safeNumber) || safeNumber < 1 || safeNumber > 114) {
+    throw new Error('tajweed-surah-invalid');
+  }
+  if (sanitizedTajweedSurahs.has(safeNumber)) return sanitizedTajweedSurahs.get(safeNumber);
+
+  const payload = await loadQuranTajweedData();
+  const surah = payload.surahs[safeNumber - 1];
+  if (!Array.isArray(surah) || !surah.length || surah.some((ayah) => !ayah)) {
+    throw new Error('tajweed-surah-invalid');
+  }
+  const sanitized = surah.map(sanitizeQuranTajweedMarkup);
+  sanitizedTajweedSurahs.set(safeNumber, sanitized);
+  return sanitized;
+}
+
 function sanitizeQuranDisplayPreferences(value) {
   const source = value && typeof value === 'object' ? value : {};
   return Object.fromEntries(
@@ -80,6 +187,7 @@ function applyQuranDisplayPreferences(preferences = quranDisplayPreferences) {
   root.dataset.quranFont = next.font;
   root.dataset.quranSize = next.size;
   root.dataset.quranSpacing = next.spacing;
+  root.dataset.quranTajweed = next.tajweed;
   quranDisplayPreferences = next;
 }
 
@@ -1560,7 +1668,23 @@ function renderQuranPreferenceButton(group, value, label) {
   `;
 }
 
+async function hydrateQuranTajweedPreview() {
+  const preview = document.getElementById('quranSettingsPreviewText');
+  if (!preview || quranDisplayPreferences.tajweed !== 'on') return;
+
+  try {
+    const ayahs = await getQuranTajweedSurah(2);
+    if (!preview.isConnected || quranDisplayPreferences.tajweed !== 'on') return;
+    preview.innerHTML = ayahs[29];
+  } catch (error) {
+    if (!preview.isConnected) return;
+    preview.classList.remove('has-tajweed');
+    preview.textContent = quranSettingsPreviewText;
+  }
+}
+
 function renderQuranDisplaySettings() {
+  const useTajweedColors = quranDisplayPreferences.tajweed === 'on';
   const isMadinah = quranDisplayPreferences.font === 'madinah';
   const previewText = isMadinah ? quranMadinahSettingsPreviewText : quranSettingsPreviewText;
   const preview = isMadinah
@@ -1571,6 +1695,7 @@ function renderQuranDisplaySettings() {
     scheherazade: 'Naskhi Jelas',
     madinah: 'Mushaf Madinah'
   }[quranDisplayPreferences.font] || 'Mushaf Indonesia';
+  const previewLabel = useTajweedColors ? 'Tajwid · Utsmani' : fontLabel;
 
   return `
     <section class="community-sidebar-card settings-account-card settings-quran-card">
@@ -1628,16 +1753,35 @@ function renderQuranDisplaySettings() {
             ${renderQuranPreferenceButton('spacing', 'relaxed', 'Lebih Lega')}
           </div>
         </div>
+        <div class="quran-display-control quran-tajweed-control">
+          <span class="quran-display-control-label">Warna Tajwid</span>
+          <div class="quran-choice-group" role="group" aria-label="Warna tajwid Al-Qur'an">
+            ${renderQuranPreferenceButton('tajweed', 'off', 'Nonaktif')}
+            ${renderQuranPreferenceButton('tajweed', 'on', 'Aktif')}
+          </div>
+        </div>
       </div>
+
+      ${useTajweedColors ? `
+        <div class="tajweed-legend" aria-label="Keterangan warna tajwid">
+          <span><i class="is-ghunnah"></i>Ghunnah</span>
+          <span><i class="is-mad"></i>Mad</span>
+          <span><i class="is-qalqalah"></i>Qalqalah</span>
+          <span><i class="is-ikhfa"></i>Ikhfa</span>
+          <span><i class="is-idgham"></i>Idgham</span>
+          <span><i class="is-iqlab"></i>Iqlab</span>
+          <span><i class="is-silent"></i>Tidak dibaca</span>
+        </div>
+      ` : ''}
 
       <div class="quran-preview" aria-live="polite">
         <div class="quran-preview-label">
           <span>Pratinjau Al-Baqarah ayat 30</span>
-          <span>${fontLabel}</span>
+          <span>${previewLabel}</span>
         </div>
-        <p class="ayah-arab" lang="ar">${preview}</p>
+        <p id="quranSettingsPreviewText" class="ayah-arab${useTajweedColors ? ' has-tajweed' : ''}" lang="ar">${preview}</p>
       </div>
-      <p class="quran-display-note">Pilihan disimpan di perangkat ini. Mode Mushaf Madinah memakai pasangan font dan teks Utsmani KFGQPC khusus pada bacaan Al-Qur'an; bacaan Tahlil tetap memakai Mushaf Indonesia.</p>
+      <p class="quran-display-note">Pilihan disimpan di perangkat ini. Saat warna Tajwid aktif, bacaan memakai teks Utsmani beranotasi dan font yang kompatibel; bacaan Tahlil tetap memakai Mushaf Indonesia.</p>
     </section>
   `;
 }
@@ -1804,7 +1948,7 @@ function renderSettingsMenu() {
       section: 'quran',
       kicker: 'Bacaan',
       title: "Tampilan Al-Qur'an",
-      description: 'Gaya Mushaf, ukuran huruf, dan jarak baris.'
+      description: 'Gaya Mushaf, ukuran huruf, jarak baris, dan warna Tajwid.'
     },
     {
       section: 'offline',
@@ -1886,6 +2030,7 @@ function renderSettingsPage() {
 
   if (section === 'quran') {
     panel.innerHTML = `${renderSettingsDetailHeader("Tampilan Al-Qur'an")}${renderQuranDisplaySettings()}`;
+    void hydrateQuranTajweedPreview();
     return;
   }
 
@@ -2692,6 +2837,7 @@ window.cancelRemoveOfflineQuranData = cancelRemoveOfflineQuranData;
 window.removeOfflineQuranData = removeOfflineQuranData;
 window.getKfgqpcHafsSurah = getKfgqpcHafsSurah;
 window.stripKfgqpcAyahMarker = stripKfgqpcAyahMarker;
+window.getQuranTajweedSurah = getQuranTajweedSurah;
 
 window.addEventListener('iqro:quran-offline-status', () => {
   if (communityState.settingsSection === 'offline') renderSettingsPage();

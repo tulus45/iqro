@@ -692,11 +692,13 @@ function renderPrayerNext() {
   if (!data) return;
   const next = getNextPrayerMeta();
   if (!next) return;
+  const card = document.querySelector('.prayer-next-card');
   const name = document.getElementById('prayerNextName');
   const time = document.getElementById('prayerNextTime');
   const index = document.getElementById('prayerNextIndex');
   const countdown = document.getElementById('prayerCountdown');
   const progress = document.getElementById('prayerCountdownProgress');
+  if (card) card.dataset.prayerKey = next.key;
   if (name) name.textContent = next.label;
   if (time) time.textContent = data.timings[next.key] || '--:--';
   if (index) index.textContent = String(next.index + 1).padStart(2, '0');

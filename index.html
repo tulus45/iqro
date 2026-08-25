@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260820-3">
+    <link rel="stylesheet" href="style.css?v=20260825-1">
     <link rel="stylesheet" href="mobile.css?v=20260820-1">
 </head>
 <body>
@@ -1434,7 +1434,14 @@
                 d = j.data;
             }
             const totalAyat = Number(d.jumlahAyat) || d.ayat.length || getAyatCountForSurah(n);
-            const useMadinahText = document.documentElement.dataset.quranFont === 'madinah';
+            const useTajweedText = document.documentElement.dataset.quranTajweed === 'on';
+            const tajweedAyahs = useTajweedText
+                ? await window.getQuranTajweedSurah?.(n)
+                : null;
+            if (useTajweedText && (!Array.isArray(tajweedAyahs) || tajweedAyahs.length !== totalAyat)) {
+                throw new Error('tajweed-surah-mismatch');
+            }
+            const useMadinahText = !useTajweedText && document.documentElement.dataset.quranFont === 'madinah';
             const madinahAyahs = useMadinahText
                 ? await window.getKfgqpcHafsSurah?.(n)
                 : null;
@@ -1454,13 +1461,22 @@
             
             let html = "";
             if (startAyat === 1 && n != 1 && n != 9) {
-                const basmalahText = useMadinahText
-                    ? window.stripKfgqpcAyahMarker((await window.getKfgqpcHafsSurah(1))[0])
-                    : 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ';
-                const basmalahHtml = useMadinahText
-                    ? escapeHtml(basmalahText)
-                    : renderQuranArabic(basmalahText);
-                html += `<div class="ayah-arab quran-reading-text" style="text-align:center; border-bottom:1px solid var(--line); padding:20px;">${basmalahHtml}</div>`;
+                let basmalahHtml = '';
+                if (useTajweedText) {
+                    const tajweedBasmalah = await window.getQuranTajweedSurah?.(1);
+                    if (!Array.isArray(tajweedBasmalah) || !tajweedBasmalah[0]) {
+                        throw new Error('tajweed-basmalah-mismatch');
+                    }
+                    basmalahHtml = tajweedBasmalah[0];
+                } else {
+                    const basmalahText = useMadinahText
+                        ? window.stripKfgqpcAyahMarker((await window.getKfgqpcHafsSurah(1))[0])
+                        : 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ';
+                    basmalahHtml = useMadinahText
+                        ? escapeHtml(basmalahText)
+                        : renderQuranArabic(basmalahText);
+                }
+                html += `<div class="ayah-arab quran-reading-text${useTajweedText ? ' has-tajweed' : ''}" style="text-align:center; border-bottom:1px solid var(--line); padding:20px;">${basmalahHtml}</div>`;
             }
             
             d.ayat
@@ -1474,15 +1490,17 @@
                 const arabicText = useMadinahText
                     ? window.stripKfgqpcAyahMarker(madinahAyahs[v.nomorAyat - 1])
                     : v.teksArab;
-                const arabicHtml = renderQuranAyahLine(
-                    arabicText,
-                    markerHtml,
-                    useMadinahText ? escapeHtml : renderQuranArabic
-                );
+                const arabicHtml = useTajweedText
+                    ? renderQuranAyahLine(tajweedAyahs[v.nomorAyat - 1], markerHtml, (text) => text)
+                    : renderQuranAyahLine(
+                        arabicText,
+                        markerHtml,
+                        useMadinahText ? escapeHtml : renderQuranArabic
+                    );
                 
                 html += `
                 <div class="ayah-block" id="block-${v.nomorAyat}">
-                    <div class="ayah-arab quran-reading-text">
+                    <div class="ayah-arab quran-reading-text${useTajweedText ? ' has-tajweed' : ''}">
                         ${arabicHtml}
                     </div>
                     <div class="ayah-latin" style="display:${document.getElementById('latinCheck').checked ? 'block' : 'none'}">
@@ -1540,9 +1558,12 @@
             }
             if (revealAtTarget) setMushafResumeLoading(false);
         } catch (e) {
-            const message = String(e?.message || '').startsWith('kfgqpc-')
+            const errorCode = String(e?.message || '');
+            const message = errorCode.startsWith('kfgqpc-')
                 ? 'Data Mushaf Madinah tidak dapat dimuat. Silakan coba lagi atau pilih gaya Mushaf Indonesia.'
-                : 'Gagal memuat API Mushaf. Periksa koneksi lalu coba lagi.';
+                : errorCode.startsWith('tajweed-')
+                    ? 'Data warna Tajwid tidak dapat dimuat. Nonaktifkan warna Tajwid di Pengaturan lalu coba lagi.'
+                    : 'Gagal memuat API Mushaf. Periksa koneksi lalu coba lagi.';
             qC.innerHTML = `<div class='status-message'>${message}</div>`;
             if (revealAtTarget) setMushafResumeLoading(false);
         }
@@ -1602,8 +1623,8 @@
 </script>
 <script src="mobile-runtime.js?v=20260801-1"></script>
 <script src="quran-offline.js?v=20260805-1"></script>
-<script src="community.js?v=20260813-2"></script>
-<script src="prayer.js?v=20260805-2"></script>
+<script src="community.js?v=20260825-1"></script>
+<script src="prayer.js?v=20260821-1"></script>
 <script src="calendar.js?v=20260807-2"></script>
 <script src="admin.js?v=20260801-1"></script>
 </body>

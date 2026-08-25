@@ -1094,24 +1094,29 @@
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.prayer-time-card[data-prayer-key="Fajr"] {
+.prayer-time-card[data-prayer-key="Fajr"],
+.prayer-next-card[data-prayer-key="Fajr"] {
     --prayer-sketch: url('assets/prayer/prayer-subuh-sketch.jpg');
 }
 
-.prayer-time-card[data-prayer-key="Dhuhr"] {
+.prayer-time-card[data-prayer-key="Dhuhr"],
+.prayer-next-card[data-prayer-key="Dhuhr"] {
     --prayer-sketch: url('assets/prayer/prayer-zuhur-sketch.jpg');
 }
 
-.prayer-time-card[data-prayer-key="Asr"] {
+.prayer-time-card[data-prayer-key="Asr"],
+.prayer-next-card[data-prayer-key="Asr"] {
     --prayer-sketch: url('assets/prayer/prayer-asar-sketch.jpg');
 }
 
-.prayer-time-card[data-prayer-key="Maghrib"] {
+.prayer-time-card[data-prayer-key="Maghrib"],
+.prayer-next-card[data-prayer-key="Maghrib"] {
     --prayer-sketch: url('assets/prayer/prayer-maghrib-sketch.jpg');
     --prayer-sketch-opacity: 0.2;
 }
 
-.prayer-time-card[data-prayer-key="Isha"] {
+.prayer-time-card[data-prayer-key="Isha"],
+.prayer-next-card[data-prayer-key="Isha"] {
     --prayer-sketch: url('assets/prayer/prayer-isya-sketch.jpg');
     --prayer-sketch-opacity: 0.16;
 }
@@ -1133,6 +1138,31 @@
 .prayer-time-card[data-prayer-key] > * {
     position: relative;
     z-index: 2;
+}
+
+.prayer-next-card[data-prayer-key] {
+    isolation: isolate;
+}
+
+.prayer-next-card[data-prayer-key]::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    border-radius: inherit;
+    background-image:
+        linear-gradient(90deg, rgba(2, 54, 33, 0.94) 0%, rgba(3, 61, 37, 0.82) 48%, rgba(4, 67, 39, 0.58) 100%),
+        var(--prayer-sketch);
+    background-position: center;
+    background-size: cover;
+    opacity: 0.82;
+    filter: saturate(0.78) contrast(0.94);
+    pointer-events: none;
+}
+
+.prayer-next-card[data-prayer-key] > * {
+    position: relative;
+    z-index: 1;
 }
 
 .prayer-time-card::after {
@@ -3503,6 +3533,69 @@ html[data-quran-font="madinah"] .quran-preview .ayah-arab {
     font-family: 'Iqro Quran Madinah', serif;
 }
 
+.quran-reading-text.has-tajweed,
+.quran-preview .ayah-arab.has-tajweed {
+    font-family: 'Iqro Quran Madinah', 'Iqro Quran', 'Amiri Quran', serif;
+}
+
+.tajweed {
+    display: inline;
+    color: inherit;
+}
+
+.tajweed-ghunnah {
+    color: #ea580c;
+}
+
+.tajweed-ham_wasl,
+.tajweed-laam_shamsiyah,
+.tajweed-slnt,
+.tajweed-idgham_mutajanisayn,
+.tajweed-idgham_mutaqaribayn {
+    color: #77808b;
+}
+
+.tajweed-madda_normal {
+    color: #537fff;
+}
+
+.tajweed-madda_permissible {
+    color: #4050ff;
+}
+
+.tajweed-madda_obligatory {
+    color: #2144c1;
+}
+
+.tajweed-madda_necessary {
+    color: #000ebc;
+}
+
+.tajweed-qalaqah {
+    color: #dd0008;
+}
+
+.tajweed-ikhafa {
+    color: #9400a8;
+}
+
+.tajweed-ikhafa_shafawi {
+    color: #d500b7;
+}
+
+.tajweed-iqlab {
+    color: #0787aa;
+}
+
+.tajweed-idgham_ghunnah,
+.tajweed-idgham_wo_ghunnah {
+    color: #169200;
+}
+
+.tajweed-idgham_shafawi {
+    color: #58a800;
+}
+
 html[data-quran-size="small"] .ayah-arab {
     font-size: clamp(1.8rem, 2.7vw, 2.42rem);
 }
@@ -4703,6 +4796,12 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     font-weight: 800;
 }
 
+.quran-tajweed-control {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(140px, 0.45fr) minmax(260px, 1fr);
+    align-items: center;
+}
+
 .quran-choice-group {
     display: grid;
     grid-auto-flow: column;
@@ -4731,6 +4830,61 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     background: #ffffff;
     color: #166534;
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.tajweed-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 12px 14px;
+    border: 1px solid rgba(22, 163, 74, 0.14);
+    border-radius: 14px;
+    background: rgba(240, 253, 244, 0.58);
+}
+
+.tajweed-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.tajweed-legend i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9);
+}
+
+.tajweed-legend .is-ghunnah {
+    color: #ea580c;
+}
+
+.tajweed-legend .is-mad {
+    color: #4050ff;
+}
+
+.tajweed-legend .is-qalqalah {
+    color: #dd0008;
+}
+
+.tajweed-legend .is-ikhfa {
+    color: #9400a8;
+}
+
+.tajweed-legend .is-idgham {
+    color: #169200;
+}
+
+.tajweed-legend .is-iqlab {
+    color: #0787aa;
+}
+
+.tajweed-legend .is-silent {
+    color: #77808b;
 }
 
 .quran-preview {
@@ -6465,6 +6619,11 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 
     .quran-font-options,
     .quran-display-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .quran-tajweed-control {
+        grid-column: auto;
         grid-template-columns: 1fr;
     }
 
