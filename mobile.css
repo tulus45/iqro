@@ -482,7 +482,7 @@ body.mobile-menu-open {
         min-height: 0;
         padding: 9px 12px 8px;
         border-radius: 15px;
-        box-shadow: 0 16px 32px rgba(6, 78, 44, 0.16);
+        box-shadow: 0 16px 32px rgba(45, 52, 47, 0.14);
     }
 
     .page-prayer .prayer-next-topline {
@@ -733,23 +733,24 @@ body.mobile-menu-open {
         line-height: 2.32;
     }
 
-    .settings-quran-card {
-        gap: 16px;
+    .community-sidebar-card.settings-quran-card {
+        gap: 10px;
+        padding: 14px;
     }
 
     .quran-font-option {
-        min-height: 116px;
-        padding: 14px;
-        border-radius: 16px;
+        min-height: 50px;
+        padding: 6px 8px;
+        border-radius: 12px;
     }
 
-    .quran-font-option-sample {
-        font-size: 1.52rem;
+    .quran-font-option-title {
+        font-size: 0.74rem;
     }
 
     .quran-preview {
-        padding: 14px;
-        border-radius: 16px;
+        padding: 9px 10px 10px;
+        border-radius: 13px;
     }
 
     .auth-gate-card {

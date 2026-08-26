@@ -16,6 +16,8 @@ const quranDisplayAllowedValues = Object.freeze({
 });
 const quranSettingsPreviewText = 'وَاِذْ قَالَ رَبُّكَ لِلْمَلٰۤىِٕكَةِ اِنِّيْ جَاعِلٌ فِى الْاَرْضِ خَلِيْفَةً ۗ قَالُوْٓا اَتَجْعَلُ فِيْهَا مَنْ يُّفْسِدُ فِيْهَا وَيَسْفِكُ الدِّمَاۤءَۚ وَنَحْنُ نُسَبِّحُ بِحَمْدِكَ وَنُقَدِّسُ لَكَ ۗ قَالَ اِنِّيْٓ اَعْلَمُ مَا لَا تَعْلَمُوْنَ';
 const quranMadinahSettingsPreviewText = 'وَإِذۡ قَالَ رَبُّكَ لِلۡمَلَٰٓئِكَةِ إِنِّي جَاعِلٞ فِي ٱلۡأَرۡضِ خَلِيفَةٗۖ قَالُوٓاْ أَتَجۡعَلُ فِيهَا مَن يُفۡسِدُ فِيهَا وَيَسۡفِكُ ٱلدِّمَآءَ وَنَحۡنُ نُسَبِّحُ بِحَمۡدِكَ وَنُقَدِّسُ لَكَۖ قَالَ إِنِّيٓ أَعۡلَمُ مَا لَا تَعۡلَمُونَ';
+const quranCompactSettingsPreviewText = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+const quranMadinahCompactSettingsPreviewText = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
 const kfgqpcHafsAssetUrl = 'assets/quran/kfgqpc-hafs-v2.0.json';
 const quranTajweedAssetUrl = 'assets/quran/uthmani-tajweed-v4.json?v=20260826-3';
 const quranTajweedAllowedRules = new Set([
@@ -41,6 +43,15 @@ const qcfTajweedApiBaseUrl = 'https://api.quran.com/api/v4';
 const qcfTajweedFontBaseUrl = 'https://verses.quran.foundation/fonts/quran/hafs/v4/colrv1/woff2';
 const qcfTajweedFetchTimeoutMs = 12000;
 const qcfTajweedGlyphPattern = /^[\u0020\uFC00-\uFDFF]+$/u;
+/*
+ * QCF Tajweed V4 COLRv1 glyphs intentionally include specialised open-tanwin
+ * and page-specific diacritic shapes. They are valid mushaf notation, but the
+ * outlines can look like an extra circle around the final harakat. Keep the
+ * verified QCF loader available for audits, while the production UI uses the
+ * verified Unicode tajweed asset so harakat and waqf signs remain complete and
+ * are rendered in the cleaner, conventional form selected for Iqro.
+ */
+const qcfTajweedColorGlyphsEnabled = false;
 let kfgqpcHafsDataPromise = null;
 let quranTajweedDataPromise = null;
 const sanitizedTajweedSurahs = new Map();
@@ -171,7 +182,8 @@ async function getLegacyQuranTajweedSurah(surahNumber) {
 
 function supportsQcfTajweedRendering() {
   return (
-    window.navigator?.onLine !== false
+    qcfTajweedColorGlyphsEnabled
+    && window.navigator?.onLine !== false
     && typeof window.FontFace === 'function'
     && Boolean(document.fonts)
     && Boolean(window.CSS?.supports?.('font-palette', 'normal'))
@@ -2005,7 +2017,7 @@ async function hydrateQuranTajweedPreview() {
   if (!preview || quranDisplayPreferences.tajweed !== 'on') return;
 
   try {
-    const ayah = await getQuranTajweedAyah(2, 30);
+    const ayah = await getQuranTajweedAyah(1, 1);
     if (!preview.isConnected || quranDisplayPreferences.tajweed !== 'on') return;
     preview.innerHTML = ayah;
     await prepareQuranTajweedFonts(preview);
@@ -2019,7 +2031,9 @@ async function hydrateQuranTajweedPreview() {
 function renderQuranDisplaySettings() {
   const useTajweedColors = quranDisplayPreferences.tajweed === 'on';
   const isMadinah = quranDisplayPreferences.font === 'madinah';
-  const previewText = isMadinah ? quranMadinahSettingsPreviewText : quranSettingsPreviewText;
+  const previewText = isMadinah
+    ? quranMadinahCompactSettingsPreviewText
+    : quranCompactSettingsPreviewText;
   const preview = isMadinah
     ? escapeHtml(previewText)
     : (typeof renderQuranArabic === 'function' ? renderQuranArabic(previewText) : escapeHtml(previewText));
@@ -2033,40 +2047,31 @@ function renderQuranDisplaySettings() {
   return `
     <section class="community-sidebar-card settings-account-card settings-quran-card">
       <div class="settings-quran-heading">
-        <div class="settings-quran-heading-copy">
-          <p class="home-card-label">Tampilan Al-Qur'an</p>
-          <h2 class="community-section-title">Pilih Gaya Mushaf</h2>
-        </div>
-        <button class="settings-reset-button" type="button" onclick="resetQuranDisplayPreferences()">Atur Ulang</button>
+        <h2 class="community-section-title">Gaya Mushaf</h2>
+        <button class="settings-reset-button" type="button" onclick="resetQuranDisplayPreferences()">Reset</button>
       </div>
 
       <div class="quran-font-options" role="radiogroup" aria-label="Gaya huruf Al-Qur'an">
         <label class="quran-font-option${quranDisplayPreferences.font === 'lpmq' ? ' is-selected' : ''}">
-          <input type="radio" name="quranFont" value="lpmq" ${quranDisplayPreferences.font === 'lpmq' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
+          <input type="radio" name="quranFont" value="lpmq" aria-label="Mushaf Indonesia" ${quranDisplayPreferences.font === 'lpmq' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
           <span class="quran-font-option-title">
-            <span>Mushaf Indonesia</span>
+            <span>Indonesia</span>
             <span class="quran-font-option-check" aria-hidden="true">✓</span>
           </span>
-          <span class="quran-font-option-meta">LPMQ Isep Misbah · standar Kemenag</span>
-          <span class="quran-font-option-sample is-lpmq" lang="ar">قَالُوا جَاعِلٌ لِلْمَلَائِكَةِ</span>
         </label>
         <label class="quran-font-option${quranDisplayPreferences.font === 'scheherazade' ? ' is-selected' : ''}">
-          <input type="radio" name="quranFont" value="scheherazade" ${quranDisplayPreferences.font === 'scheherazade' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
+          <input type="radio" name="quranFont" value="scheherazade" aria-label="Naskhi Jelas" ${quranDisplayPreferences.font === 'scheherazade' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
           <span class="quran-font-option-title">
-            <span>Naskhi Jelas</span>
+            <span>Naskhi</span>
             <span class="quran-font-option-check" aria-hidden="true">✓</span>
           </span>
-          <span class="quran-font-option-meta">Scheherazade New · bentuk lebih lapang</span>
-          <span class="quran-font-option-sample is-scheherazade" lang="ar">قَالُوا جَاعِلٌ لِلْمَلَائِكَةِ</span>
         </label>
         <label class="quran-font-option${quranDisplayPreferences.font === 'madinah' ? ' is-selected' : ''}">
-          <input type="radio" name="quranFont" value="madinah" ${quranDisplayPreferences.font === 'madinah' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
+          <input type="radio" name="quranFont" value="madinah" aria-label="Mushaf Madinah" ${quranDisplayPreferences.font === 'madinah' ? 'checked' : ''} onchange="updateQuranDisplayPreference('font', this.value)">
           <span class="quran-font-option-title">
-            <span>Mushaf Madinah</span>
+            <span>Madinah</span>
             <span class="quran-font-option-check" aria-hidden="true">✓</span>
           </span>
-          <span class="quran-font-option-meta">KFGQPC Hafs V22 · teks Utsmani khusus</span>
-          <span class="quran-font-option-sample is-madinah" lang="ar">قَالُوٓاْ جَاعِلٞ لِلۡمَلَٰٓئِكَةِ</span>
         </label>
       </div>
 
@@ -2096,25 +2101,28 @@ function renderQuranDisplaySettings() {
       </div>
 
       ${useTajweedColors ? `
-        <div class="tajweed-legend" aria-label="Keterangan warna tajwid">
-          <span><i class="is-ghunnah"></i>Ghunnah</span>
-          <span><i class="is-mad"></i>Mad</span>
-          <span><i class="is-qalqalah"></i>Qalqalah</span>
-          <span><i class="is-ikhfa"></i>Ikhfa</span>
-          <span><i class="is-idgham"></i>Idgham</span>
-          <span><i class="is-iqlab"></i>Iqlab</span>
-          <span><i class="is-silent"></i>Tidak dibaca</span>
-        </div>
+        <details class="tajweed-legend">
+          <summary>Arti warna Tajwid</summary>
+          <div class="tajweed-legend-items" aria-label="Keterangan warna tajwid">
+            <span><i class="is-ghunnah"></i>Ghunnah</span>
+            <span><i class="is-mad"></i>Mad</span>
+            <span><i class="is-qalqalah"></i>Qalqalah</span>
+            <span><i class="is-ikhfa"></i>Ikhfa</span>
+            <span><i class="is-idgham"></i>Idgham</span>
+            <span><i class="is-iqlab"></i>Iqlab</span>
+            <span><i class="is-silent"></i>Tidak dibaca</span>
+          </div>
+        </details>
       ` : ''}
 
       <div class="quran-preview" aria-live="polite">
         <div class="quran-preview-label">
-          <span>Pratinjau Al-Baqarah ayat 30</span>
+          <span>Pratinjau Al-Fatihah ayat 1</span>
           <span>${previewLabel}</span>
         </div>
         <p id="quranSettingsPreviewText" class="ayah-arab${useTajweedColors ? ' has-tajweed' : ''}" lang="ar">${preview}</p>
       </div>
-      <p class="quran-display-note">Pilihan disimpan di perangkat ini. Warna Tajwid lengkap memakai glyph QCF V4 saat perangkat terhubung ke internet. Saat offline atau layanan tidak tersedia, aplikasi otomatis memakai teks Utsmani lokal yang telah diverifikasi; bacaan Tahlil tetap memakai Mushaf Indonesia.</p>
+      <p class="quran-display-note">Tersimpan di perangkat dan tetap tersedia saat offline.</p>
     </section>
   `;
 }

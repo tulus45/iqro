@@ -18,8 +18,10 @@ const expectedRules = new Set([
 ]);
 const assetPath = path.join(__dirname, '..', 'assets', 'quran', 'uthmani-tajweed-v4.json');
 const stylePath = path.join(__dirname, '..', 'style.css');
+const runtimePath = path.join(__dirname, '..', 'community.js');
 const data = JSON.parse(fs.readFileSync(assetPath, 'utf8'));
 const styles = fs.readFileSync(stylePath, 'utf8');
+const runtimeSource = fs.readFileSync(runtimePath, 'utf8');
 const segmenter = new Intl.Segmenter('ar', { granularity: 'grapheme' });
 const seenRules = new Set();
 let ayahCount = 0;
@@ -125,9 +127,22 @@ const alBaqarahTwo = data.surahs[1][1].replace(/<span class="tajweed tajweed-[a-
 if (!alBaqarahTwo.includes('\u062A\u064E\u0670\u0628\u064F')) {
   fail('Al-Baqarah 2:2 does not contain canonical ta + fathah + dagger alif + ba + dammah.');
 }
+const alAnam151 = data.surahs[5][150]
+  .replace(/<span class="tajweed tajweed-[a-z0-9_]+">|<\/span>/gu, '');
+if (
+  (alAnam151.match(/\u064B/gu) || []).length < 2
+  || !alAnam151.includes('\u0642\u0651\u0650\u200C\u06DA')
+  || !alAnam151.includes('\u200C\u06D6')
+) {
+  fail('Al-Anam 6:151 must retain conventional fathatan, qaf kasra, and waqf signs.');
+}
+if (!/const qcfTajweedColorGlyphsEnabled = false;/u.test(runtimeSource)) {
+  fail('The clean Unicode tajweed renderer must remain enabled for production.');
+}
 
 console.log(`Verified ${ayahCount} ayat, ${graphemeCount} grapheme clusters, and ${seenRules.size} tajweed rules.`);
 console.log(`Verified ${superscriptAlefCount} canonical superscript alef characters and no legacy U+0672.`);
 console.log(`Verified blue coverage for all ${renderedMaddaClusters} source-annotated mad graphemes.`);
 console.log('Verified dagger alif attaches directly to its Arabic base, including Al-Baqarah 2:2.');
 console.log('No dotted-circle character or split grapheme boundary found.');
+console.log('Verified clean harakat rendering for Al-Anam 6:151 without removing its waqf signs.');

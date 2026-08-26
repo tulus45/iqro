@@ -923,11 +923,11 @@
     min-height: 286px;
     padding: clamp(24px, 3vw, 38px);
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(60, 78, 67, 0.16);
     border-radius: 32px;
-    color: #ffffff;
-    background: radial-gradient(circle at 84% 18%, rgba(134, 239, 172, 0.2), transparent 28%), linear-gradient(145deg, #0a5732, #073c27);
-    box-shadow: 0 24px 54px rgba(6, 78, 44, 0.22);
+    color: #14261d;
+    background: #f7f4ec;
+    box-shadow: 0 24px 54px rgba(45, 52, 47, 0.16);
 }
 
 .prayer-next-topline,
@@ -939,7 +939,7 @@
 }
 
 .prayer-next-topline {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(20, 50, 35, 0.68);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -948,10 +948,12 @@
 
 .prayer-next-topline span:last-child {
     padding: 5px 9px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(22, 101, 52, 0.18);
     border-radius: 999px;
-    color: #dcfce7;
+    color: #166534;
     letter-spacing: 0.06em;
+    background: rgba(255, 255, 255, 0.66);
+    box-shadow: 0 5px 15px rgba(57, 67, 60, 0.08);
 }
 
 .prayer-next-main {
@@ -960,29 +962,32 @@
 
 .prayer-next-main p {
     margin: 0 0 4px;
-    color: #bbf7d0;
+    color: #1b6b3e;
     font-family: 'Noto Serif', serif;
     font-size: 1.15rem;
 }
 
 .prayer-next-main strong {
+    color: #10271c;
     font-family: 'Noto Serif', serif;
     font-size: clamp(3.4rem, 6vw, 5.8rem);
     font-weight: 500;
     line-height: 1;
     letter-spacing: -0.05em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .prayer-next-index {
-    color: rgba(255, 255, 255, 0.13);
+    color: rgba(19, 72, 43, 0.23);
     font-family: 'Noto Serif', serif;
     font-size: clamp(4.6rem, 8vw, 7rem);
     line-height: 1;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.76);
 }
 
 .prayer-countdown {
     margin: 28px 0 10px;
-    color: rgba(255, 255, 255, 0.74);
+    color: rgba(29, 59, 43, 0.76);
     font-size: 0.83rem;
     font-weight: 600;
     letter-spacing: 0.035em;
@@ -992,7 +997,7 @@
     height: 4px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.13);
+    background: rgba(20, 70, 45, 0.14);
 }
 
 .prayer-countdown-track span {
@@ -1000,7 +1005,7 @@
     width: 0;
     height: 100%;
     border-radius: inherit;
-    background: #86efac;
+    background: #16934a;
     transition: width 0.8s linear;
 }
 
@@ -1151,12 +1156,12 @@
     inset: 0;
     border-radius: inherit;
     background-image:
-        linear-gradient(90deg, rgba(2, 54, 33, 0.94) 0%, rgba(3, 61, 37, 0.82) 48%, rgba(4, 67, 39, 0.58) 100%),
+        linear-gradient(90deg, rgba(255, 253, 247, 0.97) 0%, rgba(255, 253, 247, 0.9) 38%, rgba(255, 253, 247, 0.62) 58%, rgba(255, 253, 247, 0.08) 100%),
         var(--prayer-sketch);
-    background-position: center;
-    background-size: cover;
-    opacity: 0.82;
-    filter: saturate(0.78) contrast(0.94);
+    background-position: center, right 62%;
+    background-size: cover, cover;
+    opacity: 1;
+    filter: saturate(0.98) contrast(1.04);
     pointer-events: none;
 }
 
@@ -4481,11 +4486,12 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     height: auto;
 }
 
-.settings-quran-card {
+.community-sidebar-card.settings-quran-card {
     grid-column: 1 / -1;
     display: grid;
-    gap: 20px;
+    gap: 14px;
     height: auto;
+    padding: 18px;
 }
 
 .offline-quran-card {
@@ -4692,9 +4698,9 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 
 .settings-quran-heading {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: 12px;
 }
 
 .settings-quran-heading-copy {
@@ -4712,32 +4718,34 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 
 .settings-reset-button {
     flex: 0 0 auto;
-    min-height: 40px;
-    padding: 9px 14px;
+    min-height: 36px;
+    padding: 7px 11px;
     border: 1px solid rgba(22, 101, 52, 0.16);
-    border-radius: 12px;
+    border-radius: 10px;
     background: #ffffff;
     color: #166534;
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 800;
     cursor: pointer;
 }
 
 .quran-font-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
 }
 
 .quran-font-option {
     position: relative;
-    display: grid;
-    gap: 7px;
-    min-height: 126px;
-    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 52px;
+    padding: 8px 10px;
     border: 1px solid var(--line);
-    border-radius: 18px;
+    border-radius: 14px;
     background: #ffffff;
     cursor: pointer;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -4769,28 +4777,42 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 .quran-font-option-title {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    padding-inline: 14px;
+    gap: 6px;
     color: var(--text-main);
-    font-size: 0.92rem;
+    font-size: 0.8rem;
     font-weight: 800;
+    text-align: center;
+}
+
+.quran-font-option-title > span:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .quran-font-option-check {
+    position: absolute;
+    top: 5px;
+    inset-inline-end: 5px;
     display: grid;
     place-items: center;
-    width: 22px;
-    height: 22px;
+    width: 17px;
+    height: 17px;
     border: 1px solid rgba(22, 163, 74, 0.24);
     border-radius: 50%;
     color: transparent;
-    font-size: 0.72rem;
+    font-size: 0.58rem;
+    opacity: 0;
 }
 
 .quran-font-option.is-selected .quran-font-option-check {
     border-color: #16a34a;
     background: #16a34a;
     color: #ffffff;
+    opacity: 1;
 }
 
 .quran-font-option-meta {
@@ -4821,13 +4843,13 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 
 .quran-display-controls {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
 }
 
 .quran-display-control {
     display: grid;
-    gap: 8px;
+    gap: 5px;
 }
 
 .quran-display-control-label {
@@ -4837,31 +4859,30 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 }
 
 .quran-tajweed-control {
-    grid-column: 1 / -1;
-    grid-template-columns: minmax(140px, 0.45fr) minmax(260px, 1fr);
-    align-items: center;
+    grid-column: auto;
+    grid-template-columns: 1fr;
 }
 
 .quran-choice-group {
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
-    gap: 4px;
-    padding: 4px;
+    gap: 2px;
+    padding: 3px;
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 12px;
     background: #f3f4f6;
 }
 
 .quran-choice-button {
-    min-height: 38px;
-    padding: 8px 12px;
+    min-height: 36px;
+    padding: 7px 9px;
     border: 0;
     border-radius: 10px;
     background: transparent;
     color: var(--text-muted);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 750;
     cursor: pointer;
 }
@@ -4873,21 +4894,52 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 }
 
 .tajweed-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    padding: 12px 14px;
+    padding: 0 12px;
     border: 1px solid rgba(22, 163, 74, 0.14);
-    border-radius: 14px;
+    border-radius: 12px;
     background: rgba(240, 253, 244, 0.58);
 }
 
-.tajweed-legend span {
+.tajweed-legend summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 38px;
+    color: #166534;
+    font-size: 0.74rem;
+    font-weight: 800;
+    cursor: pointer;
+    list-style: none;
+}
+
+.tajweed-legend summary::-webkit-details-marker {
+    display: none;
+}
+
+.tajweed-legend summary::after {
+    content: '+';
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.tajweed-legend[open] summary::after {
+    content: '−';
+}
+
+.tajweed-legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 13px;
+    padding: 0 0 10px;
+}
+
+.tajweed-legend-items span {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     color: var(--text-muted);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
 }
 
@@ -4929,10 +4981,10 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
 
 .quran-preview {
     display: grid;
-    gap: 8px;
-    padding: 16px 18px 18px;
+    gap: 5px;
+    padding: 10px 12px 12px;
     border: 1px solid rgba(22, 163, 74, 0.14);
-    border-radius: 18px;
+    border-radius: 14px;
     background: linear-gradient(145deg, #ffffff, rgba(240, 253, 244, 0.76));
 }
 
@@ -4942,19 +4994,34 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     justify-content: space-between;
     gap: 10px;
     color: var(--text-muted);
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     font-weight: 700;
 }
 
 .quran-preview .ayah-arab {
     margin: 0;
+    font-size: 1.65rem;
+    line-height: 1.7;
+    text-align: center;
+}
+
+html[data-quran-size="small"] .quran-preview .ayah-arab {
+    font-size: 1.48rem;
+}
+
+html[data-quran-size="large"] .quran-preview .ayah-arab {
+    font-size: 1.88rem;
+}
+
+html[data-quran-spacing="relaxed"] .quran-preview .ayah-arab {
+    line-height: 1.9;
 }
 
 .quran-display-note {
     margin: 0;
     color: var(--text-muted);
-    font-size: 0.76rem;
-    line-height: 1.55;
+    font-size: 0.7rem;
+    line-height: 1.4;
 }
 
 .settings-account-card {
@@ -6612,7 +6679,7 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     }
 
     .settings-quran-heading {
-        display: grid;
+        display: flex;
     }
 
     .offline-quran-heading {
@@ -6654,17 +6721,33 @@ html[data-quran-spacing="relaxed"] .ayah-arab {
     }
 
     .settings-reset-button {
-        justify-self: start;
+        justify-self: auto;
+        min-height: 40px;
     }
 
-    .quran-font-options,
+    .quran-font-options {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
     .quran-display-controls {
         grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .quran-display-control {
+        grid-template-columns: 86px minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
     }
 
     .quran-tajweed-control {
         grid-column: auto;
-        grid-template-columns: 1fr;
+        grid-template-columns: 86px minmax(0, 1fr);
+    }
+
+    .quran-choice-button {
+        min-height: 40px;
     }
 
     .settings-memorial-actions {
