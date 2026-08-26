@@ -33,7 +33,8 @@ const assets = [
   'assets/quran/kfgqpc-hafs-v2.0.json',
   'assets/quran/KFGQPC-Hafs.SOURCE.md',
   'assets/quran/uthmani-tajweed-v4.json',
-  'assets/quran/TAJWEED.SOURCE.md'
+  'assets/quran/TAJWEED.SOURCE.md',
+  'assets/quran/QCF-TAJWEED-V4.SOURCE.md'
 ];
 
 fs.rmSync(webDir, { recursive: true, force: true });

@@ -3538,6 +3538,46 @@ html[data-quran-font="madinah"] .quran-preview .ayah-arab {
     font-family: 'Iqro Quran Madinah', 'Iqro Quran', 'Amiri Quran', serif;
 }
 
+/*
+ * QCF Tajweed V4 stores the complete, layered tajweed colouring inside its
+ * page-specific COLRv1 glyph fonts. Keep verified Unicode visible until the
+ * matching page font has loaded so a slow or failed request can never leave
+ * an ayah blank.
+ */
+.qcf-tajweed-ayah {
+    display: inline;
+    unicode-bidi: isolate;
+}
+
+.qcf-tajweed-word {
+    display: inline-block;
+    line-height: inherit;
+    padding-inline: 0.045em;
+    vertical-align: baseline;
+    white-space: nowrap;
+}
+
+.qcf-tajweed-glyph {
+    display: none;
+    font-feature-settings: normal;
+    font-palette: normal;
+    font-synthesis: none;
+    line-height: inherit;
+}
+
+.qcf-tajweed-fallback {
+    display: inline;
+    font-family: 'Iqro Quran Madinah', 'Iqro Quran', 'Amiri Quran', serif;
+}
+
+.qcf-tajweed-word.is-font-ready .qcf-tajweed-glyph {
+    display: inline;
+}
+
+.qcf-tajweed-word.is-font-ready .qcf-tajweed-fallback {
+    display: none;
+}
+
 .tajweed {
     display: inline;
     color: inherit;

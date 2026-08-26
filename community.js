@@ -17,7 +17,7 @@ const quranDisplayAllowedValues = Object.freeze({
 const quranSettingsPreviewText = 'وَاِذْ قَالَ رَبُّكَ لِلْمَلٰۤىِٕكَةِ اِنِّيْ جَاعِلٌ فِى الْاَرْضِ خَلِيْفَةً ۗ قَالُوْٓا اَتَجْعَلُ فِيْهَا مَنْ يُّفْسِدُ فِيْهَا وَيَسْفِكُ الدِّمَاۤءَۚ وَنَحْنُ نُسَبِّحُ بِحَمْدِكَ وَنُقَدِّسُ لَكَ ۗ قَالَ اِنِّيْٓ اَعْلَمُ مَا لَا تَعْلَمُوْنَ';
 const quranMadinahSettingsPreviewText = 'وَإِذۡ قَالَ رَبُّكَ لِلۡمَلَٰٓئِكَةِ إِنِّي جَاعِلٞ فِي ٱلۡأَرۡضِ خَلِيفَةٗۖ قَالُوٓاْ أَتَجۡعَلُ فِيهَا مَن يُفۡسِدُ فِيهَا وَيَسۡفِكُ ٱلدِّمَآءَ وَنَحۡنُ نُسَبِّحُ بِحَمۡدِكَ وَنُقَدِّسُ لَكَۖ قَالَ إِنِّيٓ أَعۡلَمُ مَا لَا تَعۡلَمُونَ';
 const kfgqpcHafsAssetUrl = 'assets/quran/kfgqpc-hafs-v2.0.json';
-const quranTajweedAssetUrl = 'assets/quran/uthmani-tajweed-v4.json?v=20260825-1';
+const quranTajweedAssetUrl = 'assets/quran/uthmani-tajweed-v4.json?v=20260826-3';
 const quranTajweedAllowedRules = new Set([
   'ghunnah',
   'ham_wasl',
@@ -37,9 +37,17 @@ const quranTajweedAllowedRules = new Set([
   'qalaqah',
   'slnt'
 ]);
+const qcfTajweedApiBaseUrl = 'https://api.quran.com/api/v4';
+const qcfTajweedFontBaseUrl = 'https://verses.quran.foundation/fonts/quran/hafs/v4/colrv1/woff2';
+const qcfTajweedFetchTimeoutMs = 12000;
+const qcfTajweedGlyphPattern = /^[\u0020\uFC00-\uFDFF]+$/u;
 let kfgqpcHafsDataPromise = null;
 let quranTajweedDataPromise = null;
 const sanitizedTajweedSurahs = new Map();
+const qcfTajweedSurahPromises = new Map();
+const qcfTajweedFontPromises = new Map();
+const qcfTajweedLoadedFonts = new Map();
+let qcfTajweedIntersectionObserver = null;
 
 function stripKfgqpcAyahMarker(value) {
   return String(value || '').replace(/[\u00A0 ]*[\uFC00-\uFD1D]$/u, '');
@@ -144,7 +152,7 @@ async function loadQuranTajweedData() {
   return quranTajweedDataPromise;
 }
 
-async function getQuranTajweedSurah(surahNumber) {
+async function getLegacyQuranTajweedSurah(surahNumber) {
   const safeNumber = Number(surahNumber);
   if (!Number.isInteger(safeNumber) || safeNumber < 1 || safeNumber > 114) {
     throw new Error('tajweed-surah-invalid');
@@ -159,6 +167,330 @@ async function getQuranTajweedSurah(surahNumber) {
   const sanitized = surah.map(sanitizeQuranTajweedMarkup);
   sanitizedTajweedSurahs.set(safeNumber, sanitized);
   return sanitized;
+}
+
+function supportsQcfTajweedRendering() {
+  return (
+    window.navigator?.onLine !== false
+    && typeof window.FontFace === 'function'
+    && Boolean(document.fonts)
+    && Boolean(window.CSS?.supports?.('font-palette', 'normal'))
+  );
+}
+
+function normalizeQcfTajweedComparisonText(value) {
+  return stripKfgqpcAyahMarker(value).replace(/[\s\u0640]+/gu, '');
+}
+
+async function fetchQcfTajweedJson(pathname) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), qcfTajweedFetchTimeoutMs);
+
+  try {
+    const response = await fetch(`${qcfTajweedApiBaseUrl}/${pathname}`, {
+      cache: 'no-store',
+      headers: { accept: 'application/json' },
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`qcf-tajweed-http-${response.status}`);
+    return await response.json();
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('qcf-tajweed-timeout');
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function qcfTajweedFontName(pageNumber) {
+  return `IqroQcfTajweedP${pageNumber}`;
+}
+
+function qcfTajweedPaletteName(pageNumber) {
+  return `--IqroQcfTajweedLightP${pageNumber}`;
+}
+
+function registerQcfTajweedPalette(pageNumber) {
+  const page = Number(pageNumber);
+  const ruleId = `qcf-tajweed-palette-${page}`;
+  if (document.getElementById(ruleId)) return;
+  const style = document.createElement('style');
+  style.id = ruleId;
+  style.textContent = `@font-palette-values ${qcfTajweedPaletteName(page)}{font-family:${qcfTajweedFontName(page)};base-palette:0;}`;
+  document.head.appendChild(style);
+}
+
+function compileQcfTajweedVerse(verse, expectedVerseKey, localQpcText) {
+  if (String(verse?.verse_key || '') !== expectedVerseKey || !Array.isArray(verse?.words)) {
+    throw new Error(`qcf-tajweed-verse-invalid-${expectedVerseKey}`);
+  }
+
+  const words = verse.words;
+  const endWordIndexes = words
+    .map((word, index) => (word?.char_type_name === 'end' ? index : -1))
+    .filter((index) => index >= 0);
+  if (endWordIndexes.length !== 1 || endWordIndexes[0] !== words.length - 1) {
+    throw new Error(`qcf-tajweed-end-marker-invalid-${expectedVerseKey}`);
+  }
+
+  const contentWords = words.slice(0, -1);
+  if (!contentWords.length || contentWords.some((word) => word?.char_type_name !== 'word')) {
+    throw new Error(`qcf-tajweed-words-invalid-${expectedVerseKey}`);
+  }
+
+  const pages = new Set();
+  const qpcWords = [];
+  const wordMarkup = contentWords.map((word) => {
+    const page = Number(word?.page_number);
+    const glyph = String(word?.code_v2 || '');
+    const qpcText = String(word?.text_qpc_hafs || '').trim();
+    if (
+      !Number.isInteger(page)
+      || page < 1
+      || page > 604
+      || !glyph
+      || !qcfTajweedGlyphPattern.test(glyph)
+      || !qpcText
+    ) {
+      throw new Error(`qcf-tajweed-word-invalid-${expectedVerseKey}`);
+    }
+
+    pages.add(page);
+    qpcWords.push(qpcText);
+    return `<span class="qcf-tajweed-word" data-qcf-page="${page}"><span class="qcf-tajweed-glyph" style="font-family:${qcfTajweedFontName(page)};font-palette:${qcfTajweedPaletteName(page)}" aria-hidden="true">${escapeTajweedText(glyph)}</span><span class="qcf-tajweed-fallback" aria-hidden="true">${escapeTajweedText(qpcText)}</span></span>`;
+  });
+
+  const qpcAyah = qpcWords.join(' ');
+  if (
+    normalizeQcfTajweedComparisonText(qpcAyah)
+    !== normalizeQcfTajweedComparisonText(localQpcText)
+  ) {
+    throw new Error(`qcf-tajweed-text-mismatch-${expectedVerseKey}`);
+  }
+
+  return `
+    <span
+      class="qcf-tajweed-ayah"
+      data-qcf-pages="${[...pages].join(' ')}"
+      lang="ar"
+      dir="rtl"
+      aria-label="${escapeTajweedText(qpcAyah)}"
+    >${wordMarkup.join('<wbr>')}</span>
+  `.trim();
+}
+
+function tagTajweedRenderer(ayahs, renderer) {
+  Object.defineProperty(ayahs, 'renderer', {
+    configurable: false,
+    enumerable: false,
+    value: renderer,
+    writable: false
+  });
+  return ayahs;
+}
+
+async function getQcfTajweedSurah(surahNumber) {
+  const safeNumber = Number(surahNumber);
+  if (!Number.isInteger(safeNumber) || safeNumber < 1 || safeNumber > 114) {
+    throw new Error('qcf-tajweed-surah-invalid');
+  }
+  if (qcfTajweedSurahPromises.has(safeNumber)) return qcfTajweedSurahPromises.get(safeNumber);
+
+  const promise = Promise.all([
+    fetchQcfTajweedJson(
+      `verses/by_chapter/${safeNumber}?words=true&word_fields=code_v2%2Ctext_qpc_hafs&per_page=300&mushaf=19`
+    ),
+    getKfgqpcHafsSurah(safeNumber)
+  ])
+    .then(([payload, localSurah]) => {
+      const verses = Array.isArray(payload?.verses) ? payload.verses : [];
+      if (
+        verses.length !== localSurah.length
+        || Number(payload?.pagination?.total_records) !== localSurah.length
+      ) {
+        throw new Error('qcf-tajweed-surah-count-mismatch');
+      }
+
+      const rendered = verses.map((verse, index) => compileQcfTajweedVerse(
+        verse,
+        `${safeNumber}:${index + 1}`,
+        localSurah[index]
+      ));
+      return tagTajweedRenderer(rendered, 'qcf-v4');
+    })
+    .catch((error) => {
+      qcfTajweedSurahPromises.delete(safeNumber);
+      throw error;
+    });
+
+  qcfTajweedSurahPromises.set(safeNumber, promise);
+  return promise;
+}
+
+async function getQcfTajweedAyah(surahNumber, ayahNumber) {
+  const safeSurah = Number(surahNumber);
+  const safeAyah = Number(ayahNumber);
+  if (
+    !Number.isInteger(safeSurah)
+    || safeSurah < 1
+    || safeSurah > 114
+    || !Number.isInteger(safeAyah)
+    || safeAyah < 1
+  ) {
+    throw new Error('qcf-tajweed-ayah-invalid');
+  }
+  const localSurah = await getKfgqpcHafsSurah(safeSurah);
+  if (safeAyah > localSurah.length) throw new Error('qcf-tajweed-ayah-invalid');
+  const payload = await fetchQcfTajweedJson(
+    `verses/by_key/${safeSurah}%3A${safeAyah}?words=true&word_fields=code_v2%2Ctext_qpc_hafs&mushaf=19`
+  );
+  return compileQcfTajweedVerse(
+    payload?.verse,
+    `${safeSurah}:${safeAyah}`,
+    localSurah[safeAyah - 1]
+  );
+}
+
+async function getQuranTajweedSurah(surahNumber) {
+  if (supportsQcfTajweedRendering()) {
+    try {
+      return await getQcfTajweedSurah(surahNumber);
+    } catch (error) {
+      console.warn('QCF Tajweed V4 tidak tersedia; memakai fallback Unicode.', error);
+    }
+  }
+
+  return tagTajweedRenderer(
+    [...await getLegacyQuranTajweedSurah(surahNumber)],
+    'unicode-fallback'
+  );
+}
+
+async function getQuranTajweedAyah(surahNumber, ayahNumber) {
+  if (supportsQcfTajweedRendering()) {
+    try {
+      return await getQcfTajweedAyah(surahNumber, ayahNumber);
+    } catch (error) {
+      console.warn('Pratinjau QCF Tajweed V4 tidak tersedia; memakai fallback Unicode.', error);
+    }
+  }
+
+  const fallback = await getLegacyQuranTajweedSurah(surahNumber);
+  const ayah = fallback[Number(ayahNumber) - 1];
+  if (!ayah) throw new Error('tajweed-ayah-invalid');
+  return ayah;
+}
+
+async function loadQcfTajweedFont(pageNumber) {
+  const page = Number(pageNumber);
+  if (!Number.isInteger(page) || page < 1 || page > 604) {
+    throw new Error('qcf-tajweed-font-page-invalid');
+  }
+  if (qcfTajweedFontPromises.has(page)) return qcfTajweedFontPromises.get(page);
+
+  const fontName = qcfTajweedFontName(page);
+  const fontFace = new FontFace(
+    fontName,
+    `url("${qcfTajweedFontBaseUrl}/p${page}.woff2") format("woff2")`,
+    { display: 'swap', style: 'normal', weight: '400' }
+  );
+  const promise = new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(
+      () => reject(new Error(`qcf-tajweed-font-timeout-${page}`)),
+      qcfTajweedFetchTimeoutMs
+    );
+    fontFace.load().then(
+      (loadedFont) => {
+        window.clearTimeout(timeout);
+        resolve(loadedFont);
+      },
+      (error) => {
+        window.clearTimeout(timeout);
+        reject(error);
+      }
+    );
+  })
+    .then((fontFace) => {
+      document.fonts.add(fontFace);
+      qcfTajweedLoadedFonts.set(page, fontFace);
+      registerQcfTajweedPalette(page);
+      return fontName;
+    })
+    .catch((error) => {
+      qcfTajweedFontPromises.delete(page);
+      throw error;
+    });
+
+  qcfTajweedFontPromises.set(page, promise);
+  return promise;
+}
+
+function releaseUnusedQcfTajweedFonts(allowedPages) {
+  if (typeof document.fonts?.delete !== 'function') return;
+  qcfTajweedLoadedFonts.forEach((fontFace, page) => {
+    if (allowedPages.has(page)) return;
+    document.fonts.delete(fontFace);
+    qcfTajweedLoadedFonts.delete(page);
+    qcfTajweedFontPromises.delete(page);
+  });
+}
+
+function getQcfPagesFromElement(element) {
+  return String(element?.dataset?.qcfPages || '')
+    .split(/\s+/u)
+    .map(Number)
+    .filter((page) => Number.isInteger(page) && page >= 1 && page <= 604);
+}
+
+async function activateQcfFontsForElement(element) {
+  const pages = getQcfPagesFromElement(element);
+  await Promise.all(pages.map(loadQcfTajweedFont));
+  pages.forEach((page) => {
+    element
+      .querySelectorAll(`.qcf-tajweed-word[data-qcf-page="${page}"]`)
+      .forEach((word) => word.classList.add('is-font-ready'));
+  });
+}
+
+async function prepareQuranTajweedFonts(root, targetAyah = 0) {
+  if (!root || !supportsQcfTajweedRendering()) return false;
+  const ayahs = [...root.querySelectorAll('.qcf-tajweed-ayah')];
+  if (!ayahs.length) return false;
+
+  const currentPages = new Set(ayahs.flatMap(getQcfPagesFromElement));
+  releaseUnusedQcfTajweedFonts(currentPages);
+
+  qcfTajweedIntersectionObserver?.disconnect();
+  qcfTajweedIntersectionObserver = null;
+  const eager = new Set([ayahs[0]]);
+  const target = Number(targetAyah) > 0
+    ? root.querySelector(`#block-${Number(targetAyah)} .qcf-tajweed-ayah`)
+    : null;
+  if (target) eager.add(target);
+
+  const loadSafely = (element) => activateQcfFontsForElement(element).catch((error) => {
+    console.warn('Font QCF Tajweed V4 gagal dimuat; fallback Unicode dipertahankan.', error);
+  });
+
+  if (typeof window.IntersectionObserver === 'function') {
+    qcfTajweedIntersectionObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        void loadSafely(entry.target);
+      });
+    }, { root: null, rootMargin: '900px 0px' });
+    ayahs.forEach((ayah) => {
+      if (!eager.has(ayah)) qcfTajweedIntersectionObserver.observe(ayah);
+    });
+  } else {
+    ayahs.forEach((ayah) => {
+      if (!eager.has(ayah)) void loadSafely(ayah);
+    });
+  }
+
+  await Promise.all([...eager].map(loadSafely));
+  return true;
 }
 
 function sanitizeQuranDisplayPreferences(value) {
@@ -1673,9 +2005,10 @@ async function hydrateQuranTajweedPreview() {
   if (!preview || quranDisplayPreferences.tajweed !== 'on') return;
 
   try {
-    const ayahs = await getQuranTajweedSurah(2);
+    const ayah = await getQuranTajweedAyah(2, 30);
     if (!preview.isConnected || quranDisplayPreferences.tajweed !== 'on') return;
-    preview.innerHTML = ayahs[29];
+    preview.innerHTML = ayah;
+    await prepareQuranTajweedFonts(preview);
   } catch (error) {
     if (!preview.isConnected) return;
     preview.classList.remove('has-tajweed');
@@ -1781,7 +2114,7 @@ function renderQuranDisplaySettings() {
         </div>
         <p id="quranSettingsPreviewText" class="ayah-arab${useTajweedColors ? ' has-tajweed' : ''}" lang="ar">${preview}</p>
       </div>
-      <p class="quran-display-note">Pilihan disimpan di perangkat ini. Saat warna Tajwid aktif, bacaan memakai teks Utsmani beranotasi dan font yang kompatibel; bacaan Tahlil tetap memakai Mushaf Indonesia.</p>
+      <p class="quran-display-note">Pilihan disimpan di perangkat ini. Warna Tajwid lengkap memakai glyph QCF V4 saat perangkat terhubung ke internet. Saat offline atau layanan tidak tersedia, aplikasi otomatis memakai teks Utsmani lokal yang telah diverifikasi; bacaan Tahlil tetap memakai Mushaf Indonesia.</p>
     </section>
   `;
 }
@@ -2838,6 +3171,7 @@ window.removeOfflineQuranData = removeOfflineQuranData;
 window.getKfgqpcHafsSurah = getKfgqpcHafsSurah;
 window.stripKfgqpcAyahMarker = stripKfgqpcAyahMarker;
 window.getQuranTajweedSurah = getQuranTajweedSurah;
+window.prepareQuranTajweedFonts = prepareQuranTajweedFonts;
 
 window.addEventListener('iqro:quran-offline-status', () => {
   if (communityState.settingsSection === 'offline') renderSettingsPage();

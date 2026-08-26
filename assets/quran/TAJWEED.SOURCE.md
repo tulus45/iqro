@@ -31,5 +31,20 @@ sequence at Al-Baqarah 2:72 is converted to U+0670 + the separate hamza letter,
 matching the local KFGQPC reference. Generation requires exactly 9,726 final
 U+0670 characters and fails if these integrity counts change.
 
+The payload additionally places presentation tatweel (U+0640) immediately
+before 6,100 dagger-alif positions (6,104 tatweel characters in total, because
+four positions contain a doubled tatweel). With the Android font this separates
+the mark from its intended base letter—for example `ta + fathah + tatweel +
+dagger alif` in Al-Baqarah 2:2. The generator removes only these exact
+presentation runs, producing canonical `ta + fathah + dagger alif` as used by
+KFGQPC. No Arabic letter or harakat is removed.
+
+When one grapheme carries both a source `madda_*` annotation and another
+tajweed annotation, Iqro gives the mad annotation display priority so the
+complete mad grapheme remains blue. Verification requires every source-marked
+mad grapheme to retain a rendered `madda_*` class. The currently reviewed
+payload contains 28,294 such graphemes, including 910 priority conflicts; the
+generator stops for manual review if either integrity count changes.
+
 API documentation:
 https://api-docs.quran.foundation/docs/content_apis_versioned/4.0.0/quran-verses-uthmani-tajweed/

@@ -25,6 +25,7 @@ const seenRules = new Set();
 let ayahCount = 0;
 let graphemeCount = 0;
 let superscriptAlefCount = 0;
+let renderedMaddaClusters = 0;
 
 function fail(message) {
   throw new Error(message);
@@ -33,6 +34,9 @@ function fail(message) {
 function verifyMarkup(markup, verseKey) {
   if (!markup || markup.includes('\u25CC')) fail(`Literal dotted circle found at ${verseKey}.`);
   if (markup.includes('\u0672')) fail(`Legacy wavy alef found at ${verseKey}.`);
+  if (markup.includes('\u0640\u0670')) {
+    fail(`Presentation tatweel remains before dagger alif at ${verseKey}.`);
+  }
   superscriptAlefCount += [...markup.matchAll(/\u0670/gu)].length;
 
   const fragments = [];
@@ -79,6 +83,10 @@ function verifyMarkup(markup, verseKey) {
     if (rules.size > 1) {
       fail(`Tajweed boundary splits grapheme ${JSON.stringify(segment)} at ${verseKey}.`);
     }
+    const activeGraphemeRule = [...rules][0];
+    if (activeGraphemeRule?.startsWith('madda_')) {
+      renderedMaddaClusters += 1;
+    }
   }
 }
 
@@ -107,7 +115,19 @@ if (ayahCount !== 6236 || data.metadata?.ayahCount !== 6236 || data.metadata?.su
 if (superscriptAlefCount !== 9726 || data.metadata?.canonicalSuperscriptAlefCount !== 9726) {
   fail(`Canonical superscript alef count is invalid: ${superscriptAlefCount}.`);
 }
+if (renderedMaddaClusters !== data.metadata?.sourceMaddaClusters) {
+  fail(
+    `Rendered mad coverage ${renderedMaddaClusters} does not match `
+    + `the ${data.metadata?.sourceMaddaClusters} source-annotated graphemes.`
+  );
+}
+const alBaqarahTwo = data.surahs[1][1].replace(/<span class="tajweed tajweed-[a-z0-9_]+">|<\/span>/gu, '');
+if (!alBaqarahTwo.includes('\u062A\u064E\u0670\u0628\u064F')) {
+  fail('Al-Baqarah 2:2 does not contain canonical ta + fathah + dagger alif + ba + dammah.');
+}
 
 console.log(`Verified ${ayahCount} ayat, ${graphemeCount} grapheme clusters, and ${seenRules.size} tajweed rules.`);
 console.log(`Verified ${superscriptAlefCount} canonical superscript alef characters and no legacy U+0672.`);
+console.log(`Verified blue coverage for all ${renderedMaddaClusters} source-annotated mad graphemes.`);
+console.log('Verified dagger alif attaches directly to its Arabic base, including Al-Baqarah 2:2.');
 console.log('No dotted-circle character or split grapheme boundary found.');

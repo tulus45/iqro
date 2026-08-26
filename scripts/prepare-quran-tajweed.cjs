@@ -21,7 +21,11 @@ const allowedRulePattern = /^[a-z][a-z0-9_]*$/;
 const arabicGraphemeSegmenter = new Intl.Segmenter('ar', { granularity: 'grapheme' });
 const expectedLegacyWavyAlefCount = 1561;
 const expectedLegacyWavyAlefHamzaCount = 1;
+const expectedLegacyDaggerTatweelRunCount = 6100;
+const expectedLegacyDaggerTatweelCount = 6104;
 const expectedCanonicalSuperscriptAlefCount = 9726;
+const expectedSourceMaddaClusterCount = 28294;
+const expectedMaddaPriorityResolutionCount = 910;
 const knownSourceMarkupCorrections = Object.freeze({
   // The API payload currently omits the opening tag before the dagger alif.
   // The correction restores the madda_normal annotation; visible Quran text
@@ -68,12 +72,27 @@ function normalizeLegacyQuranCodePoints(value, verseKey, audit) {
   // symbol, so convert it to canonical U+0670. One occurrence at 2:72 also
   // carries a combining hamza; KFGQPC confirms that it represents a separate
   // hamza letter following the dagger alif.
-  const normalized = source
+  const canonicalizedAlef = source
     .replace(/\u0672\u0654/gu, '\u0670\u0621')
     .replace(/\u0672/gu, '\u0670');
+  const legacyDaggerTatweelRuns = [...canonicalizedAlef.matchAll(/\u0640+(?=\u0670)/gu)];
+  const legacyDaggerTatweelCount = legacyDaggerTatweelRuns.reduce(
+    (total, match) => total + match[0].length,
+    0
+  );
+  audit.legacyDaggerTatweelRuns += legacyDaggerTatweelRuns.length;
+  audit.legacyDaggerTatweelRemovals += legacyDaggerTatweelCount;
+
+  // U+0640 before dagger alif is another presentation-only convention in the
+  // API payload. KFGQPC encodes the same orthography without tatweel, allowing
+  // U+0670 to combine directly above its actual Arabic base letter.
+  const normalized = canonicalizedAlef.replace(/\u0640+(?=\u0670)/gu, '');
 
   if (/\u0672/u.test(normalized)) {
     throw new Error(`Legacy wavy alef remains at ${verseKey}.`);
+  }
+  if (/\u0640\u0670/u.test(normalized)) {
+    throw new Error(`Presentation tatweel remains before dagger alif at ${verseKey}.`);
   }
   audit.canonicalSuperscriptAlefCount += countMatches(normalized, /\u0670/gu);
   return normalized;
@@ -121,7 +140,14 @@ function renderGraphemeSafeTajweedMarkup(fragments, verseKey, audit) {
     // A WebView must never receive an HTML boundary inside one Arabic
     // grapheme. When a source annotation colors only a combining mark, color
     // its complete base-letter cluster instead of rendering a dotted circle.
-    const clusterRule = baseRule || rulesInCluster[0] || null;
+    const sourceMaddaRule = rulesInCluster.find((rule) => rule.startsWith('madda_')) || null;
+    const clusterRule = sourceMaddaRule || baseRule || rulesInCluster[0] || null;
+    if (sourceMaddaRule) {
+      audit.sourceMaddaClusters += 1;
+      if (rulesInCluster.some((rule) => !rule.startsWith('madda_'))) {
+        audit.maddaPriorityResolutions += 1;
+      }
+    }
     if (ruleSignatures.size > 1) {
       audit.repairedClusters += 1;
       if (rulesInCluster.length > 1) audit.multiRuleClusters += 1;
@@ -210,7 +236,11 @@ async function main() {
     multiRuleClusters: 0,
     legacyWavyAlefConversions: 0,
     legacyWavyAlefHamzaConversions: 0,
-    canonicalSuperscriptAlefCount: 0
+    legacyDaggerTatweelRuns: 0,
+    legacyDaggerTatweelRemovals: 0,
+    canonicalSuperscriptAlefCount: 0,
+    sourceMaddaClusters: 0,
+    maddaPriorityResolutions: 0
   };
 
   verses.forEach((verse) => {
@@ -238,18 +268,25 @@ async function main() {
       throw new Error(`Surah ${index + 1} is incomplete.`);
     }
   });
-
   if (
     graphemeAudit.legacyWavyAlefConversions !== expectedLegacyWavyAlefCount
     || graphemeAudit.legacyWavyAlefHamzaConversions !== expectedLegacyWavyAlefHamzaCount
+    || graphemeAudit.legacyDaggerTatweelRuns !== expectedLegacyDaggerTatweelRunCount
+    || graphemeAudit.legacyDaggerTatweelRemovals !== expectedLegacyDaggerTatweelCount
     || graphemeAudit.canonicalSuperscriptAlefCount !== expectedCanonicalSuperscriptAlefCount
+    || graphemeAudit.sourceMaddaClusters !== expectedSourceMaddaClusterCount
+    || graphemeAudit.maddaPriorityResolutions !== expectedMaddaPriorityResolutionCount
   ) {
     throw new Error(
       'Legacy Quran code-point audit failed: '
       + JSON.stringify({
         legacyWavyAlefConversions: graphemeAudit.legacyWavyAlefConversions,
         legacyWavyAlefHamzaConversions: graphemeAudit.legacyWavyAlefHamzaConversions,
-        canonicalSuperscriptAlefCount: graphemeAudit.canonicalSuperscriptAlefCount
+        legacyDaggerTatweelRuns: graphemeAudit.legacyDaggerTatweelRuns,
+        legacyDaggerTatweelRemovals: graphemeAudit.legacyDaggerTatweelRemovals,
+        canonicalSuperscriptAlefCount: graphemeAudit.canonicalSuperscriptAlefCount,
+        sourceMaddaClusters: graphemeAudit.sourceMaddaClusters,
+        maddaPriorityResolutions: graphemeAudit.maddaPriorityResolutions
       })
     );
   }
@@ -269,7 +306,11 @@ async function main() {
       multiRuleGraphemeResolutions: graphemeAudit.multiRuleClusters,
       legacyWavyAlefConversions: graphemeAudit.legacyWavyAlefConversions,
       legacyWavyAlefHamzaConversions: graphemeAudit.legacyWavyAlefHamzaConversions,
+      legacyDaggerTatweelRuns: graphemeAudit.legacyDaggerTatweelRuns,
+      legacyDaggerTatweelRemovals: graphemeAudit.legacyDaggerTatweelRemovals,
       canonicalSuperscriptAlefCount: graphemeAudit.canonicalSuperscriptAlefCount,
+      sourceMaddaClusters: graphemeAudit.sourceMaddaClusters,
+      maddaPriorityResolutions: graphemeAudit.maddaPriorityResolutions,
       generatedAt: new Date().toISOString().slice(0, 10)
     },
     surahs
@@ -283,7 +324,13 @@ async function main() {
   console.log(`Grapheme-boundary repairs: ${graphemeAudit.repairedClusters}`);
   console.log(`Multi-rule grapheme resolutions: ${graphemeAudit.multiRuleClusters}`);
   console.log(`Legacy wavy-alef conversions: ${graphemeAudit.legacyWavyAlefConversions}`);
+  console.log(
+    `Dagger-alif tatweel removals: ${graphemeAudit.legacyDaggerTatweelRemovals} `
+    + `across ${graphemeAudit.legacyDaggerTatweelRuns} positions`
+  );
   console.log(`Canonical superscript alef count: ${graphemeAudit.canonicalSuperscriptAlefCount}`);
+  console.log(`Source-annotated mad clusters: ${graphemeAudit.sourceMaddaClusters}`);
+  console.log(`Mad-priority conflict resolutions: ${graphemeAudit.maddaPriorityResolutions}`);
   console.log(`Source SHA-256: ${sourceSha256}`);
   console.log(`Output SHA-256: ${crypto.createHash('sha256').update(outputBytes).digest('hex')}`);
   console.log(`Wrote ${outputPath} (${outputBytes.length} bytes)`);
