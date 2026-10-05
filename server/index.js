@@ -3,6 +3,9 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { promisify } = require('node:util');
+const { createJsonStore } = require('./json-store');
+const scrypt = promisify(crypto.scrypt);
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return;
@@ -30,7 +33,6 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 const MAX_BODY_BYTES = 1024 * 1024;
 const DEFAULT_DB_FILE = path.join(__dirname, 'data', 'app-db.json');
 const DB_FILE = path.resolve(process.env.IQRO_DATA_FILE || DEFAULT_DB_FILE);
-const DATA_DIR = path.dirname(DB_FILE);
 const DEV_OWNER_PHONE = '6285111344717';
 const LEGACY_OWNER_PHONE = '6281234567890';
 const DEV_OWNER_NAME = 'Pemilik Iqro';
@@ -173,16 +175,16 @@ function safeCompare(left, right) {
   return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-function hashSecret(secret) {
+async function hashSecret(secret) {
   const salt = crypto.randomBytes(16).toString('hex');
-  const derived = crypto.scryptSync(secret, salt, 64).toString('hex');
+  const derived = (await scrypt(secret, salt, 64)).toString('hex');
   return `scrypt:${salt}:${derived}`;
 }
 
-function verifySecret(secret, storedHash) {
+async function verifySecret(secret, storedHash) {
   const parts = String(storedHash || '').split(':');
   if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
-  const derived = crypto.scryptSync(secret, parts[1], 64).toString('hex');
+  const derived = (await scrypt(secret, parts[1], 64)).toString('hex');
   return safeCompare(derived, parts[2]);
 }
 
@@ -435,24 +437,7 @@ function normalizeDb(value) {
   };
 }
 
-function ensureStore() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, JSON.stringify(emptyDb(), null, 2));
-}
-
-function readDb() {
-  ensureStore();
-  try {
-    return normalizeDb(JSON.parse(fs.readFileSync(DB_FILE, 'utf8')));
-  } catch (error) {
-    return emptyDb();
-  }
-}
-
-function writeDb(db) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(DB_FILE, JSON.stringify(normalizeDb(db), null, 2));
-}
+const store = createJsonStore(DB_FILE, { empty: emptyDb, normalize: normalizeDb });
 
 function bootstrapManagerSeed() {
   const envPhone = normalizePhone(process.env.IQRO_OWNER_PHONE || process.env.IQRO_ADMIN_PHONE);
@@ -465,12 +450,12 @@ function bootstrapManagerSeed() {
   return null;
 }
 
-function ensureBootstrapManager(db) {
+async function ensureBootstrapManager(db) {
   const seed = bootstrapManagerSeed();
   if (!seed) return false;
   let user = db.users.find((item) => item.phone === seed.phone);
   if (!user) {
-    user = createUser(seed.phone, seed.name, seed.password, { accountStatus: 'active' });
+    user = await createUser(seed.phone, seed.name, seed.password, { accountStatus: 'active' });
     user.role = 'owner';
     db.users.push(user);
     return true;
@@ -486,7 +471,7 @@ function ensureBootstrapManager(db) {
     changed = true;
   }
   if (!user.passwordHash) {
-    user.passwordHash = hashSecret(seed.password);
+    user.passwordHash = await hashSecret(seed.password);
     changed = true;
   }
   if (changed) user.updatedAt = nowIso();
@@ -576,8 +561,9 @@ function authContext(req, db, subjectType) {
     db.sessions = db.sessions.filter((item) => item.token !== token);
     return { subject: null, changed: true, token };
   }
-  session.lastUsedAt = nowIso();
-  return { subject, changed: true, token };
+  const changed = Date.now() - Date.parse(session.lastUsedAt) >= 5 * 60 * 1000;
+  if (changed) session.lastUsedAt = nowIso();
+  return { subject, changed, token };
 }
 
 function revokeSessions(db, subjectType, subjectId, keepToken = '') {
@@ -900,7 +886,7 @@ function managerState(db, manager, options = {}) {
   };
 }
 
-function createUser(phone, name, password, options = {}) {
+async function createUser(phone, name, password, options = {}) {
   const timestamp = nowIso();
   const accountStatus = ['pending', 'active', 'suspended'].includes(options.accountStatus)
     ? options.accountStatus
@@ -913,7 +899,7 @@ function createUser(phone, name, password, options = {}) {
     shareReadingStats: true,
     role: 'user',
     accountStatus,
-    passwordHash: hashSecret(password),
+    passwordHash: await hashSecret(password),
     mustChangePassword: false,
     passwordResetAt: '',
     passwordResetRequest: null,
@@ -1015,7 +1001,6 @@ async function fetchPrayerTimes(location, date) {
 }
 
 function createServer() {
-  ensureStore();
   return http.createServer(async (req, res) => {
     setCorsHeaders(req, res);
     if (req.method === 'OPTIONS') {
@@ -1030,579 +1015,578 @@ function createServer() {
       return;
     }
 
-    const db = readDb();
-    const managementOptions = {
-      search: requestUrl.searchParams.get('q') || '',
-      page: requestUrl.searchParams.get('page') || '1'
-    };
-    let dirty = false;
-    if (migrateLegacyOwnerPhone(db)) dirty = true;
-    if (ensureBootstrapManager(db)) dirty = true;
-    if (cleanupSessions(db)) dirty = true;
-    const userAuth = authContext(req, db, 'user');
-    if (userAuth.changed) dirty = true;
-
-    const finish = (statusCode, payload) => {
-      if (dirty) {
-        writeDb(db);
-        dirty = false;
-      }
-      sendJson(res, statusCode, payload);
-    };
-
     try {
-      if (requestUrl.pathname === '/api/health' && req.method === 'GET') {
-        finish(200, {
-          ok: true,
-          service: 'iqro-api',
-          port: PORT,
-          dataFile: DB_FILE,
-          accessModel: 'owner-account',
-          ownerConfigured: db.users.some((user) => user.role === 'owner'),
-          passwordResetDelivery: 'whatsapp-link'
-        });
-        return;
-      }
-
-      if (requestUrl.pathname === '/api/prayer-times' && req.method === 'GET') {
-        if (!needUser(userAuth, finish)) return;
-        const requestedDate = String(requestUrl.searchParams.get('date') || '');
-        const date = /^\d{2}-\d{2}-\d{4}$/.test(requestedDate) ? requestedDate : defaultPrayerDate();
-        const rawLatitude = requestUrl.searchParams.get('latitude');
-        const rawLongitude = requestUrl.searchParams.get('longitude');
-        const hasLatitude = rawLatitude !== null && rawLatitude.trim() !== '';
-        const hasLongitude = rawLongitude !== null && rawLongitude.trim() !== '';
-        if (hasLatitude !== hasLongitude) {
-          return finish(400, { message: 'Koordinat lokasi belum lengkap.' });
-        }
-
-        let location;
-        if (hasLatitude && hasLongitude) {
-          const latitude = Number(rawLatitude);
-          const longitude = Number(rawLongitude);
-          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
-            || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-            return finish(400, { message: 'Koordinat lokasi tidak valid.' });
-          }
-          location = {
-            key: 'gps',
-            label: 'Lokasi saat ini',
-            latitude: Number(latitude.toFixed(1)),
-            longitude: Number(longitude.toFixed(1))
+      // Consume the body before entering the queue so slow uploads cannot hold it.
+      const body = ['POST', 'PUT', 'PATCH'].includes(req.method) ? await parseJsonBody(req) : {};
+      const result = await store.transaction(async (db, markDirty) => {
+        let response;
+        let dirty = false;
+        const run = async () => {
+          const managementOptions = {
+            search: requestUrl.searchParams.get('q') || '',
+            page: requestUrl.searchParams.get('page') || '1'
           };
-        } else {
-          const requestedLocation = String(requestUrl.searchParams.get('city') || 'jakarta').toLowerCase();
-          const locationKey = Object.hasOwn(PRAYER_LOCATIONS, requestedLocation) ? requestedLocation : '';
-          if (!locationKey) return finish(400, { message: 'Kota jadwal salat belum tersedia.' });
-          location = { key: locationKey, ...PRAYER_LOCATIONS[locationKey] };
-        }
+          if (migrateLegacyOwnerPhone(db)) dirty = true;
+          if (await ensureBootstrapManager(db)) dirty = true;
+          if (cleanupSessions(db)) dirty = true;
+          const userAuth = authContext(req, db, 'user');
+          if (userAuth.changed) dirty = true;
 
-        try {
-          const schedule = await fetchPrayerTimes(location, date);
-          finish(200, schedule);
-        } catch (error) {
-          finish(502, { message: 'Jadwal salat belum dapat dimuat. Silakan coba kembali beberapa saat lagi.' });
-        }
-        return;
-      }
+          const finish = (statusCode, payload) => {
+            response = { statusCode, payload };
+          };
 
-      const passwordChangeRouteAllowed = (
-        (requestUrl.pathname === '/api/auth/logout' && req.method === 'POST') ||
-        (requestUrl.pathname === '/api/me' && req.method === 'GET') ||
-        (requestUrl.pathname === '/api/me/complete-password-reset' && req.method === 'PUT')
-      );
-      if (userAuth.subject?.mustChangePassword && !passwordChangeRouteAllowed) {
-        finish(428, { message: 'Buat password baru terlebih dahulu sebelum mengakses fitur Iqro.', ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      if (requestUrl.pathname === '/api/auth/register' && req.method === 'POST') {
-        const body = await parseJsonBody(req);
-        const phone = normalizePhone(body.phone);
-        const password = cleanPassword(body.password);
-        const name = cleanText(body.name, '', 60);
-        const rewardConsent = body.rewardConsent === true;
-        if (!phone) return finish(400, { message: 'Nomor HP belum valid. Gunakan format seperti 08xxxxxxxxxx.' });
-        if (!name) return finish(400, { message: 'Nama wajib diisi untuk membuat akun.' });
-        if (!validPassword(password)) return finish(400, { message: 'Password minimal 6 karakter.' });
-        if (!rewardConsent) return finish(400, { message: 'Persetujuan akad kebaikan perlu dicentang sebelum mengirim permohonan.' });
-        const existingUser = db.users.find((item) => item.phone === phone);
-        if (existingUser) {
-          if (existingUser.accountStatus === 'pending' && verifySecret(password, existingUser.passwordHash)) {
-            return finish(200, {
-              message: 'Permohonan akun Anda sudah tercatat dan masih menunggu persetujuan pemilik.',
-              user: userView(db, existingUser, { includeProgress: false }),
-              delivery: whatsappRegistrationRequestDelivery(db, existingUser)
+          if (requestUrl.pathname === '/api/health' && req.method === 'GET') {
+            finish(200, {
+              ok: true,
+              service: 'iqro-api',
+              port: PORT,
+              dataFile: DB_FILE,
+              accessModel: 'owner-account',
+              ownerConfigured: db.users.some((user) => user.role === 'owner'),
+              passwordResetDelivery: 'whatsapp-link'
             });
+            return;
           }
-          return finish(409, { message: 'Nomor HP sudah terdaftar. Silakan masuk atau hubungi pemilik Iqro.' });
-        }
 
-        const user = createUser(phone, name, password, { accountStatus: 'pending' });
-        db.users.push(user);
-        const delivery = whatsappRegistrationRequestDelivery(db, user);
-        dirty = true;
-        finish(201, {
-          message: 'Permohonan akun berhasil dibuat dan sedang menunggu persetujuan pemilik.',
-          user: userView(db, user, { includeProgress: false }),
-          delivery
-        });
-        return;
-      }
+          if (requestUrl.pathname === '/api/prayer-times' && req.method === 'GET') {
+            if (!needUser(userAuth, finish)) return;
+            const requestedDate = String(requestUrl.searchParams.get('date') || '');
+            const date = /^\d{2}-\d{2}-\d{4}$/.test(requestedDate) ? requestedDate : defaultPrayerDate();
+            const rawLatitude = requestUrl.searchParams.get('latitude');
+            const rawLongitude = requestUrl.searchParams.get('longitude');
+            const hasLatitude = rawLatitude !== null && rawLatitude.trim() !== '';
+            const hasLongitude = rawLongitude !== null && rawLongitude.trim() !== '';
+            if (hasLatitude !== hasLongitude) {
+              return finish(400, { message: 'Koordinat lokasi belum lengkap.' });
+            }
 
-      if (requestUrl.pathname === '/api/auth/forgot-password' && req.method === 'POST') {
-        const body = await parseJsonBody(req);
-        const phone = normalizePhone(body.phone);
-        const senderPhoneConfirmed = body.senderPhoneConfirmed === true;
-        if (!phone) return finish(400, { message: 'Nomor HP belum valid. Gunakan format seperti 08xxxxxxxxxx.' });
-        if (!senderPhoneConfirmed) {
-          return finish(400, { message: 'Konfirmasi penggunaan nomor WhatsApp yang sama perlu dicentang.' });
-        }
+            let location;
+            if (hasLatitude && hasLongitude) {
+              const latitude = Number(rawLatitude);
+              const longitude = Number(rawLongitude);
+              if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+                || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+                return finish(400, { message: 'Koordinat lokasi tidak valid.' });
+              }
+              location = {
+                key: 'gps',
+                label: 'Lokasi saat ini',
+                latitude: Number(latitude.toFixed(1)),
+                longitude: Number(longitude.toFixed(1))
+              };
+            } else {
+              const requestedLocation = String(requestUrl.searchParams.get('city') || 'jakarta').toLowerCase();
+              const locationKey = Object.hasOwn(PRAYER_LOCATIONS, requestedLocation) ? requestedLocation : '';
+              if (!locationKey) return finish(400, { message: 'Kota jadwal salat belum tersedia.' });
+              location = { key: locationKey, ...PRAYER_LOCATIONS[locationKey] };
+            }
 
-        const user = db.users.find((item) => item.phone === phone);
-        if (!user) return finish(404, { message: 'Nomor HP belum terdaftar di Iqro.' });
-        if (user.accountStatus === 'pending') {
-          return finish(409, { message: 'Akun ini masih menunggu aktivasi. Hubungi pemilik Iqro untuk menyelesaikan aktivasi.' });
-        }
+            response = { deferred: async () => {
+              try {
+                return { statusCode: 200, payload: await fetchPrayerTimes(location, date) };
+              } catch (error) {
+                return { statusCode: 502, payload: { message: 'Jadwal salat belum dapat dimuat. Silakan coba kembali beberapa saat lagi.' } };
+              }
+            } };
 
-        const existingRequest = user.passwordResetRequest;
-        const existingRequestAge = Date.now() - (Date.parse(existingRequest?.requestedAt || '') || 0);
-        const request = existingRequest && existingRequestAge < 15 * 60 * 1000
-          ? existingRequest
-          : { code: generatePasswordResetRequestCode(), requestedAt: nowIso() };
-        user.passwordResetRequest = request;
-        user.updatedAt = nowIso();
-        dirty = true;
-        finish(200, {
-          message: 'Permintaan reset password sudah dicatat dan menunggu diproses pemilik.',
-          request: { code: request.code, requestedAt: request.requestedAt },
-          delivery: whatsappPasswordResetRequestDelivery(db, user, request)
-        });
-        return;
-      }
+            return;
+          }
 
-      if (requestUrl.pathname === '/api/auth/login' && req.method === 'POST') {
-        const body = await parseJsonBody(req);
-        const phone = normalizePhone(body.phone);
-        const password = cleanPassword(body.password);
-        if (!phone) return finish(400, { message: 'Nomor HP belum valid. Gunakan format seperti 08xxxxxxxxxx.' });
-        if (!validPassword(password)) return finish(400, { message: 'Password minimal 6 karakter.' });
+          const passwordChangeRouteAllowed = (
+            (requestUrl.pathname === '/api/auth/logout' && req.method === 'POST') ||
+            (requestUrl.pathname === '/api/me' && req.method === 'GET') ||
+            (requestUrl.pathname === '/api/me/complete-password-reset' && req.method === 'PUT')
+          );
+          if (userAuth.subject?.mustChangePassword && !passwordChangeRouteAllowed) {
+            finish(428, { message: 'Buat password baru terlebih dahulu sebelum mengakses fitur Iqro.', ...appState(db, userAuth.subject) });
+            return;
+          }
 
-        const user = db.users.find((item) => item.phone === phone);
-        if (!user) return finish(401, { message: 'Nomor HP belum terdaftar. Silakan buat akun terlebih dahulu.' });
-        if (!user.passwordHash) {
-          user.passwordHash = hashSecret(password);
-          user.updatedAt = nowIso();
-        } else if (!verifySecret(password, user.passwordHash)) {
-          return finish(401, { message: 'Nomor HP atau password tidak cocok.' });
-        }
+          if (requestUrl.pathname === '/api/auth/register' && req.method === 'POST') {
+            const phone = normalizePhone(body.phone);
+            const password = cleanPassword(body.password);
+            const name = cleanText(body.name, '', 60);
+            const rewardConsent = body.rewardConsent === true;
+            if (!phone) return finish(400, { message: 'Nomor HP belum valid. Gunakan format seperti 08xxxxxxxxxx.' });
+            if (!name) return finish(400, { message: 'Nama wajib diisi untuk membuat akun.' });
+            if (!validPassword(password)) return finish(400, { message: 'Password minimal 6 karakter.' });
+            if (!rewardConsent) return finish(400, { message: 'Persetujuan akad kebaikan perlu dicentang sebelum mengirim permohonan.' });
+            const existingUser = db.users.find((item) => item.phone === phone);
+            if (existingUser) {
+              if (existingUser.accountStatus === 'pending' && await verifySecret(password, existingUser.passwordHash)) {
+                return finish(200, {
+                  message: 'Permohonan akun Anda sudah tercatat dan masih menunggu persetujuan pemilik.',
+                  user: userView(db, existingUser, { includeProgress: false }),
+                  delivery: whatsappRegistrationRequestDelivery(db, existingUser)
+                });
+              }
+              return finish(409, { message: 'Nomor HP sudah terdaftar. Silakan masuk atau hubungi pemilik Iqro.' });
+            }
 
-        if (user.accountStatus === 'pending') {
-          return finish(403, { message: 'Permohonan akun Anda masih menunggu persetujuan pemilik Iqro.' });
-        }
-        if (user.accountStatus === 'suspended') {
-          return finish(403, { message: 'Akun Anda sedang dinonaktifkan. Silakan hubungi pemilik Iqro.' });
-        }
+            const user = await createUser(phone, name, password, { accountStatus: 'pending' });
+            db.users.push(user);
+            const delivery = whatsappRegistrationRequestDelivery(db, user);
+            dirty = true;
+            finish(201, {
+              message: 'Permohonan akun berhasil dibuat dan sedang menunggu persetujuan pemilik.',
+              user: userView(db, user, { includeProgress: false }),
+              delivery
+            });
+            return;
+          }
 
-        user.lastLoginAt = nowIso();
-        user.passwordResetRequest = null;
-        const session = issueSession(db, 'user', user.id);
-        dirty = true;
-        finish(200, { message: 'Login berhasil.', token: session.token, ...appState(db, user) });
-        return;
-      }
+          if (requestUrl.pathname === '/api/auth/forgot-password' && req.method === 'POST') {
+            const phone = normalizePhone(body.phone);
+            const senderPhoneConfirmed = body.senderPhoneConfirmed === true;
+            if (!phone) return finish(400, { message: 'Nomor HP belum valid. Gunakan format seperti 08xxxxxxxxxx.' });
+            if (!senderPhoneConfirmed) {
+              return finish(400, { message: 'Konfirmasi penggunaan nomor WhatsApp yang sama perlu dicentang.' });
+            }
 
-      if (requestUrl.pathname === '/api/auth/logout' && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        if (revokeSessions(db, 'user', userAuth.subject.id) > 0) dirty = true;
-        finish(200, { message: 'Sesi berhasil diakhiri.' });
-        return;
-      }
+            const user = db.users.find((item) => item.phone === phone);
+            if (!user) return finish(404, { message: 'Nomor HP belum terdaftar di Iqro.' });
+            if (user.accountStatus === 'pending') {
+              return finish(409, { message: 'Akun ini masih menunggu aktivasi. Hubungi pemilik Iqro untuk menyelesaikan aktivasi.' });
+            }
 
-      if (requestUrl.pathname === '/api/me' && req.method === 'GET') {
-        if (!needUser(userAuth, finish)) return;
-        finish(200, appState(db, userAuth.subject));
-        return;
-      }
+            const existingRequest = user.passwordResetRequest;
+            const existingRequestAge = Date.now() - (Date.parse(existingRequest?.requestedAt || '') || 0);
+            const request = existingRequest && existingRequestAge < 15 * 60 * 1000
+              ? existingRequest
+              : { code: generatePasswordResetRequestCode(), requestedAt: nowIso() };
+            user.passwordResetRequest = request;
+            user.updatedAt = nowIso();
+            dirty = true;
+            finish(200, {
+              message: 'Permintaan reset password sudah dicatat dan menunggu diproses pemilik.',
+              request: { code: request.code, requestedAt: request.requestedAt },
+              delivery: whatsappPasswordResetRequestDelivery(db, user, request)
+            });
+            return;
+          }
 
-      if (requestUrl.pathname === '/api/me' && req.method === 'PUT') {
-        if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        const nextName = cleanText(body.name, '', 60);
-        if (!nextName) return finish(400, { message: 'Nama tampilan tidak boleh kosong.' });
-        userAuth.subject.name = nextName;
-        userAuth.subject.updatedAt = nowIso();
-        dirty = true;
-        finish(200, { message: 'Nama tampilan berhasil diperbarui.', ...appState(db, userAuth.subject) });
-        return;
-      }
+          if (requestUrl.pathname === '/api/auth/login' && req.method === 'POST') {
+            const phone = normalizePhone(body.phone);
+            const password = cleanPassword(body.password);
+            if (!phone) return finish(400, { message: 'Nomor HP belum valid. Gunakan format seperti 08xxxxxxxxxx.' });
+            if (!validPassword(password)) return finish(400, { message: 'Password minimal 6 karakter.' });
 
-      if (requestUrl.pathname === '/api/me/privacy' && req.method === 'PUT') {
-        if (!needUser(userAuth, finish)) return;
-        await parseJsonBody(req);
-        userAuth.subject.shareReadingStats = true;
-        userAuth.subject.updatedAt = nowIso();
-        dirty = true;
-        finish(200, {
-          message: 'Statistik tilawah dibagikan kepada teman yang sudah Anda setujui.',
-          ...appState(db, userAuth.subject)
-        });
-        return;
-      }
+            const user = db.users.find((item) => item.phone === phone);
+            if (!user) return finish(401, { message: 'Nomor HP belum terdaftar. Silakan buat akun terlebih dahulu.' });
+            if (!user.passwordHash) {
+              user.passwordHash = await hashSecret(password);
+              user.updatedAt = nowIso();
+            } else if (!(await verifySecret(password, user.passwordHash))) {
+              return finish(401, { message: 'Nomor HP atau password tidak cocok.' });
+            }
 
-      if (requestUrl.pathname === '/api/me/memorial-names' && req.method === 'PUT') {
-        if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        if (!Array.isArray(body.names)) return finish(400, { message: 'Daftar nama Tahlil tidak valid.' });
-        if (body.names.length > MAX_MEMORIAL_NAMES) return finish(400, { message: `Nama untuk Tahlil maksimal ${MAX_MEMORIAL_NAMES}.` });
-        if (body.names.some((item) => typeof item !== 'string')) return finish(400, { message: 'Setiap nama Tahlil harus berupa teks.' });
-        const cleanedNames = body.names.map((item) => cleanText(item, '', MAX_MEMORIAL_NAME_LENGTH + 1));
-        if (cleanedNames.some((name) => !name)) return finish(400, { message: 'Nama untuk Tahlil tidak boleh kosong.' });
-        if (cleanedNames.some((name) => name.length > MAX_MEMORIAL_NAME_LENGTH)) return finish(400, { message: `Setiap nama maksimal ${MAX_MEMORIAL_NAME_LENGTH} karakter.` });
-        const memorialNames = normalizeMemorialNames(cleanedNames);
-        if (memorialNames.length !== cleanedNames.length) return finish(400, { message: 'Nama yang sama tidak perlu ditambahkan dua kali.' });
-        userAuth.subject.memorialNames = memorialNames;
-        userAuth.subject.updatedAt = nowIso();
-        dirty = true;
-        finish(200, { message: 'Daftar nama Tahlil berhasil diperbarui.', ...appState(db, userAuth.subject) });
-        return;
-      }
+            if (user.accountStatus === 'pending') {
+              return finish(403, { message: 'Permohonan akun Anda masih menunggu persetujuan pemilik Iqro.' });
+            }
+            if (user.accountStatus === 'suspended') {
+              return finish(403, { message: 'Akun Anda sedang dinonaktifkan. Silakan hubungi pemilik Iqro.' });
+            }
 
-      if (requestUrl.pathname === '/api/me/password' && req.method === 'PUT') {
-        if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        const currentPassword = cleanPassword(body.currentPassword);
-        const newPassword = cleanPassword(body.newPassword);
-        if (!verifySecret(currentPassword, userAuth.subject.passwordHash)) return finish(401, { message: 'Password lama tidak cocok.' });
-        if (!validPassword(newPassword)) return finish(400, { message: 'Password baru minimal 6 karakter.' });
-        userAuth.subject.passwordHash = hashSecret(newPassword);
-        userAuth.subject.mustChangePassword = false;
-        userAuth.subject.passwordResetAt = '';
-        userAuth.subject.updatedAt = nowIso();
-        revokeSessions(db, 'user', userAuth.subject.id, userAuth.token);
-        dirty = true;
-        finish(200, { message: 'Password akun berhasil diganti.', ...appState(db, userAuth.subject) });
-        return;
-      }
+            user.lastLoginAt = nowIso();
+            user.passwordResetRequest = null;
+            const session = issueSession(db, 'user', user.id);
+            dirty = true;
+            finish(200, { message: 'Login berhasil.', token: session.token, ...appState(db, user) });
+            return;
+          }
 
-      if (requestUrl.pathname === '/api/me/complete-password-reset' && req.method === 'PUT') {
-        if (!needUser(userAuth, finish)) return;
-        if (!userAuth.subject.mustChangePassword) return finish(400, { message: 'Akun ini tidak sedang menunggu pembuatan password baru.' });
-        const body = await parseJsonBody(req);
-        const newPassword = cleanPassword(body.newPassword);
-        if (!validPassword(newPassword)) return finish(400, { message: 'Password baru minimal 6 karakter.' });
-        if (verifySecret(newPassword, userAuth.subject.passwordHash)) return finish(400, { message: 'Password baru tidak boleh sama dengan password sementara.' });
-        userAuth.subject.passwordHash = hashSecret(newPassword);
-        userAuth.subject.mustChangePassword = false;
-        userAuth.subject.passwordResetAt = '';
-        userAuth.subject.updatedAt = nowIso();
-        revokeSessions(db, 'user', userAuth.subject.id, userAuth.token);
-        dirty = true;
-        finish(200, { message: 'Password baru berhasil dibuat. Semua fitur Iqro sudah terbuka.', ...appState(db, userAuth.subject) });
-        return;
-      }
+          if (requestUrl.pathname === '/api/auth/logout' && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            if (revokeSessions(db, 'user', userAuth.subject.id) > 0) dirty = true;
+            finish(200, { message: 'Sesi berhasil diakhiri.' });
+            return;
+          }
 
-      if (requestUrl.pathname === '/api/progress' && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        const surah = Math.max(1, Math.min(114, Number(body.surah) || 1));
-        const totalAyat = SURAH_AYAT_COUNTS[surah - 1] || Math.max(1, Number(body.totalAyat) || 1);
-        const previousProgress = progressRecord(db, userAuth.subject.id);
-        db.progressByUserId[userAuth.subject.id] = {
-          surah,
-          ayat: Math.max(1, Math.min(totalAyat, Number(body.ayat) || 1)),
-          nama: cleanText(body.nama, `Surah ${surah}`, 80),
-          totalAyat,
-          updatedAt: nowIso()
+          if (requestUrl.pathname === '/api/me' && req.method === 'GET') {
+            if (!needUser(userAuth, finish)) return;
+            finish(200, appState(db, userAuth.subject));
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/me' && req.method === 'PUT') {
+            if (!needUser(userAuth, finish)) return;
+            const nextName = cleanText(body.name, '', 60);
+            if (!nextName) return finish(400, { message: 'Nama tampilan tidak boleh kosong.' });
+            userAuth.subject.name = nextName;
+            userAuth.subject.updatedAt = nowIso();
+            dirty = true;
+            finish(200, { message: 'Nama tampilan berhasil diperbarui.', ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/me/privacy' && req.method === 'PUT') {
+            if (!needUser(userAuth, finish)) return;
+            await parseJsonBody(req);
+            userAuth.subject.shareReadingStats = true;
+            userAuth.subject.updatedAt = nowIso();
+            dirty = true;
+            finish(200, {
+              message: 'Statistik tilawah dibagikan kepada teman yang sudah Anda setujui.',
+              ...appState(db, userAuth.subject)
+            });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/me/memorial-names' && req.method === 'PUT') {
+            if (!needUser(userAuth, finish)) return;
+            if (!Array.isArray(body.names)) return finish(400, { message: 'Daftar nama Tahlil tidak valid.' });
+            if (body.names.length > MAX_MEMORIAL_NAMES) return finish(400, { message: `Nama untuk Tahlil maksimal ${MAX_MEMORIAL_NAMES}.` });
+            if (body.names.some((item) => typeof item !== 'string')) return finish(400, { message: 'Setiap nama Tahlil harus berupa teks.' });
+            const cleanedNames = body.names.map((item) => cleanText(item, '', MAX_MEMORIAL_NAME_LENGTH + 1));
+            if (cleanedNames.some((name) => !name)) return finish(400, { message: 'Nama untuk Tahlil tidak boleh kosong.' });
+            if (cleanedNames.some((name) => name.length > MAX_MEMORIAL_NAME_LENGTH)) return finish(400, { message: `Setiap nama maksimal ${MAX_MEMORIAL_NAME_LENGTH} karakter.` });
+            const memorialNames = normalizeMemorialNames(cleanedNames);
+            if (memorialNames.length !== cleanedNames.length) return finish(400, { message: 'Nama yang sama tidak perlu ditambahkan dua kali.' });
+            userAuth.subject.memorialNames = memorialNames;
+            userAuth.subject.updatedAt = nowIso();
+            dirty = true;
+            finish(200, { message: 'Daftar nama Tahlil berhasil diperbarui.', ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/me/password' && req.method === 'PUT') {
+            if (!needUser(userAuth, finish)) return;
+            const currentPassword = cleanPassword(body.currentPassword);
+            const newPassword = cleanPassword(body.newPassword);
+            if (!(await verifySecret(currentPassword, userAuth.subject.passwordHash))) return finish(401, { message: 'Password lama tidak cocok.' });
+            if (!validPassword(newPassword)) return finish(400, { message: 'Password baru minimal 6 karakter.' });
+            userAuth.subject.passwordHash = await hashSecret(newPassword);
+            userAuth.subject.mustChangePassword = false;
+            userAuth.subject.passwordResetAt = '';
+            userAuth.subject.updatedAt = nowIso();
+            revokeSessions(db, 'user', userAuth.subject.id, userAuth.token);
+            dirty = true;
+            finish(200, { message: 'Password akun berhasil diganti.', ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/me/complete-password-reset' && req.method === 'PUT') {
+            if (!needUser(userAuth, finish)) return;
+            if (!userAuth.subject.mustChangePassword) return finish(400, { message: 'Akun ini tidak sedang menunggu pembuatan password baru.' });
+            const newPassword = cleanPassword(body.newPassword);
+            if (!validPassword(newPassword)) return finish(400, { message: 'Password baru minimal 6 karakter.' });
+            if (await verifySecret(newPassword, userAuth.subject.passwordHash)) return finish(400, { message: 'Password baru tidak boleh sama dengan password sementara.' });
+            userAuth.subject.passwordHash = await hashSecret(newPassword);
+            userAuth.subject.mustChangePassword = false;
+            userAuth.subject.passwordResetAt = '';
+            userAuth.subject.updatedAt = nowIso();
+            revokeSessions(db, 'user', userAuth.subject.id, userAuth.token);
+            dirty = true;
+            finish(200, { message: 'Password baru berhasil dibuat. Semua fitur Iqro sudah terbuka.', ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/progress' && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            const surah = Math.max(1, Math.min(114, Number(body.surah) || 1));
+            const totalAyat = SURAH_AYAT_COUNTS[surah - 1] || Math.max(1, Number(body.totalAyat) || 1);
+            const previousProgress = progressRecord(db, userAuth.subject.id);
+            db.progressByUserId[userAuth.subject.id] = {
+              surah,
+              ayat: Math.max(1, Math.min(totalAyat, Number(body.ayat) || 1)),
+              nama: cleanText(body.nama, `Surah ${surah}`, 80),
+              totalAyat,
+              updatedAt: nowIso()
+            };
+            if (body.trackDaily === true) {
+              recordDailyProgressRange(db, userAuth.subject.id, previousProgress, db.progressByUserId[userAuth.subject.id]);
+            }
+            dirty = true;
+            finish(200, { message: 'Progress tilawah tersimpan ke akun.', ...(body.responseMode === 'progress'
+              ? { partial: 'progress', user: userView(db, userAuth.subject, { includeDailyReading: true, includeMemorialNames: true }) }
+              : appState(db, userAuth.subject)) });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/friends' && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            const phone = normalizePhone(body.phone);
+            if (!phone) return finish(400, { message: 'Nomor HP teman belum valid.' });
+            const friend = db.users.find((item) => item.phone === phone);
+            if (!friend) return finish(404, { message: 'Nomor HP tersebut belum pernah login di Iqro.' });
+            if (friend.accountStatus !== 'active') return finish(409, { message: 'Akun teman tersebut belum aktif.' });
+            if (friend.id === userAuth.subject.id) return finish(400, { message: 'Nomor HP Anda sendiri tidak bisa ditambahkan sebagai teman.' });
+            if (isFriend(db, userAuth.subject.id, friend.id)) {
+              return finish(200, { message: `${friend.name} sudah ada di daftar teman Anda.`, ...appState(db, userAuth.subject) });
+            }
+            const existingRequest = findFriendRequest(db, userAuth.subject.id, friend.id);
+            if (existingRequest) {
+              const message = existingRequest.fromUserId === userAuth.subject.id
+                ? `Permintaan pertemanan kepada ${friend.name} masih menunggu persetujuan.`
+                : `${friend.name} sudah mengirim permintaan kepada Anda. Silakan terima dari daftar permintaan masuk.`;
+              return finish(200, { message, ...appState(db, userAuth.subject) });
+            }
+            db.friendRequests.push({
+              id: `frq_${crypto.randomUUID()}`,
+              fromUserId: userAuth.subject.id,
+              toUserId: friend.id,
+              createdAt: nowIso()
+            });
+            dirty = true;
+            finish(200, { message: `Permintaan pertemanan dikirim kepada ${friend.name}.`, ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          const friendRequestMatch = requestUrl.pathname.match(/^\/api\/friend-requests\/([^/]+)\/(accept|decline)$/);
+          if (friendRequestMatch && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            const requestId = decodeURIComponent(friendRequestMatch[1]);
+            const action = friendRequestMatch[2];
+            const friendRequest = db.friendRequests.find((item) => item.id === requestId);
+            if (!friendRequest || friendRequest.toUserId !== userAuth.subject.id) {
+              return finish(404, { message: 'Permintaan pertemanan tidak ditemukan.' });
+            }
+            const requester = db.users.find((item) => item.id === friendRequest.fromUserId);
+            db.friendRequests = db.friendRequests.filter((item) => item.id !== friendRequest.id);
+            if (action === 'accept' && requester && !isFriend(db, userAuth.subject.id, requester.id)) {
+              db.friendships.push({
+                id: `fr_${crypto.randomUUID()}`,
+                userAId: requester.id,
+                userBId: userAuth.subject.id,
+                createdAt: nowIso()
+              });
+            }
+            dirty = true;
+            finish(200, {
+              message: action === 'accept'
+                ? `${requester?.name || 'Sahabat'} sekarang menjadi teman Anda.`
+                : 'Permintaan pertemanan ditolak.',
+              ...appState(db, userAuth.subject)
+            });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/groups' && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            const name = cleanText(body.name, '', 80);
+            if (!name) return finish(400, { message: 'Nama group tidak boleh kosong.' });
+            if (body.memberIds !== undefined && !Array.isArray(body.memberIds)) return finish(400, { message: 'Daftar anggota group tidak valid.' });
+            const selectedMemberIds = [...new Set((Array.isArray(body.memberIds) ? body.memberIds : [])
+              .map((item) => String(item || '').trim())
+              .filter(Boolean))];
+            if (selectedMemberIds.length > 100) return finish(400, { message: 'Anggota group maksimal 100 kontak.' });
+            const availableFriendIds = new Set(friendIds(db, userAuth.subject.id));
+            if (selectedMemberIds.some((memberId) => !availableFriendIds.has(memberId))) {
+              return finish(400, { message: 'Semua anggota group harus berasal dari daftar teman Anda.' });
+            }
+            const memberIds = [userAuth.subject.id, ...selectedMemberIds];
+            db.groups.push({
+              id: `grp_${crypto.randomUUID()}`,
+              name,
+              ownerUserId: userAuth.subject.id,
+              adminUserIds: [userAuth.subject.id],
+              memberIds,
+              createdAt: nowIso()
+            });
+            dirty = true;
+            finish(200, { message: `Group ${name} berhasil dibuat.`, ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          const deleteGroupMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)$/);
+          if (deleteGroupMatch && req.method === 'DELETE') {
+            if (!needUser(userAuth, finish)) return;
+            const groupId = decodeURIComponent(deleteGroupMatch[1]);
+            const group = db.groups.find((item) => item.id === groupId);
+            if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+            if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya pemilik group yang dapat menghapus group.' });
+            db.groups = db.groups.filter((item) => item.id !== groupId);
+            dirty = true;
+            finish(200, { message: `Group ${group.name} berhasil dihapus.`, ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          const promoteAdminMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/admins\/([^/]+)$/);
+          if (promoteAdminMatch && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            const groupId = decodeURIComponent(promoteAdminMatch[1]);
+            const memberId = decodeURIComponent(promoteAdminMatch[2]);
+            const group = db.groups.find((item) => item.id === groupId);
+            if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+            if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya pemilik group yang dapat menjadikan anggota sebagai admin.' });
+            if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
+            const member = db.users.find((item) => item.id === memberId);
+            if (!Array.isArray(group.adminUserIds)) group.adminUserIds = [group.ownerUserId];
+            if (!group.adminUserIds.includes(memberId)) {
+              group.adminUserIds.push(memberId);
+              dirty = true;
+            }
+            finish(200, { message: `${member?.name || 'Anggota'} sekarang menjadi admin group ${group.name}.`, ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          const addMemberMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/members$/);
+          if (addMemberMatch && req.method === 'POST') {
+            if (!needUser(userAuth, finish)) return;
+            const group = db.groups.find((item) => item.id === addMemberMatch[1]);
+            if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+            if (!isGroupAdmin(group, userAuth.subject.id)) return finish(403, { message: 'Hanya admin group yang dapat menambahkan anggota.' });
+            const phone = normalizePhone(body.phone);
+            if (!phone) return finish(400, { message: 'Nomor HP anggota belum valid.' });
+            const member = db.users.find((item) => item.phone === phone);
+            if (!member) return finish(404, { message: 'Nomor HP anggota belum pernah login di Iqro.' });
+            if (!isFriend(db, userAuth.subject.id, member.id) && member.id !== userAuth.subject.id) return finish(400, { message: 'Tambahkan sebagai teman dulu sebelum masuk ke group.' });
+            if (!group.memberIds.includes(member.id)) {
+              group.memberIds.push(member.id);
+              dirty = true;
+            }
+            finish(200, { message: `${member.name} berhasil masuk ke group ${group.name}.`, ...appState(db, userAuth.subject) });
+            return;
+          }
+
+          const removeMemberMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/members\/([^/]+)$/);
+          if (removeMemberMatch && req.method === 'DELETE') {
+            if (!needUser(userAuth, finish)) return;
+            const groupId = decodeURIComponent(removeMemberMatch[1]);
+            const memberId = decodeURIComponent(removeMemberMatch[2]);
+            const group = db.groups.find((item) => item.id === groupId);
+            if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
+            if (!isGroupAdmin(group, userAuth.subject.id)) return finish(403, { message: 'Hanya admin group yang dapat menghapus anggota.' });
+            if (memberId === group.ownerUserId) return finish(400, { message: 'Admin group tidak dapat dihapus dari group.' });
+            if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
+            const targetIsAdmin = isGroupAdmin(group, memberId);
+            if (userAuth.subject.id !== group.ownerUserId && targetIsAdmin) {
+              return finish(403, { message: 'Admin hanya dapat mengeluarkan anggota biasa.' });
+            }
+            const member = db.users.find((item) => item.id === memberId);
+            group.memberIds = group.memberIds.filter((item) => item !== memberId);
+            group.adminUserIds = (Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId])
+              .filter((item) => item !== memberId);
+            dirty = true;
+            finish(200, {
+              message: `${member?.name || 'Anggota'} berhasil dikeluarkan dari group ${group.name}.`,
+              ...appState(db, userAuth.subject)
+            });
+            return;
+          }
+
+          if (requestUrl.pathname === '/api/manage/users' && req.method === 'GET') {
+            if (!needManager(userAuth, finish)) return;
+            finish(200, managerState(db, userAuth.subject, managementOptions));
+            return;
+          }
+
+          const resetMatch = requestUrl.pathname.match(/^\/api\/manage\/users\/([^/]+)\/reset-password$/);
+          if (resetMatch && req.method === 'POST') {
+            if (!needManager(userAuth, finish)) return;
+            const user = db.users.find((item) => item.id === resetMatch[1]);
+            if (!user) return finish(404, { message: 'User tidak ditemukan.' });
+            if (user.id === userAuth.subject.id) return finish(400, { message: 'Gunakan menu Ganti Password untuk akun Anda sendiri.' });
+
+            const temporaryPassword = generateTemporaryPassword();
+            const delivery = whatsappResetDelivery(user, temporaryPassword);
+            user.passwordHash = await hashSecret(temporaryPassword);
+            user.mustChangePassword = true;
+            user.passwordResetAt = nowIso();
+            user.passwordResetRequest = null;
+            user.updatedAt = user.passwordResetAt;
+            const revokedSessionCount = revokeSessions(db, 'user', user.id);
+            dirty = true;
+            finish(200, {
+              message: `WhatsApp untuk ${phoneDisplay(user.phone)} sudah dibuka. Periksa pesannya lalu tekan Kirim.`,
+              revokedSessionCount,
+              temporaryPassword,
+              delivery,
+              ...managerState(db, userAuth.subject, managementOptions)
+            });
+            return;
+          }
+
+          const statusMatch = requestUrl.pathname.match(/^\/api\/manage\/users\/([^/]+)\/status$/);
+          if (statusMatch && req.method === 'PUT') {
+            if (!needManager(userAuth, finish)) return;
+            const user = db.users.find((item) => item.id === statusMatch[1]);
+            if (!user) return finish(404, { message: 'User tidak ditemukan.' });
+            if (user.id === userAuth.subject.id || user.role === 'owner') {
+              return finish(400, { message: 'Status akun pemilik tidak dapat diubah.' });
+            }
+
+            const accountStatus = String(body.accountStatus || '').toLowerCase();
+            if (!['active', 'suspended'].includes(accountStatus)) {
+              return finish(400, { message: 'Status akun belum valid.' });
+            }
+
+            user.accountStatus = accountStatus;
+            user.updatedAt = nowIso();
+            const revokedSessionCount = accountStatus === 'active' ? 0 : revokeSessions(db, 'user', user.id);
+            const delivery = accountStatus === 'active' ? whatsappActivationDelivery(user) : null;
+            dirty = true;
+            finish(200, {
+              message: accountStatus === 'active'
+                ? `Akun ${user.name} berhasil diaktifkan.`
+                : `Akun ${user.name} berhasil dinonaktifkan.`,
+              revokedSessionCount,
+              delivery,
+              ...managerState(db, userAuth.subject, managementOptions)
+            });
+            return;
+          }
+
+          const deleteMatch = requestUrl.pathname.match(/^\/api\/manage\/users\/([^/]+)$/);
+          if (deleteMatch && req.method === 'DELETE') {
+            if (!needManager(userAuth, finish)) return;
+            const user = db.users.find((item) => item.id === deleteMatch[1]);
+            if (!user) return finish(404, { message: 'User tidak ditemukan.' });
+            if (user.id === userAuth.subject.id) return finish(400, { message: 'Akun pemilik aplikasi tidak dapat dihapus.' });
+
+            const revokedSessionCount = revokeSessions(db, 'user', user.id);
+            const friendshipCount = db.friendships.length;
+            db.friendships = db.friendships.filter((item) => item.userAId !== user.id && item.userBId !== user.id);
+            const removedFriendshipCount = friendshipCount - db.friendships.length;
+            const friendRequestCount = db.friendRequests.length;
+            db.friendRequests = db.friendRequests.filter((item) => item.fromUserId !== user.id && item.toUserId !== user.id);
+            const removedFriendRequestCount = friendRequestCount - db.friendRequests.length;
+            delete db.progressByUserId[user.id];
+            delete db.dailyReadingByUserId[user.id];
+
+            let transferredGroupCount = 0;
+            let removedGroupCount = 0;
+            db.groups = db.groups.flatMap((group) => {
+              const nextMemberIds = group.memberIds.filter((memberId) => memberId !== user.id);
+              const nextAdminUserIds = (Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId])
+                .filter((memberId) => memberId !== user.id && nextMemberIds.includes(memberId));
+              if (group.ownerUserId !== user.id) return [{ ...group, memberIds: nextMemberIds, adminUserIds: nextAdminUserIds }];
+              if (!nextMemberIds.length) {
+                removedGroupCount += 1;
+                return [];
+              }
+              transferredGroupCount += 1;
+              const nextOwnerUserId = nextAdminUserIds[0] || nextMemberIds[0];
+              return [{
+                ...group,
+                ownerUserId: nextOwnerUserId,
+                adminUserIds: [...new Set([nextOwnerUserId, ...nextAdminUserIds])],
+                memberIds: nextMemberIds
+              }];
+            });
+            db.users = db.users.filter((item) => item.id !== user.id);
+            dirty = true;
+            finish(200, {
+              message: `Akun ${user.name} berhasil dihapus.`,
+              cleanup: { revokedSessionCount, removedFriendshipCount, removedFriendRequestCount, transferredGroupCount, removedGroupCount },
+              ...managerState(db, userAuth.subject, managementOptions)
+            });
+            return;
+          }
+          finish(404, { message: 'Endpoint API tidak ditemukan.' });
         };
-        if (body.trackDaily === true) {
-          recordDailyProgressRange(db, userAuth.subject.id, previousProgress, db.progressByUserId[userAuth.subject.id]);
-        }
-        dirty = true;
-        finish(200, { message: 'Progress tilawah tersimpan ke akun.', ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      if (requestUrl.pathname === '/api/friends' && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        const phone = normalizePhone(body.phone);
-        if (!phone) return finish(400, { message: 'Nomor HP teman belum valid.' });
-        const friend = db.users.find((item) => item.phone === phone);
-        if (!friend) return finish(404, { message: 'Nomor HP tersebut belum pernah login di Iqro.' });
-        if (friend.accountStatus !== 'active') return finish(409, { message: 'Akun teman tersebut belum aktif.' });
-        if (friend.id === userAuth.subject.id) return finish(400, { message: 'Nomor HP Anda sendiri tidak bisa ditambahkan sebagai teman.' });
-        if (isFriend(db, userAuth.subject.id, friend.id)) {
-          return finish(200, { message: `${friend.name} sudah ada di daftar teman Anda.`, ...appState(db, userAuth.subject) });
-        }
-        const existingRequest = findFriendRequest(db, userAuth.subject.id, friend.id);
-        if (existingRequest) {
-          const message = existingRequest.fromUserId === userAuth.subject.id
-            ? `Permintaan pertemanan kepada ${friend.name} masih menunggu persetujuan.`
-            : `${friend.name} sudah mengirim permintaan kepada Anda. Silakan terima dari daftar permintaan masuk.`;
-          return finish(200, { message, ...appState(db, userAuth.subject) });
-        }
-        db.friendRequests.push({
-          id: `frq_${crypto.randomUUID()}`,
-          fromUserId: userAuth.subject.id,
-          toUserId: friend.id,
-          createdAt: nowIso()
-        });
-        dirty = true;
-        finish(200, { message: `Permintaan pertemanan dikirim kepada ${friend.name}.`, ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      const friendRequestMatch = requestUrl.pathname.match(/^\/api\/friend-requests\/([^/]+)\/(accept|decline)$/);
-      if (friendRequestMatch && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        const requestId = decodeURIComponent(friendRequestMatch[1]);
-        const action = friendRequestMatch[2];
-        const friendRequest = db.friendRequests.find((item) => item.id === requestId);
-        if (!friendRequest || friendRequest.toUserId !== userAuth.subject.id) {
-          return finish(404, { message: 'Permintaan pertemanan tidak ditemukan.' });
-        }
-        const requester = db.users.find((item) => item.id === friendRequest.fromUserId);
-        db.friendRequests = db.friendRequests.filter((item) => item.id !== friendRequest.id);
-        if (action === 'accept' && requester && !isFriend(db, userAuth.subject.id, requester.id)) {
-          db.friendships.push({
-            id: `fr_${crypto.randomUUID()}`,
-            userAId: requester.id,
-            userBId: userAuth.subject.id,
-            createdAt: nowIso()
-          });
-        }
-        dirty = true;
-        finish(200, {
-          message: action === 'accept'
-            ? `${requester?.name || 'Sahabat'} sekarang menjadi teman Anda.`
-            : 'Permintaan pertemanan ditolak.',
-          ...appState(db, userAuth.subject)
-        });
-        return;
-      }
-
-      if (requestUrl.pathname === '/api/groups' && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        const body = await parseJsonBody(req);
-        const name = cleanText(body.name, '', 80);
-        if (!name) return finish(400, { message: 'Nama group tidak boleh kosong.' });
-        if (body.memberIds !== undefined && !Array.isArray(body.memberIds)) return finish(400, { message: 'Daftar anggota group tidak valid.' });
-        const selectedMemberIds = [...new Set((Array.isArray(body.memberIds) ? body.memberIds : [])
-          .map((item) => String(item || '').trim())
-          .filter(Boolean))];
-        if (selectedMemberIds.length > 100) return finish(400, { message: 'Anggota group maksimal 100 kontak.' });
-        const availableFriendIds = new Set(friendIds(db, userAuth.subject.id));
-        if (selectedMemberIds.some((memberId) => !availableFriendIds.has(memberId))) {
-          return finish(400, { message: 'Semua anggota group harus berasal dari daftar teman Anda.' });
-        }
-        const memberIds = [userAuth.subject.id, ...selectedMemberIds];
-        db.groups.push({
-          id: `grp_${crypto.randomUUID()}`,
-          name,
-          ownerUserId: userAuth.subject.id,
-          adminUserIds: [userAuth.subject.id],
-          memberIds,
-          createdAt: nowIso()
-        });
-        dirty = true;
-        finish(200, { message: `Group ${name} berhasil dibuat.`, ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      const deleteGroupMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)$/);
-      if (deleteGroupMatch && req.method === 'DELETE') {
-        if (!needUser(userAuth, finish)) return;
-        const groupId = decodeURIComponent(deleteGroupMatch[1]);
-        const group = db.groups.find((item) => item.id === groupId);
-        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya pemilik group yang dapat menghapus group.' });
-        db.groups = db.groups.filter((item) => item.id !== groupId);
-        dirty = true;
-        finish(200, { message: `Group ${group.name} berhasil dihapus.`, ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      const promoteAdminMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/admins\/([^/]+)$/);
-      if (promoteAdminMatch && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        const groupId = decodeURIComponent(promoteAdminMatch[1]);
-        const memberId = decodeURIComponent(promoteAdminMatch[2]);
-        const group = db.groups.find((item) => item.id === groupId);
-        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (group.ownerUserId !== userAuth.subject.id) return finish(403, { message: 'Hanya pemilik group yang dapat menjadikan anggota sebagai admin.' });
-        if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
-        const member = db.users.find((item) => item.id === memberId);
-        if (!Array.isArray(group.adminUserIds)) group.adminUserIds = [group.ownerUserId];
-        if (!group.adminUserIds.includes(memberId)) {
-          group.adminUserIds.push(memberId);
-          dirty = true;
-        }
-        finish(200, { message: `${member?.name || 'Anggota'} sekarang menjadi admin group ${group.name}.`, ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      const addMemberMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/members$/);
-      if (addMemberMatch && req.method === 'POST') {
-        if (!needUser(userAuth, finish)) return;
-        const group = db.groups.find((item) => item.id === addMemberMatch[1]);
-        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (!isGroupAdmin(group, userAuth.subject.id)) return finish(403, { message: 'Hanya admin group yang dapat menambahkan anggota.' });
-        const body = await parseJsonBody(req);
-        const phone = normalizePhone(body.phone);
-        if (!phone) return finish(400, { message: 'Nomor HP anggota belum valid.' });
-        const member = db.users.find((item) => item.phone === phone);
-        if (!member) return finish(404, { message: 'Nomor HP anggota belum pernah login di Iqro.' });
-        if (!isFriend(db, userAuth.subject.id, member.id) && member.id !== userAuth.subject.id) return finish(400, { message: 'Tambahkan sebagai teman dulu sebelum masuk ke group.' });
-        if (!group.memberIds.includes(member.id)) {
-          group.memberIds.push(member.id);
-          dirty = true;
-        }
-        finish(200, { message: `${member.name} berhasil masuk ke group ${group.name}.`, ...appState(db, userAuth.subject) });
-        return;
-      }
-
-      const removeMemberMatch = requestUrl.pathname.match(/^\/api\/groups\/([^/]+)\/members\/([^/]+)$/);
-      if (removeMemberMatch && req.method === 'DELETE') {
-        if (!needUser(userAuth, finish)) return;
-        const groupId = decodeURIComponent(removeMemberMatch[1]);
-        const memberId = decodeURIComponent(removeMemberMatch[2]);
-        const group = db.groups.find((item) => item.id === groupId);
-        if (!group) return finish(404, { message: 'Group tidak ditemukan.' });
-        if (!isGroupAdmin(group, userAuth.subject.id)) return finish(403, { message: 'Hanya admin group yang dapat menghapus anggota.' });
-        if (memberId === group.ownerUserId) return finish(400, { message: 'Admin group tidak dapat dihapus dari group.' });
-        if (!group.memberIds.includes(memberId)) return finish(404, { message: 'Anggota tidak ditemukan di group ini.' });
-        const targetIsAdmin = isGroupAdmin(group, memberId);
-        if (userAuth.subject.id !== group.ownerUserId && targetIsAdmin) {
-          return finish(403, { message: 'Admin hanya dapat mengeluarkan anggota biasa.' });
-        }
-        const member = db.users.find((item) => item.id === memberId);
-        group.memberIds = group.memberIds.filter((item) => item !== memberId);
-        group.adminUserIds = (Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId])
-          .filter((item) => item !== memberId);
-        dirty = true;
-        finish(200, {
-          message: `${member?.name || 'Anggota'} berhasil dikeluarkan dari group ${group.name}.`,
-          ...appState(db, userAuth.subject)
-        });
-        return;
-      }
-
-      if (requestUrl.pathname === '/api/manage/users' && req.method === 'GET') {
-        if (!needManager(userAuth, finish)) return;
-        finish(200, managerState(db, userAuth.subject, managementOptions));
-        return;
-      }
-
-      const resetMatch = requestUrl.pathname.match(/^\/api\/manage\/users\/([^/]+)\/reset-password$/);
-      if (resetMatch && req.method === 'POST') {
-        if (!needManager(userAuth, finish)) return;
-        const user = db.users.find((item) => item.id === resetMatch[1]);
-        if (!user) return finish(404, { message: 'User tidak ditemukan.' });
-        if (user.id === userAuth.subject.id) return finish(400, { message: 'Gunakan menu Ganti Password untuk akun Anda sendiri.' });
-
-        const temporaryPassword = generateTemporaryPassword();
-        const delivery = whatsappResetDelivery(user, temporaryPassword);
-        user.passwordHash = hashSecret(temporaryPassword);
-        user.mustChangePassword = true;
-        user.passwordResetAt = nowIso();
-        user.passwordResetRequest = null;
-        user.updatedAt = user.passwordResetAt;
-        const revokedSessionCount = revokeSessions(db, 'user', user.id);
-        dirty = true;
-        finish(200, {
-          message: `WhatsApp untuk ${phoneDisplay(user.phone)} sudah dibuka. Periksa pesannya lalu tekan Kirim.`,
-          revokedSessionCount,
-          temporaryPassword,
-          delivery,
-          ...managerState(db, userAuth.subject, managementOptions)
-        });
-        return;
-      }
-
-      const statusMatch = requestUrl.pathname.match(/^\/api\/manage\/users\/([^/]+)\/status$/);
-      if (statusMatch && req.method === 'PUT') {
-        if (!needManager(userAuth, finish)) return;
-        const user = db.users.find((item) => item.id === statusMatch[1]);
-        if (!user) return finish(404, { message: 'User tidak ditemukan.' });
-        if (user.id === userAuth.subject.id || user.role === 'owner') {
-          return finish(400, { message: 'Status akun pemilik tidak dapat diubah.' });
-        }
-
-        const body = await parseJsonBody(req);
-        const accountStatus = String(body.accountStatus || '').toLowerCase();
-        if (!['active', 'suspended'].includes(accountStatus)) {
-          return finish(400, { message: 'Status akun belum valid.' });
-        }
-
-        user.accountStatus = accountStatus;
-        user.updatedAt = nowIso();
-        const revokedSessionCount = accountStatus === 'active' ? 0 : revokeSessions(db, 'user', user.id);
-        const delivery = accountStatus === 'active' ? whatsappActivationDelivery(user) : null;
-        dirty = true;
-        finish(200, {
-          message: accountStatus === 'active'
-            ? `Akun ${user.name} berhasil diaktifkan.`
-            : `Akun ${user.name} berhasil dinonaktifkan.`,
-          revokedSessionCount,
-          delivery,
-          ...managerState(db, userAuth.subject, managementOptions)
-        });
-        return;
-      }
-
-      const deleteMatch = requestUrl.pathname.match(/^\/api\/manage\/users\/([^/]+)$/);
-      if (deleteMatch && req.method === 'DELETE') {
-        if (!needManager(userAuth, finish)) return;
-        const user = db.users.find((item) => item.id === deleteMatch[1]);
-        if (!user) return finish(404, { message: 'User tidak ditemukan.' });
-        if (user.id === userAuth.subject.id) return finish(400, { message: 'Akun pemilik aplikasi tidak dapat dihapus.' });
-
-        const revokedSessionCount = revokeSessions(db, 'user', user.id);
-        const friendshipCount = db.friendships.length;
-        db.friendships = db.friendships.filter((item) => item.userAId !== user.id && item.userBId !== user.id);
-        const removedFriendshipCount = friendshipCount - db.friendships.length;
-        const friendRequestCount = db.friendRequests.length;
-        db.friendRequests = db.friendRequests.filter((item) => item.fromUserId !== user.id && item.toUserId !== user.id);
-        const removedFriendRequestCount = friendRequestCount - db.friendRequests.length;
-        delete db.progressByUserId[user.id];
-        delete db.dailyReadingByUserId[user.id];
-
-        let transferredGroupCount = 0;
-        let removedGroupCount = 0;
-        db.groups = db.groups.flatMap((group) => {
-          const nextMemberIds = group.memberIds.filter((memberId) => memberId !== user.id);
-          const nextAdminUserIds = (Array.isArray(group.adminUserIds) ? group.adminUserIds : [group.ownerUserId])
-            .filter((memberId) => memberId !== user.id && nextMemberIds.includes(memberId));
-          if (group.ownerUserId !== user.id) return [{ ...group, memberIds: nextMemberIds, adminUserIds: nextAdminUserIds }];
-          if (!nextMemberIds.length) {
-            removedGroupCount += 1;
-            return [];
-          }
-          transferredGroupCount += 1;
-          const nextOwnerUserId = nextAdminUserIds[0] || nextMemberIds[0];
-          return [{
-            ...group,
-            ownerUserId: nextOwnerUserId,
-            adminUserIds: [...new Set([nextOwnerUserId, ...nextAdminUserIds])],
-            memberIds: nextMemberIds
-          }];
-        });
-        db.users = db.users.filter((item) => item.id !== user.id);
-        dirty = true;
-        finish(200, {
-          message: `Akun ${user.name} berhasil dihapus.`,
-          cleanup: { revokedSessionCount, removedFriendshipCount, removedFriendRequestCount, transferredGroupCount, removedGroupCount },
-          ...managerState(db, userAuth.subject, managementOptions)
-        });
-        return;
-      }
-      finish(404, { message: 'Endpoint API tidak ditemukan.' });
+        await run();
+        if (dirty) markDirty();
+        return response;
+      });
+      const response = result.deferred ? await result.deferred() : result;
+      sendJson(res, response.statusCode, response.payload);
     } catch (error) {
-      if (error.message === 'INVALID_JSON') return finish(400, { message: 'Format data tidak valid. Gunakan JSON yang benar.' });
-      if (error.message === 'PAYLOAD_TOO_LARGE') return finish(413, { message: 'Ukuran data terlalu besar.' });
+      if (error.message === 'INVALID_JSON') return sendJson(res, 400, { message: 'Format data tidak valid. Gunakan JSON yang benar.' });
+      if (error.message === 'PAYLOAD_TOO_LARGE') return sendJson(res, 413, { message: 'Ukuran data terlalu besar.' });
       console.error('[iqro-api] unexpected error', error);
-      finish(500, { message: 'Terjadi kendala pada server Iqro.' });
+      sendJson(res, 500, { message: 'Terjadi kendala pada server Iqro.' });
     }
   });
 }

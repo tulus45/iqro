@@ -18,8 +18,6 @@ const quranSettingsPreviewText = 'وَاِذْ قَالَ رَبُّكَ لِل�
 const quranMadinahSettingsPreviewText = 'وَإِذۡ قَالَ رَبُّكَ لِلۡمَلَٰٓئِكَةِ إِنِّي جَاعِلٞ فِي ٱلۡأَرۡضِ خَلِيفَةٗۖ قَالُوٓاْ أَتَجۡعَلُ فِيهَا مَن يُفۡسِدُ فِيهَا وَيَسۡفِكُ ٱلدِّمَآءَ وَنَحۡنُ نُسَبِّحُ بِحَمۡدِكَ وَنُقَدِّسُ لَكَۖ قَالَ إِنِّيٓ أَعۡلَمُ مَا لَا تَعۡلَمُونَ';
 const quranCompactSettingsPreviewText = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
 const quranMadinahCompactSettingsPreviewText = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
-const kfgqpcHafsAssetUrl = 'assets/quran/kfgqpc-hafs-v2.0.json';
-const quranTajweedAssetUrl = 'assets/quran/uthmani-tajweed-v4.json?v=20260826-3';
 const quranTajweedAllowedRules = new Set([
   'ghunnah',
   'ham_wasl',
@@ -52,8 +50,6 @@ const qcfTajweedGlyphPattern = /^[\u0020\uFC00-\uFDFF]+$/u;
  * are rendered in the cleaner, conventional form selected for Iqro.
  */
 const qcfTajweedColorGlyphsEnabled = false;
-let kfgqpcHafsDataPromise = null;
-let quranTajweedDataPromise = null;
 const sanitizedTajweedSurahs = new Map();
 const qcfTajweedSurahPromises = new Map();
 const qcfTajweedFontPromises = new Map();
@@ -64,37 +60,33 @@ function stripKfgqpcAyahMarker(value) {
   return String(value || '').replace(/[\u00A0 ]*[\uFC00-\uFD1D]$/u, '');
 }
 
-async function loadKfgqpcHafsData() {
-  if (!kfgqpcHafsDataPromise) {
-    kfgqpcHafsDataPromise = fetch(kfgqpcHafsAssetUrl)
-      .then((response) => {
-        if (!response.ok) throw new Error('kfgqpc-data-unavailable');
-        return response.json();
-      })
-      .then((payload) => {
-        if (
-          payload?.metadata?.ayahCount !== 6236
-          || payload?.metadata?.surahCount !== 114
-          || !Array.isArray(payload?.surahs)
-          || payload.surahs.length !== 114
-        ) {
-          throw new Error('kfgqpc-data-invalid');
-        }
-        return payload;
-      })
-      .catch((error) => {
-        kfgqpcHafsDataPromise = null;
-        throw error;
-      });
+const quranSurahRequests = new Map();
+
+async function loadQuranSurahAsset(source, surahNumber) {
+  const number = Number(surahNumber);
+  if (!Number.isInteger(number) || number < 1 || number > 114) throw new Error('quran-surah-invalid');
+  const url = `assets/quran/${source}/${number}.json?v=20261005-1`;
+  if (!quranSurahRequests.has(url)) {
+    const request = fetch(url).then(async (response) => {
+      if (!response.ok) throw new Error('quran-data-unavailable');
+      const payload = await response.json();
+      if (payload.surah !== number || !Array.isArray(payload.ayahs)
+          || payload.ayahs.length !== getAyatCountForSurah(number)
+          || payload.ayahs.some((ayah) => typeof ayah !== 'string' || !ayah)) {
+        throw new Error('quran-data-invalid');
+      }
+      return payload.ayahs;
+    }).catch((error) => {
+      quranSurahRequests.delete(url);
+      throw error;
+    });
+    quranSurahRequests.set(url, request);
   }
-  return kfgqpcHafsDataPromise;
+  return quranSurahRequests.get(url);
 }
 
 async function getKfgqpcHafsSurah(surahNumber) {
-  const payload = await loadKfgqpcHafsData();
-  const surah = payload.surahs[Number(surahNumber) - 1];
-  if (!Array.isArray(surah) || !surah.length) throw new Error('kfgqpc-surah-invalid');
-  return surah;
+  return loadQuranSurahAsset('kfgqpc-hafs-v2.0', surahNumber);
 }
 
 function escapeTajweedText(value) {
@@ -134,35 +126,6 @@ function sanitizeQuranTajweedMarkup(value) {
   return [...template.content.childNodes].map(serializeNode).join('');
 }
 
-async function loadQuranTajweedData() {
-  if (!quranTajweedDataPromise) {
-    quranTajweedDataPromise = fetch(quranTajweedAssetUrl)
-      .then((response) => {
-        if (!response.ok) throw new Error('tajweed-data-unavailable');
-        return response.json();
-      })
-      .then((payload) => {
-        const metadataRules = Array.isArray(payload?.metadata?.rules) ? payload.metadata.rules : [];
-        if (
-          payload?.metadata?.ayahCount !== 6236
-          || payload?.metadata?.surahCount !== 114
-          || !Array.isArray(payload?.surahs)
-          || payload.surahs.length !== 114
-          || metadataRules.some((rule) => !quranTajweedAllowedRules.has(rule))
-        ) {
-          throw new Error('tajweed-data-invalid');
-        }
-        return payload;
-      })
-      .catch((error) => {
-        quranTajweedDataPromise = null;
-        sanitizedTajweedSurahs.clear();
-        throw error;
-      });
-  }
-  return quranTajweedDataPromise;
-}
-
 async function getLegacyQuranTajweedSurah(surahNumber) {
   const safeNumber = Number(surahNumber);
   if (!Number.isInteger(safeNumber) || safeNumber < 1 || safeNumber > 114) {
@@ -170,8 +133,7 @@ async function getLegacyQuranTajweedSurah(surahNumber) {
   }
   if (sanitizedTajweedSurahs.has(safeNumber)) return sanitizedTajweedSurahs.get(safeNumber);
 
-  const payload = await loadQuranTajweedData();
-  const surah = payload.surahs[safeNumber - 1];
+  const surah = await loadQuranSurahAsset('uthmani-tajweed-v4', safeNumber);
   if (!Array.isArray(surah) || !surah.length || surah.some((ayah) => !ayah)) {
     throw new Error('tajweed-surah-invalid');
   }
@@ -857,10 +819,20 @@ async function pushProgressToServer(snapshot, options = {}) {
       ayat: snapshot.ayat,
       nama: snapshot.nama,
       totalAyat: snapshot.totalAyat,
+      responseMode: 'progress',
       trackDaily: options.trackDaily === true
     }
   });
-  applyAppState(payload);
+  if (payload.partial === 'progress' && payload.user?.id === communityState.me?.id) {
+    communityState.me = { ...communityState.me, ...payload.user };
+    communityState.offlineSession = false;
+    cacheCurrentAppState();
+    renderHomeCommunityBoard();
+    const communityPage = document.getElementById('communityPage');
+    if (communityPage?.classList.contains('is-active')) renderCommunityPage();
+  } else {
+    applyAppState(payload);
+  }
   if (!options.quiet && payload.message) {
     setCommunityMessage(payload.message, 'success');
   }
@@ -2436,8 +2408,8 @@ function renderSettingsPage() {
 function renderCommunityPage() {
   renderCommunityFlash();
   renderHeroStatus();
-  renderCommunityDirectory();
-  renderSettingsPage();
+  if (document.getElementById('communityPage')?.classList.contains('is-active')) renderCommunityDirectory();
+  if (document.getElementById('settingsPage')?.classList.contains('is-active')) renderSettingsPage();
 }
 
 function injectCommunityUi() {
@@ -2578,6 +2550,7 @@ function patchCoreIqroFunctions() {
       return;
     }
     originalSetActivePage(pageKey, navKey);
+    if (pageKey === 'community' || pageKey === 'settings') renderCommunityPage();
   };
 
   _0xSync = async function patchedIqroSync() {

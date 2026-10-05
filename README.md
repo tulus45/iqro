@@ -146,6 +146,14 @@ pm2 restart iqro-api --update-env
 
 Jangan menghapus `server/data/app-db.json` saat deploy agar akun dan progress tetap aman.
 
+Backend memakai antrean transaksi dalam **satu proses** (PM2 `fork`, `instances: 1`). Jangan menjalankan beberapa proses terhadap file database yang sama. Database dibaca ke cache, perubahan disimpan melalui file sementara dan rename, serta versi sebelumnya disimpan di `server/data/app-db.json.bak`. Backup dan file sementara berisi data privat seperti database utama; jangan layani folder `server/` melalui web server.
+
+Jika database rusak atau hilang sementara backup tersedia, API menolak menulis. Hentikan backend, periksa dan salin backup yang valid ke `app-db.json`, lalu jalankan kembali. Pemulihan tidak dilakukan otomatis agar kerusakan tidak menimpa data yang masih bisa diselamatkan.
+
+Data tampilan Al-Qur'an dimuat per surat dari folder `assets/quran/kfgqpc-hafs-v2.0/` dan `assets/quran/uthmani-tajweed-v4/`. Sertakan kedua folder saat deploy. Setelah memperbarui sumber JSON lengkap, jalankan `npm run quran:split` dan `npm run quran:split:verify`. Build aset mobile menjalankan pemecahan ini otomatis dan menyertakan seluruh surat untuk akses lokal.
+
+Jalankan `npm test` untuk pengujian transaksi, API, dan loader surat. Pengujian menggunakan database sementara, bukan data aplikasi.
+
 ## Reverse Proxy
 
 Web server perlu mengarahkan trafik berikut:

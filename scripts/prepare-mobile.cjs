@@ -4,6 +4,7 @@ const esbuild = require('esbuild');
 
 const root = path.resolve(__dirname, '..');
 const webDir = path.join(root, 'www');
+require('./split-quran-assets.cjs');
 const assets = [
   'index.html',
   'quran-offline.js',
@@ -30,9 +31,9 @@ const assets = [
   'assets/fonts/KFGQPC-Hafs-Uthmanic-V22.woff2',
   'assets/fonts/KFGQPC-Hafs.EULA.md',
   'assets/fonts/KFGQPC-Hafs.SOURCE.md',
-  'assets/quran/kfgqpc-hafs-v2.0.json',
+  'assets/quran/kfgqpc-hafs-v2.0',
   'assets/quran/KFGQPC-Hafs.SOURCE.md',
-  'assets/quran/uthmani-tajweed-v4.json',
+  'assets/quran/uthmani-tajweed-v4',
   'assets/quran/TAJWEED.SOURCE.md',
   'assets/quran/QCF-TAJWEED-V4.SOURCE.md'
 ];
@@ -42,7 +43,7 @@ fs.mkdirSync(webDir, { recursive: true });
 assets.forEach((asset) => {
   const destination = path.join(webDir, asset);
   fs.mkdirSync(path.dirname(destination), { recursive: true });
-  fs.copyFileSync(path.join(root, asset), destination);
+  fs.cpSync(path.join(root, asset), destination, { recursive: true });
 });
 
 esbuild.buildSync({

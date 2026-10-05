@@ -2,6 +2,8 @@ Thumbs.db
 .DS_Store
 
 server/data/app-db.json
+server/data/*.bak
+server/data/*.tmp
 server/.env
 node_modules/
 www/

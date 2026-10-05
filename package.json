@@ -4,6 +4,9 @@
   "private": true,
   "description": "Android application wrapper for Iqro Morning Pray",
   "scripts": {
+    "test": "node --test server/storage.test.js scripts/quran-loader.test.cjs",
+    "quran:split": "node scripts/split-quran-assets.cjs",
+    "quran:split:verify": "node scripts/split-quran-assets.cjs --verify",
     "quran:tajweed:prepare": "node scripts/prepare-quran-tajweed.cjs",
     "quran:tajweed:verify": "node scripts/verify-quran-tajweed.cjs",
     "quran:tajweed:qcf-verify": "node scripts/verify-qcf-tajweed-v4.cjs",
