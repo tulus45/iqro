@@ -1,4 +1,4 @@
-# Iqro Morning Pray
+# Iqro
 
 Aplikasi Iqro terdiri dari frontend statis di root project dan backend API ringan di `server/`.
 
